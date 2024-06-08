@@ -1,0 +1,9 @@
+godot-cpp-*/
+src/**/*.o
+project/bin/**/*.dll
+project/bin/**/*.wasm
+project/bin/**/*.a
+.sconsign.dblite
+build.bat
+
+
