@@ -1,0 +1,30 @@
+[gd_scene load_steps=4 format=3 uid="uid://lmx8rmjigqy1"]
+
+[ext_resource type="Texture2D" uid="uid://6bvux683gwpk" path="res://control_knob.svg" id="1_ac3fo"]
+[ext_resource type="Script" path="res://KnobArea2D.gd" id="1_h1o2u"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_ad58h"]
+radius = 28.0179
+
+[node name="Knob" type="Node2D"]
+
+[node name="KnobArea2D" type="Area2D" parent="."]
+script = ExtResource("1_h1o2u")
+
+[node name="Sprite2D" type="Sprite2D" parent="KnobArea2D"]
+texture = ExtResource("1_ac3fo")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="KnobArea2D"]
+shape = SubResource("CircleShape2D_ad58h")
+
+[node name="Label" type="Label" parent="KnobArea2D"]
+offset_left = -24.0
+offset_top = -12.0
+offset_right = 23.0
+offset_bottom = 10.0
+theme_override_colors/font_color = Color(1, 0.501961, 0, 1)
+theme_override_font_sizes/font_size = 15
+text = "-1234."
+horizontal_alignment = 2
+
+[connection signal="input_event" from="KnobArea2D" to="KnobArea2D" method="_on_input_event"]

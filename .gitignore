@@ -1,0 +1,17 @@
+# Godot 4+ specific ignores
+godot_project/.godot/
+godot_project/bin/
+
+# KuyoSynthe ignores
+godot_project/savegame.json
+godot_project/godot.bat
+**/*.mid
+
+# Godot-specific ignores
+godot_project/.import/
+godot_project/export.cfg
+godot_project/export_presets.cfg
+
+# Imported translations (automatically generated from CSV files)
+godot_project/*.translation
+
