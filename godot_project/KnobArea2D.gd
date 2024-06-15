@@ -88,7 +88,7 @@ func knob_draw()->void:
 		"KnobFMCarrierFreq":
 			changeKnob(0.0, 880.0, 0.0, 720.0, int(Globalv.fm_freq)) 
 		"KnobFMCentRange":
-			changeKnob(-2400.0, 8400.0, 3600.0, 1260.0, int(Globalv.fm_cent_range)) 
+			changeKnob(-2400.0, 8400.0, 360.0, 1260.0, int(Globalv.fm_cent_range))
 		"KnobFMPhaseOffset":
 			changeKnob(0.0, 360.0, -156.0, 156.0, int(Globalv.fm_phase_offset*180.0)) 
 			$"../../GDSynthesizer".get_mini_wave_image(

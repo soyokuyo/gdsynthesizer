@@ -493,6 +493,9 @@ func _input(event:InputEvent)->void:
 			if event.keycode == KEY_M and keyb[11] == false:
 				keyb[11] = true	
 				keyb_note_on(71)
+			if event.keycode == KEY_COMMA  and keyb[11] == false:
+				keyb[11] = true
+				keyb_note_on(72)
 		else:
 			if event.keycode == KEY_Z and keyb[0] == true:
 				keyb[0] = false
@@ -530,7 +533,9 @@ func _input(event:InputEvent)->void:
 			if event.keycode == KEY_M and keyb[11] == true:
 				keyb[11] = false
 				keyb_note_off(71)
-			
+			if event.keycode == KEY_COMMA  and keyb[11] == true:
+				keyb[11] = false
+				keyb_note_off(72)
 
 
 func _on_gd_synthesizer_level_info(level)->void:
