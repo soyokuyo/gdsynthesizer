@@ -4,7 +4,7 @@ GDSYNTHESIZER is software tone generator and SMF player using GDEXTENSION for Go
 
 ## What is GDSYNTHESIZER?
 
-GDSYNTHESIZER is :
+GDSYNTHESIZER is:
  - an extension of audio_stream_player that can be use by Godot engine
  - wave table base synthesizer
  - midi standard file player that may support format 0 and 1 
@@ -22,15 +22,15 @@ GDSYNTHESIZER dose note have:
  - GUI
  - sound effect filter
 
-target Godot Version is ver.4.2.1.
-
+Target Godot Version is ver.4.2.1.
+This project is just a hobby of the author and may not necessarily work the way you want it to.
 
 ## How to build
 
 GDSYNTHESIZER is builded with min-GW64 and scons.
 
 GDSYNTHESIZER depends on godot-cpp.
-prepare the necessary files using the git command as below.
+So prepare the necessary files using the git command as below.
 
 ```
 mkdir your_directory
@@ -40,7 +40,7 @@ cd gdsynthesizer
 git clone --depth 1 https://github.com/godotengine/godot-cpp.git -b godot-4.2.1-stable godot-cpp-4.2.1-stable
 ```
 
-directory structure may be below.
+Directory structure may be below.
 ```
 your_directory/
     godot-cpp-4.2.1-stable/
@@ -92,11 +92,13 @@ atach script with your scene and modify it.
 The easiest way is as follows.
 
 1. put your SMF file e.g. "sample.mid" in "res://" directory.
-2. modify _ready() function as below.
+2. modify _ready() and _process() functions as below.
 
 ```
+extends GDSynthesizer
+
 func _ready()->void:
-	init_synthe(8.0)
+	init_synthe(4.0)
 	var res:int = load_midi("res://sample.mid")
 	if res == 1:
 		print("open success")
@@ -104,7 +106,25 @@ func _ready()->void:
 		print("open failure")
 
 	play(0.0)
+
+func _process(delta:float)->void:
+	feed_data(delta)
+
 ```
 
+GDSYNTHESIZER is variable tone generator, so you can modify tone with  parameter edeitting.
+But actualy, editing parameters is a little complicated.
 
+To check how your SMF sounds with SYNTHESIZER, I've made a working GUI example named "KuyoSynthe" using GD SYNTHESIZER.
+Find it from following GITHUB and try it out.
+https://github.com/soyokuyo/kuyosynthe
 
+By using KuyoSynthe, you can easily check how your SMF sounds, and you may find out which parameters to change to make it even better.
+If you look into KuyoSynthe, you may find out how to use FGSYNTHESOZSE.
+
+KuyoSynthe is also a complete example implementation for using GDSYNTHESIZSER.
+
+Additionally, you may be able to find some explanations on my blog. 
+https://junk-box.net/toy/
+
+However, most of article will be written in Japanese.
