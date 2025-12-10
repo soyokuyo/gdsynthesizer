@@ -33,7 +33,7 @@
 
 #include <cmath>
 #include "smfparser.hpp"
-#include <list>
+#include <vector>
 #include <array>
 #include <functional>
 #include <godot_cpp/classes/random_number_generator.hpp>
@@ -302,8 +302,8 @@ private:
     int32_t delayBufferSize = 0;
     float unitOfTime = 60000.0;
     std::array<Tone, numTone> toneInstances;
-    std::list<Tone> activeTones;
-    std::list<Tone> freeTones;
+    std::vector<int32_t> activeToneIndices;
+    std::vector<int32_t> freeToneIndices;
     std::array<Instrument, numinstruments> instruments;
     std::array<Percussion, numPercussions> percussions;
 
