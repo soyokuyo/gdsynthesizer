@@ -33,8 +33,6 @@
 import os
 import sys
 
-# 並列ビルドのジョブ数を6に制限
-SetOption('num_jobs', 6)
  
 project_name = 'libgdsynthesizer'
 env = SConscript('./godot-cpp-4.2.1-stable/SConstruct')
