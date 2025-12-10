@@ -32,7 +32,6 @@
 
 import os
 import sys
-
  
 project_name = 'libgdsynthesizer'
 env = SConscript('./godot-cpp-4.2.1-stable/SConstruct')
@@ -52,7 +51,7 @@ for i in env['LIBS']:
 env.Append(CPPPATH=["src/"])
 sources = Glob("src/*.cpp")
  
-if env['platform'] == "windows" and env['use_mingw'] == True and env['arch'] == "x86_64":
+if env['platform'] == "windows" and env['arch'] == "x86_64" and env.get('use_mingw', False):
     env.Append(LINKFLAGS = ['-static-libgcc', '-static-libstdc++','-static','-pthread'])
 elif env['platform'] == "web" and env['arch'] == "wasm32":
     # strip -fno-exceptions from $CXXFLAGS.
@@ -67,6 +66,7 @@ else:
     print("android_api_level",env["android_api_level"])
     print("ios_simulator",env["ios_simulator"])
     print("arch",env["arch"])
+    print("expected: windows + use_mingw=yes  OR  web + wasm32")
     sys.exit(1)
  
 print("CPPDEFINES",env['CPPDEFINES'])

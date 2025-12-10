@@ -82,7 +82,8 @@ int GDSynthesizer::initSynthe(const int32_t max_note)
     if (!sequencer.initParam(mix_rate, buffer_length/2.0, buf_samples/2)) {
         return 0;
     }
-    Ref<AudioStreamGenerator> stream = new AudioStreamGenerator();
+    Ref<AudioStreamGenerator> stream;
+    stream.instantiate(); // use Godot allocator (memnew equivalent)
     set_stream(stream);
     stream->set_mix_rate(mix_rate);
     stream->set_buffer_length(buffer_length);
