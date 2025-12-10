@@ -1,9 +1,17 @@
 godot-cpp-*/
 src/**/*.o
+src/**/*.obj
+src/**/*.pdb
 project/bin/**/*.dll
 project/bin/**/*.wasm
 project/bin/**/*.a
+project/bin/**/*.lib
+project/bin/**/*.exp
+project/bin/**/*.pdb
 .sconsign.dblite
 build.bat
+
+# Logs
+*.log
 
 
