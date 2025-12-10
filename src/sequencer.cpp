@@ -84,17 +84,18 @@ bool SharedLUT::initialize(float rate, int32_t noiseBufSize) {
     if (waveLUTInitialized && samplingRate == rate && noiseBufferSize == noiseBufSize) {
         return true;
     }
-    
+
     // Only cleanup if no other instances are using the LUTs
-    // Note: This assumes all instances use the same sampling rate
-    // If different sampling rates are needed, we'd need a more complex solution
+    // Note: This assumes all instances use the same sampling rate/buffer size
     if (samplingRate != 0.0f && (samplingRate != rate || noiseBufferSize != noiseBufSize)) {
         // Only cleanup if we're the only reference
         if (refCount <= 1) {
             cleanup();
         } else {
-            // Parameters changed but other instances exist - this is an error condition
-            // For now, we'll just return false
+#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
+            godot::UtilityFunctions::print("[SharedLUT] init denied: samplingRate/noiseBufSize mismatch while refCount>1. current:", samplingRate, "/", noiseBufferSize, " requested:", rate, "/", noiseBufSize);
+#endif // DEBUG_ENABLED && WINDOWS_ENABLED
+            // Parameters changed but other instances exist - refuse to re-init
             return false;
         }
     }
@@ -817,7 +818,7 @@ bool Sequencer::checkNewNote(Note oneNote){
             }
         }
 
-        // variable freqNoise related.
+        // variable freqNoise related. SIMD候補: baseIncrement計算とノイズ適用のペア演算
         {
             freqNoiseCentharfRange[idx] = tone.instrument.freqNoiseCentRange*0.5f;
             float c1 = centFrequency(frequency[idx], tone.instrument.baseOffsetCent1);
@@ -959,6 +960,7 @@ bool Sequencer::feed(double *frame){
             amWaveInvert = -1.0f;
         }
         double maxFrameValue = 0.0;
+        // SIMD hot path start: envelope + phase update + noise + AM/FM + mix + delay
         for (int32_t i = 0; i < bufferSamples; i++){
             bool isTone = false;
             if (current > rw) {
@@ -1136,6 +1138,7 @@ bool Sequencer::feed(double *frame){
             }
             current += delta;
         }
+        // SIMD hot path end
         if (maxFrameValue > 1.0){
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
             godot::UtilityFunctions::print("saturated! ", maxFrameValue);
