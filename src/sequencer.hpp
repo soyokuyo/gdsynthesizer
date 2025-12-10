@@ -247,23 +247,12 @@ private:
         int32_t restartTempo;
         float restartTempo_f;
 
-        // envelope factor
-        float strength = 0.0;
-        float atackedStrength = 0.0f;
-        float decayedStrength = 0.0f;
-        float atackedStrengthfloor = 0.0f;
+        // envelope control (ratios only; time-varying values are stored in SoA arrays)
         float atackSlopeRatio;
         float decaySlopeRatio;
         float releaseSlopeRatio;
 
-        // signal cont
-        float phase1;
-        float phase2;
-        float phase3;
-        float baseIncrement1 = 0.0;
-        float baseIncrement2 = 0.0;
-        float baseIncrement3 = 0.0;
-
+        // base tone config
         float base1ratio;
         float base2ratio;
         float base3ratio;
@@ -273,35 +262,19 @@ private:
         float restartWaitDuration;
         float mainteinDuration;
 
-        float freqNoiseCentharfRange;
-        
+        // static instrument assignment
         Instrument instrument;
-        
-        // for delay
+
+        // for delay (buffer pointer only; indices/ratios are SoA)
         float* delayBuffer = nullptr;
-        int32_t delayBufferIndex;
-        int32_t delay0Index;
-        int32_t delay1Index;
-        int32_t delay2Index;
-        float delay0Ratio;
-        float delay1Ratio;
-        float delay2Ratio;
-        float mainRatio;
-        
-        //fm moduration
-        float fmPhase;
-        float fmIncrement;
-        
-        //am moduration
-        float amPhase;
-        float amIncrement;
-        
+        float maxDelayTime;
+
+        // fm/am meta (phase/increment live data are SoA)
         int32_t program;
         int32_t key;
         int32_t realKey1;
         int32_t realKey2;
         int32_t realKey3;
-        float maxDelayTime;
     };
     SMFParser midi;
     int32_t delayBufferSize = 0;
