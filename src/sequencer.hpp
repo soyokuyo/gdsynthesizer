@@ -238,43 +238,10 @@ private:
     struct Tone {
         // from smf
         Note note;
-        int32_t velocity;
-        float velocity_f;
-        int32_t tempo;
-        float tempo_f;
-        int32_t restartVelocity;
-        float restartVelocity_f;
-        int32_t restartTempo;
-        float restartTempo_f;
-
-        // envelope control (ratios only; time-varying values are stored in SoA arrays)
-        float atackSlopeRatio;
-        float decaySlopeRatio;
-        float releaseSlopeRatio;
-
-        // base tone config
-        float base1ratio;
-        float base2ratio;
-        float base3ratio;
-        float frequency;
-        int32_t passed;
-        float waitDuration;
-        float restartWaitDuration;
-        float mainteinDuration;
-
         // static instrument assignment
         Instrument instrument;
-
         // for delay (buffer pointer only; indices/ratios are SoA)
         float* delayBuffer = nullptr;
-        float maxDelayTime;
-
-        // fm/am meta (phase/increment live data are SoA)
-        int32_t program;
-        int32_t key;
-        int32_t realKey1;
-        int32_t realKey2;
-        int32_t realKey3;
     };
     SMFParser midi;
     int32_t delayBufferSize = 0;
@@ -307,6 +274,31 @@ private:
     std::array<float, numTone> delay1Ratio{};
     std::array<float, numTone> delay2Ratio{};
     std::array<float, numTone> mainRatio{};
+    std::array<int32_t, numTone> velocity{};
+    std::array<float, numTone> velocity_f{};
+    std::array<int32_t, numTone> tempo{};
+    std::array<float, numTone> tempo_f{};
+    std::array<int32_t, numTone> restartVelocity{};
+    std::array<float, numTone> restartVelocity_f{};
+    std::array<int32_t, numTone> restartTempo{};
+    std::array<float, numTone> restartTempo_f{};
+    std::array<float, numTone> atackSlopeRatio{};
+    std::array<float, numTone> decaySlopeRatio{};
+    std::array<float, numTone> releaseSlopeRatio{};
+    std::array<float, numTone> base1ratio{};
+    std::array<float, numTone> base2ratio{};
+    std::array<float, numTone> base3ratio{};
+    std::array<float, numTone> frequency{};
+    std::array<int32_t, numTone> passed{};
+    std::array<float, numTone> waitDuration{};
+    std::array<float, numTone> restartWaitDuration{};
+    std::array<float, numTone> mainteinDuration{};
+    std::array<float, numTone> maxDelayTime{};
+    std::array<int32_t, numTone> program{};
+    std::array<int32_t, numTone> key{};
+    std::array<int32_t, numTone> realKey1{};
+    std::array<int32_t, numTone> realKey2{};
+    std::array<int32_t, numTone> realKey3{};
     std::array<Instrument, numinstruments> instruments;
     std::array<Percussion, numPercussions> percussions;
 
