@@ -299,6 +299,13 @@ private:
     std::array<int32_t, numTone> realKey1{};
     std::array<int32_t, numTone> realKey2{};
     std::array<int32_t, numTone> realKey3{};
+    // hot-pathフラグ／モード
+    std::array<uint8_t, numTone> useFM{};
+    std::array<uint8_t, numTone> useAM{};
+    std::array<uint8_t, numTone> useDelay{};
+    std::array<uint8_t, numTone> useFreqNoise{};
+    std::array<uint8_t, numTone> freqNoiseMode{};  // 0: white, 1: triangular, 2: cos4th
+    std::array<uint8_t, numTone> noiseColorMode{}; // 0: white, 1: pink
     std::array<Instrument, numinstruments> instruments;
     std::array<Percussion, numPercussions> percussions;
 

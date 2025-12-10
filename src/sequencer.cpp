@@ -517,6 +517,9 @@ bool Sequencer::initParam(double rate, double time, int32_t samples) {
         maxDelayTime[i] = 0.0f;
         program[i] = 0;
         key[i] = realKey1[i] = realKey2[i] = realKey3[i] = 0;
+        useFM[i] = useAM[i] = useDelay[i] = useFreqNoise[i] = 0;
+        freqNoiseMode[i] = 0;
+        noiseColorMode[i] = 0;
         freeToneIndices.push_back(i);
     }
 
@@ -736,6 +739,8 @@ bool Sequencer::checkNewNote(Note oneNote){
         restartTempo[idx] = tempo[idx] = oneNote.tempo;
         restartTempo_f[idx] = tempo_f[idx] = (float)oneNote.tempo*1000.0f; // msec
         restartVelocity[idx] = velocity[idx] = oneNote.velocity;
+        useFM[idx] = (tone.instrument.fmFreq != 0.0f) ? 1 : 0;
+        useAM[idx] = (tone.instrument.amFreq != 0.0f) ? 1 : 0;
 
         // select instrument
         if (tone.note.channel > 127 || tone.note.channel < 0) {
@@ -872,6 +877,7 @@ bool Sequencer::checkNewNote(Note oneNote){
         for (int32_t i = 0; i < delayBufferSize; i++) {
             tone.delayBuffer[i] = 0.0f;
         }
+        useDelay[idx] = (delay0Ratio[idx] != 0.0f) || (delay1Ratio[idx] != 0.0f) || (delay2Ratio[idx] != 0.0f);
 
         {
             auto& lut = SharedLUT::getInstance();
@@ -879,6 +885,15 @@ bool Sequencer::checkNewNote(Note oneNote){
             decaySlopeRatio[idx] = lut.getDecayHalfLifeTime()/tone.instrument.decayHalfLifeTime;
             releaseSlopeRatio[idx] = lut.getReleaseSlopeTime()/tone.instrument.releaseSlopeTime;
         }
+
+        // noise mode flags
+        useFreqNoise[idx] = (freqNoiseCentharfRange[idx] != 0.0f) ? 1 : 0;
+        switch (tone.instrument.freqNoiseType) {
+            case NoiseDistributType::NOISEDTYPE_TRIANGULAR: freqNoiseMode[idx] = 1; break;
+            case NoiseDistributType::NOISEDTYPE_COS4ThPOW:  freqNoiseMode[idx] = 2; break;
+            default: freqNoiseMode[idx] = 0; break;
+        }
+        noiseColorMode[idx] = (tone.instrument.noiseColorType == NoiseColorType::NOISECTYPE_PINK) ? 1 : 0;
 
         activeToneIndices.push_back(idx);
 
@@ -948,6 +963,15 @@ bool Sequencer::feed(double *frame){
         int32_t& rk1 = realKey1[toneIndex];
         int32_t& rk2 = realKey2[toneIndex];
         int32_t& rk3 = realKey3[toneIndex];
+        const float* freqNoiseLUT = (freqNoiseMode[toneIndex] == 1) ? triangularLUT
+                                     : (freqNoiseMode[toneIndex] == 2) ? cos4thPowLUT
+                                     : whiteLUT;
+        const float* noiseMixLUT = (noiseColorMode[toneIndex] == 1) ? pinkLUT : whiteLUT;
+        bool doFM = (useFM[toneIndex] != 0);
+        bool doAM = (useAM[toneIndex] != 0);
+        bool doDelay = (useDelay[toneIndex] != 0);
+        bool doFreqNoise = (useFreqNoise[toneIndex] != 0);
+        bool doNoiseMix = (toneRef.instrument.noiseRatio != 0.0f);
         bool isEnd = false;
         int32_t sinWave   = static_cast<int32_t>(BaseWave::WAVE_SIN);
         int32_t baseWave1 = static_cast<int32_t>(toneRef.instrument.baseWave1);
@@ -1018,17 +1042,11 @@ bool Sequencer::feed(double *frame){
 #endif // DEBUG_ENABLED
             if (isTone){
                 float inc1, inc2, inc3;
-                float cent;
-                if (toneRef.instrument.freqNoiseType == NoiseDistributType::NOISEDTYPE_TRIANGULAR) {
-                    cent = freqNoiseCentharfRange[toneIndex]*triangularLUT[noiseBufIndex+i];
+                float cent = 0.0f;
+                if (doFreqNoise) {
+                    cent = freqNoiseCentharfRange[toneIndex]*freqNoiseLUT[noiseBufIndex+i];
                 }
-                else if (toneRef.instrument.freqNoiseType == NoiseDistributType::NOISEDTYPE_COS4ThPOW) {
-                    cent = freqNoiseCentharfRange[toneIndex]*cos4thPowLUT[noiseBufIndex+i];
-                }
-                else {
-                    cent = freqNoiseCentharfRange[toneIndex]*whiteLUT[noiseBufIndex+i];
-                }
-                if (current > wt){
+                if (doFM && current > wt){
                     fmPh += fmInc;
                     if (fmPh > PI*2.0f) fmPh -= PI*2.0f;
                     cent += toneRef.instrument.fmCentRange*(waveLUT[fmWave][(int32_t)(fmPh*period)]*fmWaveInvert+1.0f)*0.5f;
@@ -1051,7 +1069,7 @@ bool Sequencer::feed(double *frame){
                 if (ph3 > PI*2.0f) ph3 -= PI*2.0f;
                 
                 float level = 1.0f;
-                if (current > wt){
+                if (doAM && current > wt){
                     amPh += amInc;
                     if (amPh > PI*2.0f) amPh -= PI*2.0f;
                     level = (toneRef.instrument.amLevel)*(waveLUT[amWave][(int32_t)(amPh*period)]*amWaveInvert+1.0f)*0.5f;
@@ -1083,11 +1101,8 @@ bool Sequencer::feed(double *frame){
                 }
                 float data = tone1+tone2+tone3;
                 
-                if (toneRef.instrument.noiseColorType == NoiseColorType::NOISECTYPE_WHITE) {
-                    data = data*(1.0f - toneRef.instrument.noiseRatio)+whiteLUT[noiseBufIndex+i]*toneRef.instrument.noiseRatio;
-                }
-                else if (toneRef.instrument.noiseColorType == NoiseColorType::NOISECTYPE_PINK) {
-                    data = data*(1.0f - toneRef.instrument.noiseRatio)+pinkLUT[noiseBufIndex+i]*toneRef.instrument.noiseRatio;
+                if (doNoiseMix) {
+                    data = data*(1.0f - toneRef.instrument.noiseRatio)+noiseMixLUT[noiseBufIndex+i]*toneRef.instrument.noiseRatio;
                 }
 
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
@@ -1105,38 +1120,40 @@ bool Sequencer::feed(double *frame){
 #endif // DEBUG_ENABLED
                 data = godot::Math::clamp(data, -1.0f, 1.0f);
 
-                data = data * mainRatio[toneIndex] + toneRef.delayBuffer[delayBufferIndex[toneIndex]];
+                if (doDelay) {
+                    data = data * mainRatio[toneIndex] + toneRef.delayBuffer[delayBufferIndex[toneIndex]];
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-                if (godot::Math::absf(data) > 1.0){
-                    godot::UtilityFunctions::print("data 3 saturated! ", data);
-                }
+                    if (godot::Math::absf(data) > 1.0){
+                        godot::UtilityFunctions::print("data 3 saturated! ", data);
+                    }
 #endif // DEBUG_ENABLED
-                data = godot::Math::clamp(data, -1.0f, 1.0f);
+                    data = godot::Math::clamp(data, -1.0f, 1.0f);
                 
-                // delay
-                float delayData;
-                delayData = toneRef.delayBuffer[delay0Index[toneIndex]] + data * delay0Ratio[toneIndex];
-                if (delayData >  1.0) delayData =  1.0;
-                if (delayData < -1.0) delayData = -1.0;
-                toneRef.delayBuffer[delay0Index[toneIndex]] = delayData;
-                delayData = toneRef.delayBuffer[delay1Index[toneIndex]] + data * delay1Ratio[toneIndex];
-                if (delayData >  1.0) delayData =  1.0;
-                if (delayData < -1.0) delayData = -1.0;
-                toneRef.delayBuffer[delay1Index[toneIndex]] = delayData;
-                delayData = toneRef.delayBuffer[delay2Index[toneIndex]] + data * delay2Ratio[toneIndex];
-                if (delayData >  1.0) delayData =  1.0;
-                if (delayData < -1.0) delayData = -1.0;
-                toneRef.delayBuffer[delay2Index[toneIndex]] = delayData;
+                    // delay
+                    float delayData;
+                    delayData = toneRef.delayBuffer[delay0Index[toneIndex]] + data * delay0Ratio[toneIndex];
+                    if (delayData >  1.0) delayData =  1.0;
+                    if (delayData < -1.0) delayData = -1.0;
+                    toneRef.delayBuffer[delay0Index[toneIndex]] = delayData;
+                    delayData = toneRef.delayBuffer[delay1Index[toneIndex]] + data * delay1Ratio[toneIndex];
+                    if (delayData >  1.0) delayData =  1.0;
+                    if (delayData < -1.0) delayData = -1.0;
+                    toneRef.delayBuffer[delay1Index[toneIndex]] = delayData;
+                    delayData = toneRef.delayBuffer[delay2Index[toneIndex]] + data * delay2Ratio[toneIndex];
+                    if (delayData >  1.0) delayData =  1.0;
+                    if (delayData < -1.0) delayData = -1.0;
+                    toneRef.delayBuffer[delay2Index[toneIndex]] = delayData;
 
-                delay0Index[toneIndex] += 1;
-                if (delay0Index[toneIndex] == delayBufferSize) delay0Index[toneIndex] = 0;
-                delay1Index[toneIndex] +=1;
-                if (delay1Index[toneIndex] == delayBufferSize) delay1Index[toneIndex] = 0;
-                delay2Index[toneIndex] += 1;
-                if (delay2Index[toneIndex] == delayBufferSize) delay2Index[toneIndex] = 0;
-                toneRef.delayBuffer[delayBufferIndex[toneIndex]] = 0.0f;
-                delayBufferIndex[toneIndex] +=1;
-                if (delayBufferIndex[toneIndex] == delayBufferSize) delayBufferIndex[toneIndex] = 0;
+                    delay0Index[toneIndex] += 1;
+                    if (delay0Index[toneIndex] == delayBufferSize) delay0Index[toneIndex] = 0;
+                    delay1Index[toneIndex] +=1;
+                    if (delay1Index[toneIndex] == delayBufferSize) delay1Index[toneIndex] = 0;
+                    delay2Index[toneIndex] += 1;
+                    if (delay2Index[toneIndex] == delayBufferSize) delay2Index[toneIndex] = 0;
+                    toneRef.delayBuffer[delayBufferIndex[toneIndex]] = 0.0f;
+                    delayBufferIndex[toneIndex] +=1;
+                    if (delayBufferIndex[toneIndex] == delayBufferSize) delayBufferIndex[toneIndex] = 0;
+                }
 
                 frame[i] += (double)data;
                 if (godot::Math::absf(frame[i]) > maxFrameValue) maxFrameValue = godot::Math::absf(frame[i]);
