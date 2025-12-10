@@ -912,6 +912,12 @@ bool Sequencer::feed(double *frame){
     float delta = 1.0f/samplingRate*1000.0f;
     float div = 1.0f/asumedConcurrentTone; // to avoid saturation.
 
+    // Hot-path LUT pointers (SIMD化に備えループ外へ)
+    const float* whiteLUT = lut.getWhiteNoiseLUT();
+    const float* triangularLUT = lut.getTriangularDistributionLUT();
+    const float* cos4thPowLUT = lut.getCos4thPowDistributionLUT();
+    const float* pinkLUT = lut.getPinkNoiseLUT();
+
     for (size_t tonePos = 0; tonePos < activeToneIndices.size();) {
         int32_t toneIndex = activeToneIndices[tonePos];
         Tone& toneRef = toneInstances[toneIndex];
@@ -960,6 +966,10 @@ bool Sequencer::feed(double *frame){
             amWaveInvert = -1.0f;
         }
         double maxFrameValue = 0.0;
+#if defined(GDSYNTH_USE_X86_SIMD)
+#pragma GCC ivdep
+#pragma GCC unroll 4
+#endif
         // SIMD hot path start: envelope + phase update + noise + AM/FM + mix + delay
         for (int32_t i = 0; i < bufferSamples; i++){
             bool isTone = false;
@@ -1009,9 +1019,6 @@ bool Sequencer::feed(double *frame){
             if (isTone){
                 float inc1, inc2, inc3;
                 float cent;
-                const float* whiteLUT = lut.getWhiteNoiseLUT();
-                const float* triangularLUT = lut.getTriangularDistributionLUT();
-                const float* cos4thPowLUT = lut.getCos4thPowDistributionLUT();
                 if (toneRef.instrument.freqNoiseType == NoiseDistributType::NOISEDTYPE_TRIANGULAR) {
                     cent = freqNoiseCentharfRange[toneIndex]*triangularLUT[noiseBufIndex+i];
                 }
@@ -1075,7 +1082,6 @@ bool Sequencer::feed(double *frame){
                     tone3 = (float)godot::Math::lerp(g3, f3, r3)*b3ratio;
                 }
                 float data = tone1+tone2+tone3;
-                const float* pinkLUT = lut.getPinkNoiseLUT();
                 
                 if (toneRef.instrument.noiseColorType == NoiseColorType::NOISECTYPE_WHITE) {
                     data = data*(1.0f - toneRef.instrument.noiseRatio)+whiteLUT[noiseBufIndex+i]*toneRef.instrument.noiseRatio;
