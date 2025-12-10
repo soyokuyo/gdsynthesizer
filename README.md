@@ -5,20 +5,20 @@ GDSYNTHESIZER is software tone generator and SMF player using GDEXTENSION for Go
 ## What is GDSYNTHESIZER?
 
 GDSYNTHESIZER is:
- - an extension of audio_stream_player that can be use by Godot engine
+ - an extension of audio_stream_player that can be used by Godot engine
  - wave table base synthesizer
  - midi standard file player that may support format 0 and 1 
  - polyphony 32 or more
  - with variable parameters for 256 instruments
  - with 3 oscillator that are 5 types base wave forms
- - with variable envelope params i.e. attack slope time, decay harf-life time sustain rate and release slope time
+ - with variable envelope params i.e. attack slope time, decay half-life time sustain rate and release slope time
  - with 2 types noises i.e. white and pink that can be added 
  - with random vibrator that make frequency distribution noise
  - with 3 delay functions for each instruments
- - with 2 LFOs for each AM and FM moduration
+ - with 2 LFOs for each AM and FM modulation
  - currently for only Windows and WEB(html5) platforms
 
-GDSYNTHESIZER dose note have:
+GDSYNTHESIZER does not have:
  - GUI
  - sound effect filter
 
@@ -27,7 +27,7 @@ This project is just a hobby of the author and may not necessarily work the way 
 
 ## How to build
 
-GDSYNTHESIZER is builded with min-GW64 and scons.
+GDSYNTHESIZER is built with MinGW64 and scons.
 
 GDSYNTHESIZER depends on godot-cpp.
 So prepare the necessary files using the git command as below.
@@ -72,7 +72,7 @@ scons platform=web target=template_release
 ```
 
 
-## how to include your Godot Engine project
+## How to include your Godot Engine project
 
 make "bin" directory under "res://" and then copy gdsynthesizer.gdextension file and gdextension files as below.
 
@@ -87,7 +87,7 @@ res://
 ```
 
 put GDSynthesizer node on your scene.
-atach script with your scene and modify it.
+attach script with your scene and modify it.
 
 The easiest way is as follows.
 
@@ -112,17 +112,17 @@ func _process(delta:float)->void:
 
 ```
 
-GDSYNTHESIZER is variable tone generator, so you can modify tone with  parameter edeitting.
-But actualy, editing parameters is a little complicated.
+GDSYNTHESIZER is variable tone generator, so you can modify tone with parameter editing.
+But actually, editing parameters is a little complicated.
 
 To check how your SMF sounds with SYNTHESIZER, I've made a working GUI example named "KuyoSynthe" using GD SYNTHESIZER.
 Find it from following GITHUB and try it out.
 https://github.com/soyokuyo/kuyosynthe
 
 By using KuyoSynthe, you can easily check how your SMF sounds, and you may find out which parameters to change to make it even better.
-If you look into KuyoSynthe, you may find out how to use FGSYNTHESOZSE.
+If you look into KuyoSynthe, you may find out how to use GDSYNTHESIZER.
 
-KuyoSynthe is also a complete example implementation for using GDSYNTHESIZSER.
+KuyoSynthe is also a complete example implementation for using GDSYNTHESIZER.
 
 Additionally, you may be able to find some explanations on my blog. 
 https://junk-box.net/toy/

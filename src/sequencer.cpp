@@ -33,6 +33,7 @@
 #endif // DEBUG_ENABLED && WINDOWS_ENABLED
 
 #include "instrument.hpp"
+#include <new>
 
 const char* scale[] = {" C", "C#", " D", "D#", " E", " F", "F#", " G", "G#", " A", "A#", " B"};
 
@@ -72,8 +73,8 @@ void SharedLUT::removeRef() {
     refCount--;
     if (refCount <= 0) {
         cleanup();
-        // Note: We don't delete the instance here to allow reuse
-        // The instance will be cleaned up when the program exits
+        delete instance; // Delete the singleton instance
+        instance = nullptr;
         refCount = 0;
     }
 }
@@ -479,7 +480,15 @@ bool Sequencer::initParam(double rate, double time, int32_t samples) {
     delayBufferSize = (int32_t)((float)rate*(delayBufferDuration/1000.0f));
 
     for (int32_t i = 0; i < std::size(toneInstances); i++) {
-        toneInstances[i].delayBuffer = new float[delayBufferSize];
+        toneInstances[i].delayBuffer = new (std::nothrow) float[delayBufferSize];
+        if (toneInstances[i].delayBuffer == nullptr) {
+            // メモリ確保失敗時は既に確保したバッファをクリーンアップ
+            for (int32_t j = 0; j < i; j++) {
+                delete [] toneInstances[j].delayBuffer;
+                toneInstances[j].delayBuffer = nullptr;
+            }
+            return false;
+        }
         freeTones.push_back(toneInstances[i]);
     }
 

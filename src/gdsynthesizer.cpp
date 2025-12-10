@@ -36,6 +36,7 @@
 #include <filesystem>
 
 #include <cmath>
+#include <new>
 
 using namespace godot;
 
@@ -78,13 +79,23 @@ GDSynthesizer::~GDSynthesizer()
 
 int GDSynthesizer::initSynthe(const int32_t max_note)
 {
-    sequencer.initParam(mix_rate, buffer_length/2.0, buf_samples/2);
+    if (!sequencer.initParam(mix_rate, buffer_length/2.0, buf_samples/2)) {
+        return 0;
+    }
     Ref<AudioStreamGenerator> stream = new AudioStreamGenerator();
     set_stream(stream);
     stream->set_mix_rate(mix_rate);
     stream->set_buffer_length(buffer_length);
 
-    pcmBuf = new double[buf_samples/2];
+    // 既存のバッファを解放してから新しいバッファを確保
+    if (pcmBuf != nullptr) {
+        delete [] pcmBuf;
+        pcmBuf = nullptr;
+    }
+    pcmBuf = new (std::nothrow) double[buf_samples/2];
+    if (pcmBuf == nullptr) {
+        return 0; // メモリ確保失敗
+    }
     frames = PackedVector2Array();
     frames.resize((int64_t)buf_samples/2);
 
