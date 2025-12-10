@@ -32,7 +32,6 @@
 
 import os
 import sys
-import SCons
 
 # 並列ビルドのジョブ数を6に制限
 SetOption('num_jobs', 6)
@@ -54,18 +53,9 @@ for i in env['LIBS']:
     print("  ",type(i), i)
 env.Append(CPPPATH=["src/"])
 sources = Glob("src/*.cpp")
-
-# Force MSVC to use the latest standard (needed for designated initializers)
-if env['platform'] == "windows":
-    # Remove existing /std:c++17 if present, then add /std:c++latest
-    env['CXXFLAGS'] = SCons.Util.CLVar(str(env['CXXFLAGS']).replace("/std:c++17", ""))
-    env.Append(CXXFLAGS=['/std:c++latest'])
  
 if env['platform'] == "windows" and env['use_mingw'] == True and env['arch'] == "x86_64":
     env.Append(LINKFLAGS = ['-static-libgcc', '-static-libstdc++','-static','-pthread'])
-elif env['platform'] == "windows" and env['arch'] == "x86_64":
-    # MSVC build on Windows
-    pass
 elif env['platform'] == "web" and env['arch'] == "wasm32":
     # strip -fno-exceptions from $CXXFLAGS.
 #    env['CXXFLAGS'] = SCons.Util.CLVar(str(env['CXXFLAGS']).replace("-fno-exceptions", ""))
