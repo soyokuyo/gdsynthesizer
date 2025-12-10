@@ -304,6 +304,31 @@ private:
     std::array<Tone, numTone> toneInstances;
     std::vector<int32_t> activeToneIndices;
     std::vector<int32_t> freeToneIndices;
+
+    // SoA hot data (indexed by toneInstances index)
+    std::array<float, numTone> phase1{};
+    std::array<float, numTone> phase2{};
+    std::array<float, numTone> phase3{};
+    std::array<float, numTone> baseIncrement1{};
+    std::array<float, numTone> baseIncrement2{};
+    std::array<float, numTone> baseIncrement3{};
+    std::array<float, numTone> strength{};
+    std::array<float, numTone> atackedStrength{};
+    std::array<float, numTone> decayedStrength{};
+    std::array<float, numTone> atackedStrengthfloor{};
+    std::array<float, numTone> fmPhase{};
+    std::array<float, numTone> fmIncrement{};
+    std::array<float, numTone> amPhase{};
+    std::array<float, numTone> amIncrement{};
+    std::array<float, numTone> freqNoiseCentharfRange{};
+    std::array<int32_t, numTone> delayBufferIndex{};
+    std::array<int32_t, numTone> delay0Index{};
+    std::array<int32_t, numTone> delay1Index{};
+    std::array<int32_t, numTone> delay2Index{};
+    std::array<float, numTone> delay0Ratio{};
+    std::array<float, numTone> delay1Ratio{};
+    std::array<float, numTone> delay2Ratio{};
+    std::array<float, numTone> mainRatio{};
     std::array<Instrument, numinstruments> instruments;
     std::array<Percussion, numPercussions> percussions;
 
