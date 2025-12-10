@@ -36,6 +36,213 @@
 
 const char* scale[] = {" C", "C#", " D", "D#", " E", " F", "F#", " G", "G#", " A", "A#", " B"};
 
+// SharedLUT singleton instance
+SharedLUT* SharedLUT::instance = nullptr;
+int32_t SharedLUT::refCount = 0;
+
+SharedLUT::SharedLUT() 
+    : waveLUTInitialized(false)
+    , numAtackSlopeLUT(0)
+    , numReleaseSlopeLUT(0)
+    , numDecaySlopeLUT(0)
+    , atackSlopeTime(0.0f)
+    , releaseSlopeTime(0.0f)
+    , decaySlopeTime(0.0f)
+    , atackSlopeHz(25.0f)
+    , releaseSlopeHz(25.0f)
+    , decaySlopeHz(1.0f)
+    , decayHalfLifeTime(50.0f)
+    , samplingRate(0.0f)
+    , noiseBufferSize(0)
+{
+}
+
+SharedLUT& SharedLUT::getInstance() {
+    if (instance == nullptr) {
+        instance = new SharedLUT();
+    }
+    return *instance;
+}
+
+void SharedLUT::addRef() {
+    refCount++;
+}
+
+void SharedLUT::removeRef() {
+    refCount--;
+    if (refCount <= 0) {
+        cleanup();
+        // Note: We don't delete the instance here to allow reuse
+        // The instance will be cleaned up when the program exits
+        refCount = 0;
+    }
+}
+
+bool SharedLUT::initialize(float rate, int32_t noiseBufSize) {
+    // If already initialized with same parameters, skip
+    if (waveLUTInitialized && samplingRate == rate && noiseBufferSize == noiseBufSize) {
+        return true;
+    }
+    
+    // Only cleanup if no other instances are using the LUTs
+    // Note: This assumes all instances use the same sampling rate
+    // If different sampling rates are needed, we'd need a more complex solution
+    if (samplingRate != 0.0f && (samplingRate != rate || noiseBufferSize != noiseBufSize)) {
+        // Only cleanup if we're the only reference
+        if (refCount <= 1) {
+            cleanup();
+        } else {
+            // Parameters changed but other instances exist - this is an error condition
+            // For now, we'll just return false
+            return false;
+        }
+    }
+    
+    samplingRate = rate;
+    noiseBufferSize = noiseBufSize;
+    
+    // Initialize wave LUT (only once, as it doesn't depend on sampling rate)
+    if (!waveLUTInitialized) {
+        int32_t s = SharedLUT::waveLUTSize;
+        { // sin wave
+            int32_t j = static_cast<int32_t>(BaseWave::WAVE_SIN);
+            for (int32_t i = 0; i < s; i++){
+                waveLUT[j][i] = sinf(2.0f*PI*(float)i/(float)s);
+            }
+        }
+        { // square wave
+            int32_t j = static_cast<int32_t>(BaseWave::WAVE_SQUARE);
+            for (int32_t i = 0; i < s; i++){
+                waveLUT[j][i] = (i < s/2) ? 1.0f : -1.0f;
+            }
+        }
+        { // triangle wave
+            int32_t j = static_cast<int32_t>(BaseWave::WAVE_TRIANGLE);
+            for (int32_t i = 0; i < s; i++){
+                waveLUT[j][(i+3*s/4)%s] = (i < s/2)?((float)i*4.0f)/((float)s)-1.0f:3.0f-((float)i*4.0f)/((float)s);
+            }
+        }
+        { // sawtooth wave
+            int32_t j = static_cast<int32_t>(BaseWave::WAVE_SAWTOOTH);
+            for (int32_t i = 0; i < s; i++){
+                waveLUT[j][(i+3*s/4)%s] = ((float)i*2.0f)/((float)s)-1.0f;
+            }
+        }
+        { // sin on sawtooth2 wave
+            int32_t l = static_cast<int32_t>(BaseWave::WAVE_SAWTOOTH);
+            int32_t j = static_cast<int32_t>(BaseWave::WAVE_SIN);
+            int32_t k = static_cast<int32_t>(BaseWave::WAVE_SINSAWx2);
+            for (int32_t i = 0; i < s; i++){
+                waveLUT[k][i] = ((waveLUT[j][i]+1.0f)+(waveLUT[l][(i*2)%s]+1.0f))/2.0f -1.0f;
+            }
+        }
+        waveLUTInitialized = true;
+    }
+    
+    // Initialize slope LUTs (depends on sampling rate)
+    {
+        numAtackSlopeLUT = (int32_t)((1.0f/atackSlopeHz/2.0f)*samplingRate);
+        atackSlopeLUT = std::make_unique<float[]>(numAtackSlopeLUT);
+        atackSlopeTime = 1.0f/atackSlopeHz/2.0f*1000.0f;
+        for (int32_t i = 0; i < numAtackSlopeLUT; i++){
+            atackSlopeLUT[i] = (1.0f-cosf(PI*(float)i/(float)numAtackSlopeLUT))/2.0f;
+        }
+    }
+    {
+        numReleaseSlopeLUT = (int32_t)((1.0f/releaseSlopeHz/2.0f)*samplingRate);
+        releaseSlopeLUT = std::make_unique<float[]>(numReleaseSlopeLUT);
+        releaseSlopeTime = 1.0f/releaseSlopeHz/2.0f*1000.0f;
+        for (int32_t i = 0; i < numReleaseSlopeLUT; i++){
+            releaseSlopeLUT[i] = (1.0f+cosf(PI*(float)i/(float)numReleaseSlopeLUT))/2.0f;
+        }
+    }
+    {
+        numDecaySlopeLUT = (int32_t)((1.0f/decaySlopeHz/2.0f)*samplingRate);
+        decaySlopeLUT = std::make_unique<float[]>(numDecaySlopeLUT);
+        decaySlopeTime = 1.0f/decaySlopeHz/2.0f*1000.0f;
+        for (int32_t i = 0; i < numDecaySlopeLUT; i++){
+            decaySlopeLUT[i] = 0.5f+tanhf(log10f(decayHalfLifeTime/(decaySlopeTime*(float)i/(float)numDecaySlopeLUT)))/2.0f;
+        }
+    }
+    {
+        float offset = decaySlopeLUT[numDecaySlopeLUT-1];
+        float range = 1.0f - offset;
+        for (int32_t i = 0; i < numDecaySlopeLUT; i++){
+            decaySlopeLUT[i] = (decaySlopeLUT[i]-offset)/range;
+        }
+    }
+    
+    // Initialize noise LUTs (depends on buffer size)
+    {
+        godot::RandomNumberGenerator rand;
+        whiteNoiseLUT = std::make_unique<float[]>(noiseBufferSize);
+        triangularDistributionLUT = std::make_unique<float[]>(noiseBufferSize);
+        cos4thPowDistributionLUT = std::make_unique<float[]>(noiseBufferSize);
+        for (int32_t i = 0; i < noiseBufferSize; i++){
+            whiteNoiseLUT[i] = (float)rand.randf_range(-1.0, 1.0);
+            double r = godot::Math::absf((double)whiteNoiseLUT[i]);
+            double c = godot::Math::absf(1-pow(cos(Math_PI*(r*0.5-0.5)), 4.0));
+            triangularDistributionLUT[i] = (float)rand.randf_range(-r, r);
+            cos4thPowDistributionLUT[i] = (float)rand.randf_range(-c, c);
+        }
+    }
+    
+    {
+        pinkNoiseLUT = std::make_unique<float[]>(noiseBufferSize);
+        PinkNoise pinkNoise = PinkNoise();
+        for (int32_t i = 0; i < noiseBufferSize; i++){
+            pinkNoiseLUT[i] = pinkNoise.makeNoise(whiteNoiseLUT[i]);
+        }
+        float head = pinkNoiseLUT[0];
+        float tail = pinkNoise.makeNoise(whiteNoiseLUT[0]);
+        float diff = (tail- head)/(float)noiseBufferSize;
+        float max = -1.0f;
+        float min =  1.0f;
+        
+        for (int32_t i = 0; i < noiseBufferSize; i++){
+            pinkNoiseLUT[i] += diff*(float)i;
+            if (pinkNoiseLUT[i] > max) max = pinkNoiseLUT[i];
+            if (pinkNoiseLUT[i] < min) min = pinkNoiseLUT[i];
+        }
+        for (int32_t i = 0; i < noiseBufferSize; i++){
+            pinkNoiseLUT[i] = (pinkNoiseLUT[i] - min)/(max - min)*2.0f - 1.0f;
+        }
+    }
+    
+    // Initialize pow2_x_1200LUT (only once)
+    if (!pow2_x_1200LUT) {
+        pow2_x_1200LUT = std::make_unique<float[]>(pow2_x_1200LUT_size);
+        for (int32_t i = 0; i < pow2_x_1200LUT_size; i++){
+            pow2_x_1200LUT[i] = powf(2.0f, (float)(i-pow2_x_1200LUT_size/2)/1200.0f);
+        }
+    }
+    
+    // Initialize velocity2powerLUT (only once)
+    if (!velocity2powerLUT) {
+        velocity2powerLUT = std::make_unique<float[]>(128);
+        for (int32_t i = 0; i < 128; i++){
+            velocity2powerLUT[i] = powf((float)(i+1)/128.0f, 2.2f);
+        }
+    }
+    
+    return true;
+}
+
+void SharedLUT::cleanup() {
+    atackSlopeLUT.reset();
+    releaseSlopeLUT.reset();
+    decaySlopeLUT.reset();
+    whiteNoiseLUT.reset();
+    pinkNoiseLUT.reset();
+    triangularDistributionLUT.reset();
+    cos4thPowDistributionLUT.reset();
+    // Note: waveLUT, pow2_x_1200LUT, and velocity2powerLUT are kept as they don't depend on sampling rate
+    // They will be reused if needed
+    samplingRate = 0.0f;
+    noiseBufferSize = 0;
+    // Note: We don't reset waveLUTInitialized to allow reuse of waveLUT
+}
+
 PinkNoise::PinkNoise() {
     for (int32_t i = 0; i < tapNum ; i++) z[i] = 0;
     k[tapNum - 1] = 0.5f;
@@ -57,6 +264,7 @@ float PinkNoise::makeNoise(float in) {
 }
 
 Sequencer::Sequencer() {
+    SharedLUT::getInstance().addRef();
 }
 
 Sequencer::~Sequencer(){
@@ -64,6 +272,7 @@ Sequencer::~Sequencer(){
         delete [] toneInstances[i].delayBuffer;
         toneInstances[i].delayBuffer = nullptr;
     }
+    SharedLUT::getInstance().removeRef();
 }
 
 float Sequencer::noteFrequency(int8_t note) {
@@ -71,18 +280,20 @@ float Sequencer::noteFrequency(int8_t note) {
 }
 
 float Sequencer::centFrequency(float freq, float cent) {
+    auto& lut = SharedLUT::getInstance();
     static const float h = (powf(2.0f,  120.0f/1200.0f)-1.0f)/120.0f;
     static const float l = (powf(2.0f, -120.0f/1200.0f)-1.0f)/120.0f;
-    static const float t =  (float(pow2_x_1200LUT_size/2));
-    static const float b = -(float(pow2_x_1200LUT_size/2));
+    static const float t =  (float(SharedLUT::getPow2_x_1200LUT_size()/2));
+    static const float b = -(float(SharedLUT::getPow2_x_1200LUT_size()/2));
+    const float* pow2LUT = lut.getPow2_x_1200LUT();
 
     float result;
-    if      (cent <=        b) result = freq * pow2_x_1200LUT[0];
-    else if (cent <   -120.0f) result = freq * pow2_x_1200LUT[pow2_x_1200LUT_size/2+(int32_t)cent];
+    if      (cent <=        b) result = freq * pow2LUT[0];
+    else if (cent <   -120.0f) result = freq * pow2LUT[SharedLUT::getPow2_x_1200LUT_size()/2+(int32_t)cent];
     else if (cent <      0.0f) result = freq * (1.0f - cent*l);
     else if (cent <=   120.0f) result = freq * (1.0f + cent*h);
-    else if (cent <         t) result = freq * pow2_x_1200LUT[pow2_x_1200LUT_size/2+(int32_t)cent];
-    else                       result = freq * pow2_x_1200LUT[pow2_x_1200LUT_size-1];
+    else if (cent <         t) result = freq * pow2LUT[SharedLUT::getPow2_x_1200LUT_size()/2+(int32_t)cent];
+    else                       result = freq * pow2LUT[SharedLUT::getPow2_x_1200LUT_size()-1];
     if (result > samplingRate*0.47f) result = samplingRate*0.47f; // 0.47 is upper limit.
     return result;
 }
@@ -251,83 +462,16 @@ bool Sequencer::initParam(double rate, double time, int32_t samples) {
     freeTones.clear();
     activeTones.clear();
 
-    {
-        numAtackSlopeLUT = (int32_t)((1.0f/atackSlopeHz/2.0f)*samplingRate);
-        atackSlopeLUT = std::make_unique<float[]>(numAtackSlopeLUT);
-        atackSlopeTime = 1.0f/atackSlopeHz/2.0f*1000.0f;
-#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-        godot::UtilityFunctions::print("numAtackSlopeLUT ", numAtackSlopeLUT);
-        godot::UtilityFunctions::print("atackSlopeTime ", atackSlopeTime);
-#endif // DEBUG_ENABLED
-
-        for (int32_t i = 0; i < numAtackSlopeLUT; i++){
-            atackSlopeLUT[i] = (1.0f-cosf(PI*(float)i/(float)numAtackSlopeLUT))/2.0f;
-        }
-    }
-    {
-        numReleaseSlopeLUT = (int32_t)((1.0f/releaseSlopeHz/2.0f)*samplingRate);
-        releaseSlopeLUT = std::make_unique<float[]>(numReleaseSlopeLUT);
-        releaseSlopeTime = 1.0f/releaseSlopeHz/2.0f*1000.0f;
-#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-        godot::UtilityFunctions::print("numReleaseSlopeLUT ", numReleaseSlopeLUT);
-        godot::UtilityFunctions::print("releaseSlopeTime ", releaseSlopeTime);
-#endif // DEBUG_ENABLED
-        for (int32_t i = 0; i < numReleaseSlopeLUT; i++){
-            releaseSlopeLUT[i] = (1.0f+cosf(PI*(float)i/(float)numReleaseSlopeLUT))/2.0f;
-        }
-    }
-    {
-        numDecaySlopeLUT = (int32_t)((1.0f/decaySlopeHz/2.0f)*samplingRate);
-        decaySlopeLUT = std::make_unique<float[]>(numDecaySlopeLUT);
-        decaySlopeTime = 1.0f/decaySlopeHz/2.0f*1000.0f;
-#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-        godot::UtilityFunctions::print("numDecaySlopeLUT ", numDecaySlopeLUT);
-        godot::UtilityFunctions::print("decaySlopeTime ", decaySlopeTime);
-#endif // DEBUG_ENABLED
-        for (int32_t i = 0; i < numDecaySlopeLUT; i++){
-            decaySlopeLUT[i] = 0.5f+tanhf(log10f(decayHalfLifeTime/(decaySlopeTime*(float)i/(float)numDecaySlopeLUT)))/2.0f;
-        }
-    }
-    {
-        float offset = decaySlopeLUT[numDecaySlopeLUT-1];
-        float range = 1.0f - offset;
-        for (int32_t i = 0; i < numDecaySlopeLUT; i++){
-            decaySlopeLUT[i] = (decaySlopeLUT[i]-offset)/range;
-        }
+    // Initialize shared LUTs
+    if (!SharedLUT::getInstance().initialize(samplingRate, noiseBuffer)) {
+        return false;
     }
 
-    // make base wave look-up tables.
-    int32_t s = waveLUTSize;
-    { // sin wave
-        int32_t j = static_cast<int32_t>(BaseWave::WAVE_SIN);
-        for (int32_t i = 0; i < s; i++){
-            waveLUT[j][i] = sinf(2.0f*PI*(float)i/(float)s);
-        }
-    }
-    { // square wave
-        int32_t j = static_cast<int32_t>(BaseWave::WAVE_SQUARE);
-        for (int32_t i = 0; i < s; i++){
-            waveLUT[j][i] = (i < s/2) ? 1.0f : -1.0f;
-        }
-    }
-    { // triangle wave
-        int32_t j = static_cast<int32_t>(BaseWave::WAVE_TRIANGLE);
-        for (int32_t i = 0; i < s; i++){
-            waveLUT[j][(i+3*s/4)%s] = (i < s/2)?((float)i*4.0f)/((float)s)-1.0f:3.0f-((float)i*4.0f)/((float)s);
-        }
-    }
-    { // sawtooth wave
-        int32_t j = static_cast<int32_t>(BaseWave::WAVE_SAWTOOTH);
-        for (int32_t i = 0; i < s; i++){
-            waveLUT[j][(i+3*s/4)%s] = ((float)i*2.0f)/((float)s)-1.0f;
-        }
-    }
-    { // sin on sawtooth2 wave
-        int32_t l = static_cast<int32_t>(BaseWave::WAVE_SAWTOOTH);
-        int32_t j = static_cast<int32_t>(BaseWave::WAVE_SIN);
-        int32_t k = static_cast<int32_t>(BaseWave::WAVE_SINSAWx2);
-        for (int32_t i = 0; i < s; i++){
-            waveLUT[k][i] = ((waveLUT[j][i]+1.0f)+(waveLUT[l][(i*2)%s]+1.0f))/2.0f -1.0f;
+    // Clean up existing delay buffers before creating new ones
+    for (int32_t i = 0; i < std::size(toneInstances); i++) {
+        if (toneInstances[i].delayBuffer != nullptr) {
+            delete [] toneInstances[i].delayBuffer;
+            toneInstances[i].delayBuffer = nullptr;
         }
     }
 
@@ -337,56 +481,6 @@ bool Sequencer::initParam(double rate, double time, int32_t samples) {
     for (int32_t i = 0; i < std::size(toneInstances); i++) {
         toneInstances[i].delayBuffer = new float[delayBufferSize];
         freeTones.push_back(toneInstances[i]);
-    }
-
-    { // make look-up table for white-noise and noise distributions.
-        whiteNoiseLUT             = std::make_unique<float[]>(noiseBuffer);
-        triangularDistributionLUT = std::make_unique<float[]>(noiseBuffer);
-        cos4thPowDistributionLUT  = std::make_unique<float[]>(noiseBuffer);
-        for (int32_t i = 0; i < noiseBuffer ; i++){
-            whiteNoiseLUT[i] = (float)rand.randf_range(-1.0, 1.0); // randf_range() returns double.
-            double r = godot::Math::absf((double)whiteNoiseLUT[i]);
-            double c = godot::Math::absf(1-pow(cos(Math_PI*(r*0.5-0.5)), 4.0));
-            triangularDistributionLUT[i] = (float)rand.randf_range(-r, r);
-            cos4thPowDistributionLUT[i]  = (float)rand.randf_range(-c, c);
-        }
-    }
-
-    { // make look-up table for pink-noise
-        pinkNoiseLUT              = std::make_unique<float[]>(noiseBuffer);
-        PinkNoise pinkNoise = PinkNoise();
-        for (int32_t i = 0; i < noiseBuffer ; i++){
-            pinkNoiseLUT[i] = pinkNoise.makeNoise(whiteNoiseLUT[i]);
-        }
-        float head = pinkNoiseLUT[0];
-        float tail = pinkNoise.makeNoise(whiteNoiseLUT[0]);
-        float diff = (tail- head)/(float)noiseBuffer;
-        float max = -1.0f;
-        float min =  1.0f;
-
-        for (int32_t i = 0; i < noiseBuffer ; i++){
-            pinkNoiseLUT[i] += diff*(float)i;
-            if (pinkNoiseLUT[i] > max) max = pinkNoiseLUT[i];
-            if (pinkNoiseLUT[i] < min) min = pinkNoiseLUT[i];
-        }
-        for (int32_t i = 0; i < noiseBuffer ; i++){
-            pinkNoiseLUT[i] = (pinkNoiseLUT[i] - min)/(max - min)*2.0f - 1.0f;
-        }
-    }
-
-    { // make look-up table for centFrequency function.
-        pow2_x_1200LUT  = std::make_unique<float[]>(pow2_x_1200LUT_size);
-        for (int32_t i = 0; i < pow2_x_1200LUT_size ; i++){
-            pow2_x_1200LUT[i] = powf(2.0f, (float)(i-pow2_x_1200LUT_size/2)/1200.0f);
-        }
-    }
-    { //make look-up table to convert velocity value to output power.
-        velocity2powerLUT = std::make_unique<float[]>(128);
-        {
-            for (int32_t i = 0; i < 128; i++){
-                velocity2powerLUT[i] = powf((float)(i+1)/128.0f, 2.2f);
-            }
-        }
     }
 
     instruments = defaultInstruments;
@@ -507,7 +601,9 @@ godot::Ref<godot::Image> Sequencer::getMiniWavePicture(const godot::Dictionary d
 
     miniWaveImage = godot::Image::create(size_x, size_y, false, godot::Image::FORMAT_RGBA8);
     miniWaveImage->fill(godot::Color(0.2, 0.2, 0.2, 1.0));
-    int32_t s = waveLUTSize;
+    auto& lut = SharedLUT::getInstance();
+    const auto& waveLUT = lut.getWaveLUT();
+    int32_t s = SharedLUT::getWaveLUTSize();
     
     int32_t pre_y;
     for (int32_t i = 0; i < size_x; i++){
@@ -640,7 +736,8 @@ bool Sequencer::checkNewNote(Note oneNote){
             emitSignal(dic);
         }
         {
-            tone->restartVelocity_f = tone->velocity_f = velocity2powerLUT[tone->note.velocity];
+            auto& lut = SharedLUT::getInstance();
+            tone->restartVelocity_f = tone->velocity_f = lut.getVelocity2powerLUT()[tone->note.velocity];
             tone->atackedStrengthfloor = 0.0f;
         }
         tone->base1ratio = tone->instrument.baseVsOthersRatio;
@@ -726,9 +823,12 @@ bool Sequencer::checkNewNote(Note oneNote){
             tone->delayBuffer[i] = 0.0f;
         }
 
-        tone->atackSlopeRatio = atackSlopeTime/tone->instrument.atackSlopeTime;
-        tone->decaySlopeRatio = decayHalfLifeTime/tone->instrument.decayHalfLifeTime;
-        tone->releaseSlopeRatio = releaseSlopeTime/tone->instrument.releaseSlopeTime;
+        {
+            auto& lut = SharedLUT::getInstance();
+            tone->atackSlopeRatio = lut.getAtackSlopeTime()/tone->instrument.atackSlopeTime;
+            tone->decaySlopeRatio = lut.getDecayHalfLifeTime()/tone->instrument.decayHalfLifeTime;
+            tone->releaseSlopeRatio = lut.getReleaseSlopeTime()/tone->instrument.releaseSlopeTime;
+        }
 
         activeTones.insert(activeTones.end(), *freeTones.begin());
         freeTones.erase(freeTones.begin());
@@ -772,6 +872,8 @@ bool Sequencer::feed(double *frame){
     }
     currentTime += frameTime;
     int32_t noiseBufIndex = frameCount*bufferSamples;
+    auto& lut = SharedLUT::getInstance();
+    const auto& waveLUT = lut.getWaveLUT();
     float period = (float)std::size(waveLUT[0])/(PI*2.0f);
     float delta = 1.0f/samplingRate*1000.0f;
     float div = 1.0f/asumedConcurrentTone; // to avoid saturation.
@@ -812,21 +914,24 @@ bool Sequencer::feed(double *frame){
             }
             else if (current > tone->waitDuration+tone->mainteinDuration){ // release
                 int32_t d = (int32_t)(((current-(tone->waitDuration+tone->mainteinDuration))*tone->releaseSlopeRatio)/delta);
-                if (d >= numReleaseSlopeLUT) d = numReleaseSlopeLUT - 1;
-                tone->atackedStrengthfloor = tone->strength = tone->decayedStrength*releaseSlopeLUT[d];
+                const float* releaseLUT = lut.getReleaseSlopeLUT();
+                if (d >= lut.getNumReleaseSlopeLUT()) d = lut.getNumReleaseSlopeLUT() - 1;
+                tone->atackedStrengthfloor = tone->strength = tone->decayedStrength*releaseLUT[d];
                 isTone = true;
             }
             else if (current > tone->waitDuration+tone->instrument.atackSlopeTime){ // decay and sustain
                 int32_t d = (int32_t)(((current-(tone->waitDuration+tone->instrument.atackSlopeTime))*tone->decaySlopeRatio)/delta);
-                if (d >= numDecaySlopeLUT) d = numDecaySlopeLUT - 1;
-                tone->strength = tone->atackedStrength*((decaySlopeLUT[d]*(1.0f-tone->instrument.sustainRate)+tone->instrument.sustainRate));
+                const float* decayLUT = lut.getDecaySlopeLUT();
+                if (d >= lut.getNumDecaySlopeLUT()) d = lut.getNumDecaySlopeLUT() - 1;
+                tone->strength = tone->atackedStrength*((decayLUT[d]*(1.0f-tone->instrument.sustainRate)+tone->instrument.sustainRate));
                 tone->atackedStrengthfloor = tone->decayedStrength = tone->strength;
                 isTone = true;
             }
             else if (current > tone->waitDuration){ // atack
                 int32_t d = (int32_t)((current-tone->waitDuration)*tone->atackSlopeRatio/delta);
-                if (d >= numAtackSlopeLUT) d = numAtackSlopeLUT - 1;
-                tone->strength = atackSlopeLUT[d]*(1.0f-tone->atackedStrengthfloor)+tone->atackedStrengthfloor;
+                const float* atackLUT = lut.getAtackSlopeLUT();
+                if (d >= lut.getNumAtackSlopeLUT()) d = lut.getNumAtackSlopeLUT() - 1;
+                tone->strength = atackLUT[d]*(1.0f-tone->atackedStrengthfloor)+tone->atackedStrengthfloor;
                 tone->decayedStrength = tone->atackedStrength = tone->strength;
                 isTone = true;
             }
@@ -841,14 +946,17 @@ bool Sequencer::feed(double *frame){
             if (isTone){
                 float inc1, inc2, inc3;
                 float cent;
+                const float* whiteLUT = lut.getWhiteNoiseLUT();
+                const float* triangularLUT = lut.getTriangularDistributionLUT();
+                const float* cos4thPowLUT = lut.getCos4thPowDistributionLUT();
                 if (tone->instrument.freqNoiseType == NoiseDistributType::NOISEDTYPE_TRIANGULAR) {
-                    cent = tone->freqNoiseCentharfRange*triangularDistributionLUT[noiseBufIndex+i];
+                    cent = tone->freqNoiseCentharfRange*triangularLUT[noiseBufIndex+i];
                 }
                 else if (tone->instrument.freqNoiseType == NoiseDistributType::NOISEDTYPE_COS4ThPOW) {
-                    cent = tone->freqNoiseCentharfRange*cos4thPowDistributionLUT[noiseBufIndex+i];
+                    cent = tone->freqNoiseCentharfRange*cos4thPowLUT[noiseBufIndex+i];
                 }
                 else {
-                    cent = tone->freqNoiseCentharfRange*whiteNoiseLUT[noiseBufIndex+i];
+                    cent = tone->freqNoiseCentharfRange*whiteLUT[noiseBufIndex+i];
                 }
                 if (current > tone->waitDuration){
                     tone->fmPhase += tone->fmIncrement;
@@ -904,12 +1012,13 @@ bool Sequencer::feed(double *frame){
                     tone3 = (float)godot::Math::lerp(g3, f3, r3)*tone->base3ratio;
                 }
                 float data = tone1+tone2+tone3;
+                const float* pinkLUT = lut.getPinkNoiseLUT();
                 
                 if (tone->instrument.noiseColorType == NoiseColorType::NOISECTYPE_WHITE) {
-                    data = data*(1.0f - tone->instrument.noiseRatio)+whiteNoiseLUT[noiseBufIndex+i]*tone->instrument.noiseRatio;
+                    data = data*(1.0f - tone->instrument.noiseRatio)+whiteLUT[noiseBufIndex+i]*tone->instrument.noiseRatio;
                 }
                 else if (tone->instrument.noiseColorType == NoiseColorType::NOISECTYPE_PINK) {
-                    data = data*(1.0f - tone->instrument.noiseRatio)+pinkNoiseLUT[noiseBufIndex+i]*tone->instrument.noiseRatio;
+                    data = data*(1.0f - tone->instrument.noiseRatio)+pinkLUT[noiseBufIndex+i]*tone->instrument.noiseRatio;
                 }
 
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)

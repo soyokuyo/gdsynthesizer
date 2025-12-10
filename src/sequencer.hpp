@@ -130,6 +130,94 @@ public:
     float makeNoise (float);    
 };
 
+// Shared LUT manager for all Sequencer instances (Singleton pattern)
+class SharedLUT {
+private:
+    static constexpr int32_t waveLUTSize = 32768;
+    static constexpr int32_t pow2_x_1200LUT_size = 7200;
+    
+    // Singleton instance
+    static SharedLUT* instance;
+    static int32_t refCount;
+    
+    // Wave LUT (shared across all instances)
+    std::array<std::array<float, waveLUTSize>, static_cast<int32_t>(BaseWave::WAVE_TAIL)> waveLUT;
+    bool waveLUTInitialized;
+    
+    // Slope LUTs (shared, but size depends on sampling rate)
+    std::unique_ptr<float[]> atackSlopeLUT;
+    std::unique_ptr<float[]> releaseSlopeLUT;
+    std::unique_ptr<float[]> decaySlopeLUT;
+    int32_t numAtackSlopeLUT;
+    int32_t numReleaseSlopeLUT;
+    int32_t numDecaySlopeLUT;
+    float atackSlopeTime;
+    float releaseSlopeTime;
+    float decaySlopeTime;
+    float atackSlopeHz;
+    float releaseSlopeHz;
+    float decaySlopeHz;
+    float decayHalfLifeTime;
+    float samplingRate; // Last used sampling rate
+    
+    // Noise LUTs (shared, but size depends on buffer size)
+    std::unique_ptr<float[]> whiteNoiseLUT;
+    std::unique_ptr<float[]> pinkNoiseLUT;
+    std::unique_ptr<float[]> triangularDistributionLUT;
+    std::unique_ptr<float[]> cos4thPowDistributionLUT;
+    int32_t noiseBufferSize;
+    
+    // Other shared LUTs
+    std::unique_ptr<float[]> pow2_x_1200LUT;
+    std::unique_ptr<float[]> velocity2powerLUT;
+    
+    // Private constructor (Singleton pattern)
+    SharedLUT();
+    
+    // Prevent copying
+    SharedLUT(const SharedLUT&) = delete;
+    SharedLUT& operator=(const SharedLUT&) = delete;
+    
+public:
+    // Get singleton instance
+    static SharedLUT& getInstance();
+    
+    // Initialize shared LUTs
+    bool initialize(float rate, int32_t noiseBufSize);
+    
+    // Cleanup shared LUTs (called when last instance is destroyed)
+    void cleanup();
+    
+    // Increment reference count
+    void addRef();
+    
+    // Decrement reference count and cleanup if needed
+    void removeRef();
+    
+    // Accessors for LUTs
+    const std::array<std::array<float, waveLUTSize>, static_cast<int32_t>(BaseWave::WAVE_TAIL)>& getWaveLUT() const { return waveLUT; }
+    const float* getAtackSlopeLUT() const { return atackSlopeLUT.get(); }
+    const float* getReleaseSlopeLUT() const { return releaseSlopeLUT.get(); }
+    const float* getDecaySlopeLUT() const { return decaySlopeLUT.get(); }
+    const float* getWhiteNoiseLUT() const { return whiteNoiseLUT.get(); }
+    const float* getPinkNoiseLUT() const { return pinkNoiseLUT.get(); }
+    const float* getTriangularDistributionLUT() const { return triangularDistributionLUT.get(); }
+    const float* getCos4thPowDistributionLUT() const { return cos4thPowDistributionLUT.get(); }
+    const float* getPow2_x_1200LUT() const { return pow2_x_1200LUT.get(); }
+    const float* getVelocity2powerLUT() const { return velocity2powerLUT.get(); }
+    
+    int32_t getNumAtackSlopeLUT() const { return numAtackSlopeLUT; }
+    int32_t getNumReleaseSlopeLUT() const { return numReleaseSlopeLUT; }
+    int32_t getNumDecaySlopeLUT() const { return numDecaySlopeLUT; }
+    float getAtackSlopeTime() const { return atackSlopeTime; }
+    float getReleaseSlopeTime() const { return releaseSlopeTime; }
+    float getDecaySlopeTime() const { return decaySlopeTime; }
+    float getDecayHalfLifeTime() const { return decayHalfLifeTime; }
+    
+    static constexpr int32_t getWaveLUTSize() { return waveLUTSize; }
+    static constexpr int32_t getPow2_x_1200LUT_size() { return pow2_x_1200LUT_size; }
+};
+
 
 class Sequencer {
 public:
@@ -140,8 +228,6 @@ public:
 private:
     // constant control params.
     static constexpr int32_t numTone = 64;
-//    static constexpr int32_t waveLUTSize = 8192;
-    static constexpr int32_t waveLUTSize = 32768;
     static constexpr float delayBufferDuration = 500.0;// msec
 
     struct Tone {
@@ -230,34 +316,10 @@ private:
     int32_t noiseBufSize;
     int32_t noiseBuffer;
     bool isSet = false;
-    std::array<std::array<float, waveLUTSize>, static_cast<int32_t>(BaseWave::WAVE_TAIL)> waveLUT;
-
-    float atackSlopeHz = 25.0;
-    std::unique_ptr<float []> atackSlopeLUT;
-    float atackSlopeTime;
-    int32_t numAtackSlopeLUT;
-    
-    float releaseSlopeHz = 25.0;
-    std::unique_ptr<float []> releaseSlopeLUT;
-    float releaseSlopeTime;
-    int32_t numReleaseSlopeLUT;
-    
-    float decaySlopeHz = 1.0;
-    float decayHalfLifeTime = 50.0;
-    std::unique_ptr<float []> decaySlopeLUT;
-    float decaySlopeTime;
-    int32_t numDecaySlopeLUT;
+    // LUTs are now shared via SharedLUT class
     
     float sustainRate = 0.0;
     godot::RandomNumberGenerator rand;
-
-    std::unique_ptr<float []> velocity2powerLUT;
-    std::unique_ptr<float []> whiteNoiseLUT;
-    std::unique_ptr<float []> pinkNoiseLUT;
-    std::unique_ptr<float []> triangularDistributionLUT;
-    std::unique_ptr<float []> cos4thPowDistributionLUT;
-    static constexpr int32_t pow2_x_1200LUT_size = 7200;
-    std::unique_ptr<float []> pow2_x_1200LUT;
     
     float asumedConcurrentTone = 4.0f;
     bool checkNewNote(Note);
