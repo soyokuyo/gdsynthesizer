@@ -53,6 +53,7 @@ sources = Glob("src/*.cpp")
  
 if env['platform'] == "windows" and env['arch'] == "x86_64" and env.get('use_mingw', False):
     env.Append(LINKFLAGS = ['-static-libgcc', '-static-libstdc++','-static','-pthread'])
+    env.Append(CPPDEFINES=['GDSYNTH_USE_X86_SIMD'])
 elif env['platform'] == "web" and env['arch'] == "wasm32":
     # strip -fno-exceptions from $CXXFLAGS.
 #    env['CXXFLAGS'] = SCons.Util.CLVar(str(env['CXXFLAGS']).replace("-fno-exceptions", ""))

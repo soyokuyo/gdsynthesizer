@@ -43,6 +43,11 @@
 #define PI (float)Math_PI
 #define FLOAT_LONGTIME 36000000.0f
 
+// SIMD availability flags (set via build system)
+#if !defined(GDSYNTH_USE_X86_SIMD) && !defined(GDSYNTH_USE_WASM_SIMD)
+#define GDSYNTH_SIMD_DISABLED 1
+#endif
+
 enum class BaseWave {
     WAVE_SIN,         //  0
     WAVE_SQUARE,      //  1
