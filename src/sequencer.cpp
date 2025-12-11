@@ -829,6 +829,7 @@ bool Sequencer::checkNewNote(Note oneNote){
         }
 
         // init delay ring buffer
+        const float invDelayDuration = 1.0f / delayBufferDuration;
         delayBufferIndex[idx] = 0;
         delay0Index[idx] = delay1Index[idx] = delay2Index[idx] = 0;
         delay0Ratio[idx] = delay1Ratio[idx] = delay2Ratio[idx] = 0.0f;
@@ -839,7 +840,7 @@ bool Sequencer::checkNewNote(Note oneNote){
             && tone.instrument->delay0Ratio > 0.0f)
         {
             maxDelayTime[idx] = tone.instrument->delay0Time;
-            delay0Index[idx] = (uint32_t)((float)delayBufferSize/delayBufferDuration * tone.instrument->delay0Time);
+            delay0Index[idx] = (uint32_t)((float)delayBufferSize * (tone.instrument->delay0Time * invDelayDuration));
             delay0Ratio[idx] = tone.instrument->delay0Ratio;
         }
         if (   tone.instrument->delay1Time > 0.0f
@@ -848,7 +849,7 @@ bool Sequencer::checkNewNote(Note oneNote){
             && tone.instrument->delay1Ratio > 0.0f)
         {
             if (tone.instrument->delay1Time > maxDelayTime[idx]) maxDelayTime[idx] = tone.instrument->delay1Time;
-            delay1Index[idx] = (uint32_t)((float)delayBufferSize/delayBufferDuration * tone.instrument->delay1Time);
+            delay1Index[idx] = (uint32_t)((float)delayBufferSize * (tone.instrument->delay1Time * invDelayDuration));
             delay1Ratio[idx] = tone.instrument->delay1Ratio;
         }
         if (   tone.instrument->delay2Time > 0.0f
@@ -857,7 +858,7 @@ bool Sequencer::checkNewNote(Note oneNote){
             && tone.instrument->delay2Ratio > 0.0f)
         {
             if (tone.instrument->delay2Time > maxDelayTime[idx]) maxDelayTime[idx] = tone.instrument->delay2Time;
-            delay2Index[idx] = (uint32_t)((float)delayBufferSize/delayBufferDuration * tone.instrument->delay2Time);
+            delay2Index[idx] = (uint32_t)((float)delayBufferSize * (tone.instrument->delay2Time * invDelayDuration));
             delay2Ratio[idx] = tone.instrument->delay2Ratio;
         }
         maxDelayTime[idx] *= 3.0f;
@@ -913,7 +914,9 @@ bool Sequencer::feed(double *frame){
     auto& lut = SharedLUT::getInstance();
     const auto& waveLUT = lut.getWaveLUT();
     float period = (float)std::size(waveLUT[0])/(PI*2.0f);
-    float delta = 1.0f/samplingRate*1000.0f;
+    // precompute reciprocals to reduce divides (WASM向け分岐・除算削減)
+    float invSamplingRate = 1.0f / samplingRate;
+    float delta = invSamplingRate * 1000.0f;
     float div = 1.0f/asumedConcurrentTone; // to avoid saturation.
 
     // Hot-path LUT pointers (SIMD化に備えループ外へ)
