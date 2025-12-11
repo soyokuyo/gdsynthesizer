@@ -88,14 +88,14 @@ int GDSynthesizer::initSynthe(const int32_t max_note)
     stream->set_mix_rate(mix_rate);
     stream->set_buffer_length(buffer_length);
 
-    // 既存のバッファを解放してから新しいバッファを確保
+    // Release existing buffer before allocating a new one
     if (pcmBuf != nullptr) {
         delete [] pcmBuf;
         pcmBuf = nullptr;
     }
     pcmBuf = new (std::nothrow) double[buf_samples/2];
     if (pcmBuf == nullptr) {
-        return 0; // メモリ確保失敗
+        return 0; // Allocation failed
     }
     frames = PackedVector2Array();
     frames.resize((int64_t)buf_samples/2);

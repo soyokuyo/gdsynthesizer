@@ -7,13 +7,13 @@
 
 class SharedInstruments {
 public:
-    // シングルトンインスタンスへのアクセス
+    // Access singleton instance
     static SharedInstruments& getInstance();
 
-    // 現在の楽器定義を取得
+    // Get current instruments
     const std::array<Instrument, Sequencer::numinstruments>& getInstruments() const;
 
-    // 楽器定義を差し替え
+    // Replace instruments
     void setInstruments(const std::array<Instrument, Sequencer::numinstruments>& instruments);
 
 private:

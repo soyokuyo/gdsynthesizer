@@ -55,6 +55,9 @@ void SMFParser::unload(void) {
 }
 
 bool SMFParser::load(const char *name) {
+    // reset previous state in case caller skipped unload
+    unload();
+
     std::ifstream in;
     position = 0;
 
@@ -131,6 +134,9 @@ bool SMFParser::load(const char *name) {
 
 
 bool SMFParser::load(const godot::String &name) {
+    // reset previous state in case caller skipped unload
+    unload();
+
     position = 0;
     auto in = godot::FileAccess::open(name, godot::FileAccess::READ);
 

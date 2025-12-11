@@ -284,7 +284,7 @@ float Sequencer::noteFrequency(int8_t note) {
 
 float Sequencer::centFrequency(float freq, float cent) {
     auto& lut = SharedLUT::getInstance();
-    // 小範囲の頻出ケースをLUTで高速化（-240〜240 cent）
+    // Fast path for common small range via LUT (-240 to 240 cent)
     static bool lutBuilt = false;
     static std::array<float, 481> centMultLUT{}; // index offset 240
     if (!lutBuilt) {
@@ -300,13 +300,13 @@ float Sequencer::centFrequency(float freq, float cent) {
 
     float result;
     if (cent >= -240.0f && cent <= 240.0f) {
-        // 1 cent刻み近傍で近似（端はclamp）
+        // Approximate with 1-cent steps near the midpoint (clamped at edges)
         int idx = static_cast<int>(cent);
         if (idx < -240) idx = -240;
         if (idx >  240) idx =  240;
         result = freq * centMultLUT[idx + 240];
     } else {
-        // 従来の1-cent刻みLUTを使用
+        // Use existing 1-cent LUT for the remaining ranges
         if      (cent <= -(float)lutMid) result = freq * pow2LUT[0];
         else if (cent <   0.0f)          result = freq * pow2LUT[lutMid + (int32_t)cent];
         else if (cent <   (float)lutMid) result = freq * pow2LUT[lutMid + (int32_t)cent];
@@ -874,7 +874,7 @@ bool Sequencer::checkNewNote(Note oneNote){
             }
         }
 
-        // variable freqNoise related. SIMD候補: baseIncrement計算とノイズ適用のペア演算
+        // Variable freqNoise path. SIMD candidate: pair base increment calc with noise application
         {
             freqNoiseCentharfRange[idx] = tone.instrument->freqNoiseCentRange*0.5f;
             float c1 = centFrequency(frequency[idx], tone.instrument->baseOffsetCent1);
@@ -977,12 +977,12 @@ bool Sequencer::feed(double *frame){
     const auto& waveLUT = lut.getWaveLUT();
     float period = (float)std::size(waveLUT[0])/(PI*2.0f);
     const float phaseToIndex = period; // phase(rad) -> LUT index scale
-    // precompute reciprocals to reduce divides (WASM向け分岐・除算削減)
+    // Precompute reciprocals to reduce divides (WASM branch/division reduction)
     float invSamplingRate = 1.0f / samplingRate;
     float delta = invSamplingRate * 1000.0f;
     float div = 1.0f/asumedConcurrentTone; // to avoid saturation.
 
-    // Hot-path LUT pointers (SIMD化に備えループ外へ)
+    // Hot-path LUT pointers (hoisted out of loop for SIMD readiness)
     const float* whiteLUT = lut.getWhiteNoiseLUT();
     const float* triangularLUT = lut.getTriangularDistributionLUT();
     const float* cos4thPowLUT = lut.getCos4thPowDistributionLUT();

@@ -301,7 +301,7 @@ private:
     std::array<int32_t, numTone> restartVelocity{};
     std::array<int32_t, numTone> tempo{};
     std::array<int32_t, numTone> restartTempo{};
-    // hot-pathフラグ／モード
+    // hot-path flags / modes
     std::array<uint8_t, numTone> useFM{};
     std::array<uint8_t, numTone> useAM{};
     std::array<uint8_t, numTone> useDelay{};
