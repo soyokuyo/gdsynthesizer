@@ -976,7 +976,8 @@ bool Sequencer::feed(double *frame){
         bool doAM = (useAM[toneIndex] != 0);
         bool doDelay = (useDelay[toneIndex] != 0);
         bool doFreqNoise = (useFreqNoise[toneIndex] != 0);
-        bool doNoiseMix = (toneRef.instrument->noiseRatio != 0.0f);
+        const float noiseRatio = toneRef.instrument->noiseRatio;
+        bool doNoiseMix = (noiseRatio != 0.0f);
         bool isEnd = false;
         int32_t sinWave   = static_cast<int32_t>(BaseWave::WAVE_SIN);
         int32_t baseWave1 = static_cast<int32_t>(toneRef.instrument->baseWave1);
@@ -994,6 +995,15 @@ bool Sequencer::feed(double *frame){
             amWave = static_cast<int32_t>(BaseWave::WAVE_SAWTOOTH);
             amWaveInvert = -1.0f;
         }
+        const float sustainRate = toneRef.instrument->sustainRate;
+        const float fmCentRange = toneRef.instrument->fmCentRange;
+        const float amLevel = toneRef.instrument->amLevel;
+        const float totalGain = toneRef.instrument->totalGain;
+        const float atackSlopeTime = toneRef.instrument->atackSlopeTime;
+        const float releaseSlopeTime = toneRef.instrument->releaseSlopeTime;
+        const float releaseStart = wt + md;
+        const float releaseEnd = releaseStart + releaseSlopeTime + maxDelay;
+        const float attackEnd = wt + atackSlopeTime;
         double maxFrameValue = 0.0;
 #if defined(GDSYNTH_USE_X86_SIMD)
 #pragma GCC ivdep
@@ -1010,22 +1020,22 @@ bool Sequencer::feed(double *frame){
                 tempo_f[toneIndex] = restartTempo_f[toneIndex];
                 velF = rVelF;
             }
-            if (current > wt+md+toneRef.instrument->releaseSlopeTime+maxDelay){
+            if (current > releaseEnd){
                 isEnd = true;
                 break;
             }
-            else if (current > wt+md){ // release
+            else if (current > releaseStart){ // release
                 int32_t d = (int32_t)(((current-(wt+md))*relRatio)/delta);
                 const float* releaseLUT = lut.getReleaseSlopeLUT();
                 if (d >= lut.getNumReleaseSlopeLUT()) d = lut.getNumReleaseSlopeLUT() - 1;
                 atkFloor = st = decSt*releaseLUT[d];
                 isTone = true;
             }
-            else if (current > wt+toneRef.instrument->atackSlopeTime){ // decay and sustain
-                int32_t d = (int32_t)(((current-(wt+toneRef.instrument->atackSlopeTime))*decRatio)/delta);
+            else if (current > attackEnd){ // decay and sustain
+                int32_t d = (int32_t)(((current-attackEnd)*decRatio)/delta);
                 const float* decayLUT = lut.getDecaySlopeLUT();
                 if (d >= lut.getNumDecaySlopeLUT()) d = lut.getNumDecaySlopeLUT() - 1;
-                st = atkSt*((decayLUT[d]*(1.0f-toneRef.instrument->sustainRate)+toneRef.instrument->sustainRate));
+                st = atkSt*((decayLUT[d]*(1.0f-sustainRate)+sustainRate));
                 atkFloor = decSt = st;
                 isTone = true;
             }
@@ -1054,7 +1064,7 @@ bool Sequencer::feed(double *frame){
                 if (doFM && current > wt){
                     fmPh += fmInc;
                     if (fmPh > PI*2.0f) fmPh -= PI*2.0f;
-                    cent += toneRef.instrument->fmCentRange*(waveLUT[fmWave][(int32_t)(fmPh*period)]*fmWaveInvert+1.0f)*0.5f;
+                    cent += fmCentRange*(waveLUT[fmWave][(int32_t)(fmPh*period)]*fmWaveInvert+1.0f)*0.5f;
                 }
                 
                 inc1 = centFrequency(baseIncrement1[toneIndex], cent);
@@ -1077,8 +1087,8 @@ bool Sequencer::feed(double *frame){
                 if (doAM && current > wt){
                     amPh += amInc;
                     if (amPh > PI*2.0f) amPh -= PI*2.0f;
-                    level = (toneRef.instrument->amLevel)*(waveLUT[amWave][(int32_t)(amPh*period)]*amWaveInvert+1.0f)*0.5f;
-                    level += 1.0f - toneRef.instrument->amLevel;
+                    level = (amLevel)*(waveLUT[amWave][(int32_t)(amPh*period)]*amWaveInvert+1.0f)*0.5f;
+                    level += 1.0f - amLevel;
                 }
 
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
@@ -1107,7 +1117,7 @@ bool Sequencer::feed(double *frame){
                 float data = tone1+tone2+tone3;
                 
                 if (doNoiseMix) {
-                    data = data*(1.0f - toneRef.instrument->noiseRatio)+noiseMixLUT[noiseBufIndex+i]*toneRef.instrument->noiseRatio;
+                    data = data*(1.0f - noiseRatio)+noiseMixLUT[noiseBufIndex+i]*noiseRatio;
                 }
 
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
@@ -1117,7 +1127,7 @@ bool Sequencer::feed(double *frame){
 #endif // DEBUG_ENABLED
                 data = godot::Math::clamp(data, -1.0f, 1.0f);
 
-                data *= (velF*st*div*level)*toneRef.instrument->totalGain;
+                data *= (velF*st*div*level)*totalGain;
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
                 if (godot::Math::absf(data) > 1.0){
                     godot::UtilityFunctions::print("data 2 saturated! ", data);
