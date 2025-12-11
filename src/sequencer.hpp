@@ -310,6 +310,27 @@ private:
     std::array<uint8_t, numTone> noiseColorMode{}; // 0: white, 1: pink
     std::array<Percussion, numPercussions> percussions;
 
+    struct EmittedEvent {
+        int32_t msg = 0;
+        struct NotePayload {
+            int32_t onOff = 0;
+            int32_t trackNum = 0;
+            int32_t channel = 0;
+            int32_t velocity = 0;
+            int32_t program = 0;
+            int32_t key = 0;
+            int32_t instrumentNum = 0;
+            int32_t key2 = 0;
+        } note;
+        struct LevelPayload {
+            int32_t max_level = 0;
+            int32_t frame_level = 0;
+        } level;
+    };
+    std::vector<EmittedEvent> eventQueue;
+    static constexpr int32_t initialEventCapacity = 64;
+    static constexpr int32_t maxEventCapacity = 1024;
+
     float samplingRate = 44100.0f;
     float bufferingTime = 0.05f;
     int32_t bufferSamples;
@@ -348,6 +369,10 @@ public:
     std::function<void(const godot::Dictionary dic)> emitSignal;
     Sequencer();
     ~Sequencer();
+private:
+    void enqueueNoteEvent(int32_t onOff, const Tone& tone, int32_t instrumentNum, int32_t key2);
+    void enqueueLevelEvent(double maxValue, double maxFrameValue);
+    void flushEvents();
 };
 
 #endif // SEQUENCER_H

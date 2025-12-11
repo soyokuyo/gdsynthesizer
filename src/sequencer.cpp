@@ -271,6 +271,7 @@ Sequencer::Sequencer() {
     freeToneIndices.reserve(numTone);
     activeToneIndices.reserve(numTone);
     SharedLUT::getInstance().addRef();
+    eventQueue.reserve(initialEventCapacity);
 }
 
 Sequencer::~Sequencer(){
@@ -625,6 +626,68 @@ void Sequencer::incertNoteOff(const godot::Dictionary dic){
     checkNewNote(oneNote);
 };
 
+void Sequencer::enqueueNoteEvent(int32_t onOff, const Tone& tone, int32_t instrumentNum, int32_t key2) {
+    if (eventQueue.size() == eventQueue.capacity() && eventQueue.capacity() < maxEventCapacity) {
+        size_t newCap = std::min(static_cast<size_t>(maxEventCapacity), eventQueue.capacity() * 2);
+        eventQueue.reserve(newCap);
+#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
+        godot::UtilityFunctions::print("eventQueue expanded to ", (int32_t)newCap);
+#endif
+    }
+    if (eventQueue.size() < maxEventCapacity) {
+        EmittedEvent ev;
+        ev.msg = 0;
+        ev.note.onOff = onOff;
+        ev.note.trackNum = tone.note.trackNum;
+        ev.note.channel = tone.note.channel;
+        ev.note.velocity = tone.note.velocity;
+        ev.note.program = tone.note.program;
+        ev.note.key = tone.note.key;
+        ev.note.instrumentNum = instrumentNum;
+        ev.note.key2 = key2;
+        eventQueue.push_back(ev);
+    }
+}
+
+void Sequencer::enqueueLevelEvent(double maxValue, double maxFrameValue) {
+    if (eventQueue.size() == eventQueue.capacity() && eventQueue.capacity() < maxEventCapacity) {
+        size_t newCap = std::min(static_cast<size_t>(maxEventCapacity), eventQueue.capacity() * 2);
+        eventQueue.reserve(newCap);
+#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
+        godot::UtilityFunctions::print("eventQueue expanded to ", (int32_t)newCap);
+#endif
+    }
+    if (eventQueue.size() < maxEventCapacity) {
+        EmittedEvent ev;
+        ev.msg = 1;
+        ev.level.max_level = (int32_t)(maxValue*1000.0);
+        ev.level.frame_level = (int32_t)(maxFrameValue*1000.0);
+        eventQueue.push_back(ev);
+    }
+}
+
+void Sequencer::flushEvents() {
+    for (const auto& ev : eventQueue) {
+        godot::Dictionary dic;
+        dic["msg"] = ev.msg;
+        if (ev.msg == 0) {
+            dic["onOff"]         = ev.note.onOff;
+            dic["trackNum"]      = ev.note.trackNum;
+            dic["channel"]       = ev.note.channel;
+            dic["velocity"]      = ev.note.velocity;
+            dic["program"]       = ev.note.program;
+            dic["key"]           = ev.note.key;
+            dic["instrumentNum"] = ev.note.instrumentNum;
+            dic["key2"]          = ev.note.key2;
+        } else if (ev.msg == 1) {
+            dic["max_level"]   = ev.level.max_level;
+            dic["frame_level"] = ev.level.frame_level;
+        }
+        emitSignal(dic);
+    }
+    eventQueue.clear(); // keep capacity for reuse
+}
+
 
 godot::Ref<godot::Image> Sequencer::getMiniWavePicture(const godot::Dictionary dic){
     int32_t size_x = dic["size_x"];
@@ -700,18 +763,7 @@ bool Sequencer::checkNewNote(Note oneNote){
             ringingTone.note.state = NState::NS_OFF;
 
             {
-                godot::Dictionary dic;
-
-                dic["msg"]                = (int32_t)0;
-                dic["onOff"]              = (int32_t)0;
-                dic["trackNum"]           = ringingTone.note.trackNum;
-                dic["channel"]            = ringingTone.note.channel;
-                dic["velocity"]           = ringingTone.note.velocity;
-                dic["program"]            = ringingTone.note.program;
-                dic["key"]                = ringingTone.note.key;
-                dic["instrumentNum"]      = program[ringingIdx];
-                dic["key2"]               = key[ringingIdx];
-                emitSignal(dic);
+            enqueueNoteEvent(0, ringingTone, program[ringingIdx], key[ringingIdx]);
             }
 
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
@@ -785,19 +837,7 @@ bool Sequencer::checkNewNote(Note oneNote){
             realKey2[idx] = key[idx] + (int32_t)(tone.instrument->baseOffsetCent2/100.0f);
             realKey3[idx] = key[idx] + (int32_t)(tone.instrument->baseOffsetCent3/100.0f);
         }
-        {
-            godot::Dictionary dic;
-            dic["msg"]                = (int32_t)0;
-            dic["onOff"]              = (int32_t)1;
-            dic["trackNum"]           = tone.note.trackNum;
-            dic["channel"]            = tone.note.channel;
-            dic["velocity"]           = tone.note.velocity;
-            dic["program"]            = tone.note.program;
-            dic["key"]                = tone.note.key;
-            dic["instrumentNum"]      = program[idx];
-            dic["key2"]               = key[idx];
-            emitSignal(dic);
-        }
+        enqueueNoteEvent(1, tone, program[idx], key[idx]);
         {
             auto& lut = SharedLUT::getInstance();
             restartVelocity_f[idx] = velocity_f[idx] = lut.getVelocity2powerLUT()[tone.note.velocity];
@@ -1195,13 +1235,7 @@ bool Sequencer::feed(double *frame){
 #endif // DEBUG_ENABLED
         }
         if (maxFrameValue > maxValue) maxValue = maxFrameValue;
-        {
-            godot::Dictionary dic;
-            dic["msg"]                = (int32_t)1;
-            dic["max_level"]          = (int32_t)(maxValue*1000.0);
-            dic["frame_level"]        = (int32_t)(maxFrameValue*1000.0);
-            emitSignal(dic);
-        }
+        enqueueLevelEvent(maxValue, maxFrameValue);
 
         maxFrameValue = 0.0;
         if (isEnd && rw == FLOAT_LONGTIME){
@@ -1225,5 +1259,7 @@ bool Sequencer::feed(double *frame){
 //        currentTime = -1000; // wait 1sec for repetition.
         currentTime = 0; // or executed immediately without waiting.
     }
+    // flush queued events
+    flushEvents();
     return true;
 }
