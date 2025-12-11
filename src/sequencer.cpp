@@ -267,14 +267,13 @@ float PinkNoise::makeNoise(float in) {
 }
 
 Sequencer::Sequencer() {
+    // Avoid reallocations on real-time paths
+    freeToneIndices.reserve(numTone);
+    activeToneIndices.reserve(numTone);
     SharedLUT::getInstance().addRef();
 }
 
 Sequencer::~Sequencer(){
-    for (int32_t i = 0; i < std::size(toneInstances); i++) {
-        delete [] toneInstances[i].delayBuffer;
-        toneInstances[i].delayBuffer = nullptr;
-    }
     SharedLUT::getInstance().removeRef();
 }
 
@@ -473,27 +472,12 @@ bool Sequencer::initParam(double rate, double time, int32_t samples) {
         return false;
     }
 
-    // Clean up existing delay buffers before creating new ones
-    for (int32_t i = 0; i < std::size(toneInstances); i++) {
-        if (toneInstances[i].delayBuffer != nullptr) {
-            delete [] toneInstances[i].delayBuffer;
-            toneInstances[i].delayBuffer = nullptr;
-        }
-    }
-
-    // make delay ring buffers
+    // make delay ring buffers (pooled)
     delayBufferSize = (int32_t)((float)rate*(delayBufferDuration/1000.0f));
+    delayBufferPool.assign(numTone * delayBufferSize, 0.0f);
 
     for (int32_t i = 0; i < std::size(toneInstances); i++) {
-        toneInstances[i].delayBuffer = new (std::nothrow) float[delayBufferSize];
-        if (toneInstances[i].delayBuffer == nullptr) {
-            // メモリ確保失敗時は既に確保したバッファをクリーンアップ
-            for (int32_t j = 0; j < i; j++) {
-                delete [] toneInstances[j].delayBuffer;
-                toneInstances[j].delayBuffer = nullptr;
-            }
-            return false;
-        }
+        toneInstances[i].delayBuffer = delayBufferPool.data() + (i * delayBufferSize);
         // reset SoA hot data
         phase1[i] = phase2[i] = phase3[i] = 0.0f;
         strength[i] = atackedStrength[i] = decayedStrength[i] = atackedStrengthfloor[i] = 0.0f;

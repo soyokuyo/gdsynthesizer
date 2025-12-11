@@ -22,8 +22,6 @@ private:
     SharedInstruments& operator=(const SharedInstruments&) = delete;
     SharedInstruments(SharedInstruments&&) = delete;
     SharedInstruments& operator=(SharedInstruments&&) = delete;
-
-    static SharedInstruments* instance_;
     std::array<Instrument, Sequencer::numinstruments> instruments_;
 };
 

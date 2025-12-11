@@ -1,12 +1,8 @@
 #include "shared_instruments.hpp"
 
-SharedInstruments* SharedInstruments::instance_ = nullptr;
-
 SharedInstruments& SharedInstruments::getInstance() {
-    if (instance_ == nullptr) {
-        instance_ = new SharedInstruments();
-    }
-    return *instance_;
+    static SharedInstruments instance;
+    return instance;
 }
 
 SharedInstruments::SharedInstruments()
