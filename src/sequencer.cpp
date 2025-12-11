@@ -914,6 +914,7 @@ bool Sequencer::feed(double *frame){
     auto& lut = SharedLUT::getInstance();
     const auto& waveLUT = lut.getWaveLUT();
     float period = (float)std::size(waveLUT[0])/(PI*2.0f);
+    const float phaseToIndex = period; // phase(rad) -> LUT index scale
     // precompute reciprocals to reduce divides (WASM向け分岐・除算削減)
     float invSamplingRate = 1.0f / samplingRate;
     float delta = invSamplingRate * 1000.0f;
@@ -1051,7 +1052,8 @@ bool Sequencer::feed(double *frame){
                 if (doFM && current > wt){
                     fmPh += fmInc;
                     if (fmPh > PI*2.0f) fmPh -= PI*2.0f;
-                    cent += fmCentRange*(waveLUT[fmWave][(int32_t)(fmPh*period)]*fmWaveInvert+1.0f)*0.5f;
+                    int32_t fmIdx = (int32_t)(fmPh * phaseToIndex);
+                    cent += fmCentRange*(waveLUT[fmWave][fmIdx]*fmWaveInvert+1.0f)*0.5f;
                 }
                 
                 inc1 = centFrequency(baseIncrement1[toneIndex], cent);
@@ -1074,7 +1076,8 @@ bool Sequencer::feed(double *frame){
                 if (doAM && current > wt){
                     amPh += amInc;
                     if (amPh > PI*2.0f) amPh -= PI*2.0f;
-                    level = (amLevel)*(waveLUT[amWave][(int32_t)(amPh*period)]*amWaveInvert+1.0f)*0.5f;
+                    int32_t amIdx = (int32_t)(amPh * phaseToIndex);
+                    level = (amLevel)*(waveLUT[amWave][amIdx]*amWaveInvert+1.0f)*0.5f;
                     level += 1.0f - amLevel;
                 }
 
@@ -1085,13 +1088,17 @@ bool Sequencer::feed(double *frame){
                 float tone1, tone2, tone3;
                 {
                     double c = 1.0/120.0; // key 120 may be 8372.0Hz
-                    double f1 = (double)waveLUT[sinWave][(int32_t)(ph1*period)];
-                    double f2 = (double)waveLUT[sinWave][(int32_t)(ph2*period)];
-                    double f3 = (double)waveLUT[sinWave][(int32_t)(ph3*period)];
+                    int32_t idx1 = (int32_t)(ph1 * phaseToIndex);
+                    int32_t idx2 = (int32_t)(ph2 * phaseToIndex);
+                    int32_t idx3 = (int32_t)(ph3 * phaseToIndex);
 
-                    double g1 = (double)waveLUT[baseWave1][(int32_t)(ph1*period)];
-                    double g2 = (double)waveLUT[baseWave2][(int32_t)(ph2*period)];
-                    double g3 = (double)waveLUT[baseWave3][(int32_t)(ph3*period)];
+                    double f1 = (double)waveLUT[sinWave][idx1];
+                    double f2 = (double)waveLUT[sinWave][idx2];
+                    double f3 = (double)waveLUT[sinWave][idx3];
+
+                    double g1 = (double)waveLUT[baseWave1][idx1];
+                    double g2 = (double)waveLUT[baseWave2][idx2];
+                    double g3 = (double)waveLUT[baseWave3][idx3];
 
                     double r1 = godot::Math::clamp((double)(rk1)*c, 0.0, 1.0);
                     double r2 = godot::Math::clamp((double)(rk2)*c, 0.0, 1.0);
