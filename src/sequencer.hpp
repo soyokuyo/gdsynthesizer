@@ -245,6 +245,7 @@ private:
     };
     SMFParser midi;
     int32_t delayBufferSize = 0;
+    int32_t delayBufferMask = 0; // for power-of-two ring buffer
     std::vector<float> delayBufferPool;
     float unitOfTime = 60000.0;
     std::array<Tone, numTone> toneInstances;

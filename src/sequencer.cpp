@@ -283,19 +283,34 @@ float Sequencer::noteFrequency(int8_t note) {
 
 float Sequencer::centFrequency(float freq, float cent) {
     auto& lut = SharedLUT::getInstance();
-    static const float h = (powf(2.0f,  120.0f/1200.0f)-1.0f)/120.0f;
-    static const float l = (powf(2.0f, -120.0f/1200.0f)-1.0f)/120.0f;
-    static const float t =  (float(SharedLUT::getPow2_x_1200LUT_size()/2));
-    static const float b = -(float(SharedLUT::getPow2_x_1200LUT_size()/2));
+    // 小範囲の頻出ケースをLUTで高速化（-240〜240 cent）
+    static bool lutBuilt = false;
+    static std::array<float, 481> centMultLUT{}; // index offset 240
+    if (!lutBuilt) {
+        for (int i = -240; i <= 240; ++i) {
+            centMultLUT[i + 240] = powf(2.0f, (float)i / 1200.0f);
+        }
+        lutBuilt = true;
+    }
+
     const float* pow2LUT = lut.getPow2_x_1200LUT();
+    const int32_t lutMid = SharedLUT::getPow2_x_1200LUT_size() / 2;
+    const int32_t lutMax = SharedLUT::getPow2_x_1200LUT_size() - 1;
 
     float result;
-    if      (cent <=        b) result = freq * pow2LUT[0];
-    else if (cent <   -120.0f) result = freq * pow2LUT[SharedLUT::getPow2_x_1200LUT_size()/2+(int32_t)cent];
-    else if (cent <      0.0f) result = freq * (1.0f - cent*l);
-    else if (cent <=   120.0f) result = freq * (1.0f + cent*h);
-    else if (cent <         t) result = freq * pow2LUT[SharedLUT::getPow2_x_1200LUT_size()/2+(int32_t)cent];
-    else                       result = freq * pow2LUT[SharedLUT::getPow2_x_1200LUT_size()-1];
+    if (cent >= -240.0f && cent <= 240.0f) {
+        // 1 cent刻み近傍で近似（端はclamp）
+        int idx = static_cast<int>(cent);
+        if (idx < -240) idx = -240;
+        if (idx >  240) idx =  240;
+        result = freq * centMultLUT[idx + 240];
+    } else {
+        // 従来の1-cent刻みLUTを使用
+        if      (cent <= -(float)lutMid) result = freq * pow2LUT[0];
+        else if (cent <   0.0f)          result = freq * pow2LUT[lutMid + (int32_t)cent];
+        else if (cent <   (float)lutMid) result = freq * pow2LUT[lutMid + (int32_t)cent];
+        else                             result = freq * pow2LUT[lutMax];
+    }
     if (result > samplingRate*0.47f) result = samplingRate*0.47f; // 0.47 is upper limit.
     return result;
 }
@@ -472,8 +487,15 @@ bool Sequencer::initParam(double rate, double time, int32_t samples) {
         return false;
     }
 
-    // make delay ring buffers (pooled)
-    delayBufferSize = (int32_t)((float)rate*(delayBufferDuration/1000.0f));
+    // make delay ring buffers (pooled, power-of-two for mask)
+    int32_t requestedDelaySize = (int32_t)((float)rate*(delayBufferDuration/1000.0f));
+    if (requestedDelaySize < 1) requestedDelaySize = 1;
+    int32_t pow2 = 1;
+    while (pow2 < requestedDelaySize) {
+        pow2 <<= 1;
+    }
+    delayBufferSize = pow2;
+    delayBufferMask = delayBufferSize - 1;
     delayBufferPool.assign(numTone * delayBufferSize, 0.0f);
 
     for (int32_t i = 0; i < std::size(toneInstances); i++) {
@@ -1153,15 +1175,11 @@ bool Sequencer::feed(double *frame){
                     if (delayData < -1.0) delayData = -1.0;
                     toneRef.delayBuffer[delay2Index[toneIndex]] = delayData;
 
-                    delay0Index[toneIndex] += 1;
-                    if (delay0Index[toneIndex] == delayBufferSize) delay0Index[toneIndex] = 0;
-                    delay1Index[toneIndex] +=1;
-                    if (delay1Index[toneIndex] == delayBufferSize) delay1Index[toneIndex] = 0;
-                    delay2Index[toneIndex] += 1;
-                    if (delay2Index[toneIndex] == delayBufferSize) delay2Index[toneIndex] = 0;
+                    delay0Index[toneIndex] = (delay0Index[toneIndex] + 1) & delayBufferMask;
+                    delay1Index[toneIndex] = (delay1Index[toneIndex] + 1) & delayBufferMask;
+                    delay2Index[toneIndex] = (delay2Index[toneIndex] + 1) & delayBufferMask;
                     toneRef.delayBuffer[delayBufferIndex[toneIndex]] = 0.0f;
-                    delayBufferIndex[toneIndex] +=1;
-                    if (delayBufferIndex[toneIndex] == delayBufferSize) delayBufferIndex[toneIndex] = 0;
+                    delayBufferIndex[toneIndex] = (delayBufferIndex[toneIndex] + 1) & delayBufferMask;
                 }
 
                 frame[i] += (double)data;
