@@ -238,8 +238,8 @@ private:
     struct Tone {
         // from smf
         Note note;
-        // static instrument assignment
-        Instrument instrument;
+        // instrument is shared (singleton), keep pointer only
+        const Instrument* instrument = nullptr;
         // for delay (buffer pointer only; indices/ratios are SoA)
         float* delayBuffer = nullptr;
     };
@@ -306,7 +306,6 @@ private:
     std::array<uint8_t, numTone> useFreqNoise{};
     std::array<uint8_t, numTone> freqNoiseMode{};  // 0: white, 1: triangular, 2: cos4th
     std::array<uint8_t, numTone> noiseColorMode{}; // 0: white, 1: pink
-    std::array<Instrument, numinstruments> instruments;
     std::array<Percussion, numPercussions> percussions;
 
     float samplingRate = 44100.0f;
