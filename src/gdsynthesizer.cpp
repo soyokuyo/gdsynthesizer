@@ -62,6 +62,7 @@ void GDSynthesizer::_bind_methods()
     ClassDB::bind_method(D_METHOD("get_mini_wave_picture", "p_dict"), &GDSynthesizer::getMiniWavePicture);
     
     ADD_SIGNAL(MethodInfo("note_changed", PropertyInfo(Variant::STRING, "name"), PropertyInfo(Variant::DICTIONARY, "note")));
+    ADD_SIGNAL(MethodInfo("pre_note_changed", PropertyInfo(Variant::STRING, "name"), PropertyInfo(Variant::DICTIONARY, "note")));
     ADD_SIGNAL(MethodInfo("level_info", PropertyInfo(Variant::DICTIONARY, "level")));
 }
 
