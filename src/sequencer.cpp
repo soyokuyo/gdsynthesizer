@@ -462,6 +462,11 @@ void Sequencer::setPercussions(const godot::Array array) {
 void Sequencer::setControlParams(const godot::Dictionary dic){
     asumedConcurrentTone = (float)(godot::Math::clamp((double)(dic["divisionNum"]), 0.1, 64.0));
     logLevel = (int32_t)(std::clamp((int32_t)dic["logLevel"], 0, 10));
+    if (dic.has("preOnTime")) {
+        preOnTime = (float)(godot::Math::clamp((double)(dic["preOnTime"]), 0.0, 10000.0));
+    } else {
+        preOnTime = 0.0f; // Default: disabled
+    }
     maxValue = 0.0;
 }
 
@@ -469,6 +474,7 @@ godot::Dictionary Sequencer::getControlParams(void) {
     godot::Dictionary dic;
     dic["divisionNum"] = asumedConcurrentTone;
     dic["logLevel"] = logLevel;
+    dic["preOnTime"] = preOnTime;
     return dic;
 }
 

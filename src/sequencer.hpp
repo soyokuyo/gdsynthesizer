@@ -346,6 +346,7 @@ private:
     godot::RandomNumberGenerator rand;
     
     float asumedConcurrentTone = 4.0f;
+    float preOnTime = 0.0f; // Pre-on signal time in milliseconds (0 = disabled)
     bool checkNewNote(Note);
     int32_t logLevel = 1;
 public:
