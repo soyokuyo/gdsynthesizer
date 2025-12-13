@@ -308,6 +308,7 @@ private:
     std::array<uint8_t, numTone> useFreqNoise{};
     std::array<uint8_t, numTone> freqNoiseMode{};  // 0: white, 1: triangular, 2: cos4th
     std::array<uint8_t, numTone> noiseColorMode{}; // 0: white, 1: pink
+    std::array<uint8_t, numTone> preOnOffEmitted{}; // 0: not emitted, 1: emitted
     std::array<Percussion, numPercussions> percussions;
 
     struct EmittedEvent {
@@ -371,7 +372,7 @@ public:
     Sequencer();
     ~Sequencer();
 private:
-    void enqueueNoteEvent(int32_t onOff, const Tone& tone, int32_t instrumentNum, int32_t key2);
+    void enqueueNoteEvent(int32_t onOff, const Tone& tone, int32_t instrumentNum, int32_t key2, int32_t msg = 0);
     void enqueueLevelEvent(double maxValue, double maxFrameValue);
     void flushEvents();
 };

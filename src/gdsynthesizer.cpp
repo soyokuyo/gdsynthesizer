@@ -164,6 +164,15 @@ void GDSynthesizer::emitSignal(const godot::Dictionary dic) {
     else if ((int32_t)dic["msg"] == 1){
         emit_signal("level_info", dic);
     }
+    else if ((int32_t)dic["msg"] == 2){
+        // pre-on signal
+        if ((int32_t)dic["onOff"] == 1){
+            emit_signal("pre_note_changed", "pre_note_on", dic);
+        }
+        else{
+            emit_signal("pre_note_changed", "pre_note_off", dic);
+        }
+    }
 }
 
 

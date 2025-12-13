@@ -537,6 +537,7 @@ bool Sequencer::initParam(double rate, double time, int32_t samples) {
         useFM[i] = useAM[i] = useDelay[i] = useFreqNoise[i] = 0;
         freqNoiseMode[i] = 0;
         noiseColorMode[i] = 0;
+        preOnOffEmitted[i] = 0;
         freeToneIndices.push_back(i);
     }
 
@@ -632,7 +633,7 @@ void Sequencer::incertNoteOff(const godot::Dictionary dic){
     checkNewNote(oneNote);
 };
 
-void Sequencer::enqueueNoteEvent(int32_t onOff, const Tone& tone, int32_t instrumentNum, int32_t key2) {
+void Sequencer::enqueueNoteEvent(int32_t onOff, const Tone& tone, int32_t instrumentNum, int32_t key2, int32_t msg) {
     if (eventQueue.size() == eventQueue.capacity() && eventQueue.capacity() < maxEventCapacity) {
         size_t newCap = std::min(static_cast<size_t>(maxEventCapacity), eventQueue.capacity() * 2);
         eventQueue.reserve(newCap);
@@ -642,7 +643,7 @@ void Sequencer::enqueueNoteEvent(int32_t onOff, const Tone& tone, int32_t instru
     }
     if (eventQueue.size() < maxEventCapacity) {
         EmittedEvent ev;
-        ev.msg = 0;
+        ev.msg = msg; // 0: normal note, 2: pre-on signal
         ev.note.onOff = onOff;
         ev.note.trackNum = tone.note.trackNum;
         ev.note.channel = tone.note.channel;
@@ -676,7 +677,9 @@ void Sequencer::flushEvents() {
     for (const auto& ev : eventQueue) {
         godot::Dictionary dic;
         dic["msg"] = ev.msg;
-        if (ev.msg == 0) {
+        if (ev.msg == 0 || ev.msg == 2) {
+            // msg == 0: normal note_on/note_off
+            // msg == 2: pre-on signal
             dic["onOff"]         = ev.note.onOff;
             dic["trackNum"]      = ev.note.trackNum;
             dic["channel"]       = ev.note.channel;
@@ -838,6 +841,7 @@ bool Sequencer::checkNewNote(Note oneNote){
         }
         useFM[idx] = (tone.instrument->fmFreq != 0.0f) ? 1 : 0;
         useAM[idx] = (tone.instrument->amFreq != 0.0f) ? 1 : 0;
+        preOnOffEmitted[idx] = 0; // Initialize pre-on signal emission flag
         {
             realKey1[idx] = key[idx] + (int32_t)(tone.instrument->baseOffsetCent1/100.0f);
             realKey2[idx] = key[idx] + (int32_t)(tone.instrument->baseOffsetCent2/100.0f);
