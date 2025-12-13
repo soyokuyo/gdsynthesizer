@@ -532,6 +532,7 @@ bool Sequencer::initParam(double rate, double time, int32_t samples) {
         restartWaitDuration[i] = 0.0f;
         mainteinDuration[i] = 0.0f;
         maxDelayTime[i] = 0.0f;
+        noteStartTime[i] = 0;
         program[i] = 0;
         key[i] = realKey1[i] = realKey2[i] = realKey3[i] = 0;
         useFM[i] = useAM[i] = useDelay[i] = useFreqNoise[i] = 0;
@@ -804,6 +805,7 @@ bool Sequencer::checkNewNote(Note oneNote){
         frequency[idx] = noteFrequency(oneNote.key);
         passed[idx] = 0;
         waitDuration[idx] = (float)(oneNote.startTime - currentTime);
+        noteStartTime[idx] = currentTime; // Save currentTime when note is registered
 
         mainteinDuration[idx] = durationTime;
         restartWaitDuration[idx] = FLOAT_LONGTIME;
@@ -1064,6 +1066,15 @@ bool Sequencer::feed(double *frame){
         const float releaseStart = wt + md;
         const float releaseEnd = releaseStart + releaseSlopeTime + maxDelay;
         const float attackEnd = wt + atackSlopeTime;
+        
+        // Check for pre-on signal emission
+        // Calculate remaining time until note start: waitDuration - (currentTime - noteStartTime)
+        float remainingTime = wt - (float)(currentTime - noteStartTime[toneIndex]);
+        if (preOnTime > 0.0f && preOnOffEmitted[toneIndex] == 0 && remainingTime <= preOnTime && remainingTime > 0.0f) {
+            enqueueNoteEvent(1, toneRef, program[toneIndex], key[toneIndex], 2); // msg = 2 for pre-on signal
+            preOnOffEmitted[toneIndex] = 1;
+        }
+        
         double maxFrameValue = 0.0;
 #if defined(GDSYNTH_USE_X86_SIMD)
 #pragma GCC ivdep

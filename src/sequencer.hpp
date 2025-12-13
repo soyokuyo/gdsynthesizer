@@ -283,6 +283,7 @@ private:
     std::array<float, numTone> restartWaitDuration{};
     std::array<float, numTone> mainteinDuration{};
     std::array<float, numTone> maxDelayTime{};
+    std::array<int32_t, numTone> noteStartTime{}; // currentTime when note was registered
     std::array<int32_t, numTone> delayBufferIndex{};
     std::array<int32_t, numTone> delay0Index{};
     std::array<int32_t, numTone> delay1Index{};
