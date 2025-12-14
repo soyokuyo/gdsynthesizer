@@ -309,7 +309,6 @@ private:
     std::array<uint8_t, numTone> useFreqNoise{};
     std::array<uint8_t, numTone> freqNoiseMode{};  // 0: white, 1: triangular, 2: cos4th
     std::array<uint8_t, numTone> noiseColorMode{}; // 0: white, 1: pink
-    std::array<uint8_t, numTone> preOnOffEmitted{}; // 0: not emitted, 1: emitted
     std::array<Percussion, numPercussions> percussions;
 
     struct EmittedEvent {
@@ -338,7 +337,6 @@ private:
     int32_t bufferSamples;
 
     int32_t currentTime = 0;
-    int32_t currentTimeForPreOnOff = 0; // Current time for preOnOff sequence (0-based, no preOnTime offset)
     int32_t frameCount = 0;
     int32_t noiseBufSize;
     int32_t noiseBuffer;
@@ -350,6 +348,7 @@ private:
     
     float asumedConcurrentTone = 4.0f;
     float preOnTime = 0.0f; // Pre-on signal time in milliseconds (0 = disabled)
+    std::vector<std::pair<int32_t, int32_t>> preOnOffActiveNotes; // Track active pre_note_on events (channel, key) - using vector for FIFO matching, same as normal sequence's ringingIdx logic
     bool checkNewNote(Note, bool forPreOnOff = false);
     int32_t logLevel = 1;
 public:
@@ -375,6 +374,7 @@ public:
     ~Sequencer();
 private:
     void enqueueNoteEvent(int32_t onOff, const Tone& tone, int32_t instrumentNum, int32_t key2, int32_t msg = 0);
+    void enqueueNoteEvent(int32_t onOff, const Note& note, int32_t msg = 0); // For preOnOff signals (no Tone)
     void enqueueLevelEvent(double maxValue, double maxFrameValue);
     void flushEvents();
 };

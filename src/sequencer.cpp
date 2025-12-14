@@ -28,13 +28,12 @@
 
 
 #include "sequencer.hpp"
-#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
 #include <godot_cpp/variant/utility_functions.hpp> // for "UtilityFunctions::print()".
-#endif // DEBUG_ENABLED && WINDOWS_ENABLED
 
 #include "instrument.hpp"
 #include "shared_instruments.hpp"
 #include <new>
+#include <algorithm> // for std::find
 
 const char* scale[] = {" C", "C#", " D", "D#", " E", " F", "F#", " G", "G#", " A", "A#", " B"};
 
@@ -540,7 +539,6 @@ bool Sequencer::initParam(double rate, double time, int32_t samples) {
         useFM[i] = useAM[i] = useDelay[i] = useFreqNoise[i] = 0;
         freqNoiseMode[i] = 0;
         noiseColorMode[i] = 0;
-        preOnOffEmitted[i] = 0;
         freeToneIndices.push_back(i);
     }
 
@@ -659,6 +657,29 @@ void Sequencer::enqueueNoteEvent(int32_t onOff, const Tone& tone, int32_t instru
     }
 }
 
+void Sequencer::enqueueNoteEvent(int32_t onOff, const Note& note, int32_t msg) {
+    if (eventQueue.size() == eventQueue.capacity() && eventQueue.capacity() < maxEventCapacity) {
+        size_t newCap = std::min(static_cast<size_t>(maxEventCapacity), eventQueue.capacity() * 2);
+        eventQueue.reserve(newCap);
+#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
+        godot::UtilityFunctions::print("eventQueue expanded to ", (int32_t)newCap);
+#endif
+    }
+    if (eventQueue.size() < maxEventCapacity) {
+        EmittedEvent ev;
+        ev.msg = msg; // 2: pre-on/pre-off signal
+        ev.note.onOff = onOff;
+        ev.note.trackNum = note.trackNum;
+        ev.note.channel = note.channel;
+        ev.note.velocity = note.velocity;
+        ev.note.program = note.program;
+        ev.note.key = note.key;
+        ev.note.instrumentNum = note.program; // Use program as instrumentNum for preOnOff
+        ev.note.key2 = note.key; // Use key as key2 for preOnOff
+        eventQueue.push_back(ev);
+    }
+}
+
 void Sequencer::enqueueLevelEvent(double maxValue, double maxFrameValue) {
     if (eventQueue.size() == eventQueue.capacity() && eventQueue.capacity() < maxEventCapacity) {
         size_t newCap = std::min(static_cast<size_t>(maxEventCapacity), eventQueue.capacity() * 2);
@@ -758,7 +779,27 @@ godot::Ref<godot::Image> Sequencer::getMiniWavePicture(const godot::Dictionary d
 bool Sequencer::checkNewNote(Note oneNote, bool forPreOnOff){
     // For preOnOff sequence, only process signals (no Tone allocation)
     if (forPreOnOff) {
-        // TODO: PreNoteEvent registration will be added here in a later step
+        // Emit pre_note_on/pre_note_off signals at the same timing as normal signals
+        // Same logic as normal sequence: NS_ON_FOREVER -> emit signal and track, NS_OFF -> find corresponding and emit signal
+        if (oneNote.state == NState::NS_OFF) {
+            // Find corresponding pre_note_on (same logic as normal sequence's ringingIdx search)
+            // Linear search for matching (channel, key) in preOnOffActiveNotes (FIFO: first match)
+            auto it = std::find(preOnOffActiveNotes.begin(), preOnOffActiveNotes.end(),
+                std::make_pair(oneNote.channel, oneNote.key));
+            if (it != preOnOffActiveNotes.end()) {
+                // Corresponding pre_note_on exists, emit pre_note_off signal (same timing as normal sequence)
+                enqueueNoteEvent(0, oneNote, 2); // msg=2 for preOnOff signal
+                preOnOffActiveNotes.erase(it); // Remove from active notes (FIFO: first match)
+            } else {
+                // No corresponding pre_note_on found, skip (same as normal sequence's ringingIdx < 0 case)
+                return false; // Same as normal sequence when ringingIdx < 0
+            }
+        } else if (oneNote.state == NState::NS_ON_FOREVER) {
+            // pre_note_on signal (same timing as normal sequence's NS_ON_FOREVER processing)
+            // Track active pre_note_on (same channel/key can have multiple entries, FIFO matching)
+            preOnOffActiveNotes.push_back(std::make_pair(oneNote.channel, oneNote.key)); // Track active pre_note_on
+            enqueueNoteEvent(1, oneNote, 2); // msg=2 for preOnOff signal
+        }
         return true;
     }
     
@@ -852,7 +893,6 @@ bool Sequencer::checkNewNote(Note oneNote, bool forPreOnOff){
         }
         useFM[idx] = (tone.instrument->fmFreq != 0.0f) ? 1 : 0;
         useAM[idx] = (tone.instrument->amFreq != 0.0f) ? 1 : 0;
-        preOnOffEmitted[idx] = 0; // Initialize pre-on signal emission flag
         {
             realKey1[idx] = key[idx] + (int32_t)(tone.instrument->baseOffsetCent1/100.0f);
             realKey2[idx] = key[idx] + (int32_t)(tone.instrument->baseOffsetCent2/100.0f);
@@ -986,12 +1026,10 @@ bool Sequencer::feed(double *frame){
     int32_t frameTime = (int32_t)(bufferingTime*1000.0f);
     int32_t preOnTimeInt = (int32_t)preOnTime;
     
-    // Update currentTimeForPreOnOff (preOnOff sequence time, 0-based, no preOnTime offset)
-    currentTimeForPreOnOff = currentTime + frameTime;
-    
     // Parse preOnOff sequence (if preOnTime > 0 and MIDI file is loaded)
+    // Use common currentTime for both sequences
     if (preOnTime > 0.0f && midi.getNumOfTracks() > 0) {
-        int32_t preOnOffTill = currentTimeForPreOnOff + preOnTimeInt; // Look ahead by preOnTime
+        int32_t preOnOffTill = currentTime + frameTime + preOnTimeInt; // Look ahead by preOnTime
         Note preNote;
         while(isSet) {
             preNote = midi.parse(preOnOffTill, true); // forPreOnOff = true
@@ -1096,13 +1134,8 @@ bool Sequencer::feed(double *frame){
         const float releaseEnd = releaseStart + releaseSlopeTime + maxDelay;
         const float attackEnd = wt + atackSlopeTime;
         
-        // Check for pre-on signal emission
-        // Calculate remaining time until note start: waitDuration - (currentTime - noteStartTime)
-        float remainingTime = wt - (float)(currentTime - noteStartTime[toneIndex]);
-        if (preOnTime > 0.0f && preOnOffEmitted[toneIndex] == 0 && remainingTime <= preOnTime && remainingTime > 0.0f) {
-            enqueueNoteEvent(1, toneRef, program[toneIndex], key[toneIndex], 2); // msg = 2 for pre-on signal
-            preOnOffEmitted[toneIndex] = 1;
-        }
+        // Note: pre_note_on/pre_note_off signals are emitted from preOnOff sequence events only
+        // (not from feed loop) to match the timing with normal onOff signals
         
         double maxFrameValue = 0.0;
 #if defined(GDSYNTH_USE_X86_SIMD)
@@ -1308,6 +1341,7 @@ bool Sequencer::feed(double *frame){
         midi.restart();
 //        currentTime = -1000; // wait 1sec for repetition.
         currentTime = 0; // or executed immediately without waiting.
+        preOnOffActiveNotes.clear(); // Clear active pre_note_on tracking
     }
     // flush queued events
     flushEvents();
