@@ -467,6 +467,8 @@ void Sequencer::setControlParams(const godot::Dictionary dic){
     } else {
         preOnTime = 0.0f; // Default: disabled
     }
+    // Set preOnTime to SMFParser for time offset calculation
+    midi.setPreOnTime(preOnTime);
     maxValue = 0.0;
 }
 
@@ -753,7 +755,13 @@ godot::Ref<godot::Image> Sequencer::getMiniWavePicture(const godot::Dictionary d
 }
 
 
-bool Sequencer::checkNewNote(Note oneNote){
+bool Sequencer::checkNewNote(Note oneNote, bool forPreOnOff){
+    // For preOnOff sequence, only process signals (no Tone allocation)
+    if (forPreOnOff) {
+        // TODO: PreNoteEvent registration will be added here in a later step
+        return true;
+    }
+    
     float durationTime = 0;
     if (oneNote.state == NState::NS_ON_FOREVER) durationTime = FLOAT_LONGTIME;
     int32_t ringingIdx = -1;
@@ -804,8 +812,9 @@ bool Sequencer::checkNewNote(Note oneNote){
         key[idx] = oneNote.key;
         frequency[idx] = noteFrequency(oneNote.key);
         passed[idx] = 0;
+        // waitDuration calculation: oneNote.startTime already includes preOnTime offset from SMFParser
         waitDuration[idx] = (float)(oneNote.startTime - currentTime);
-        noteStartTime[idx] = currentTime; // Save currentTime when note is registered
+        noteStartTime[idx] = oneNote.startTime; // Save oneNote.startTime (from normal sequence)
 
         mainteinDuration[idx] = durationTime;
         restartWaitDuration[idx] = FLOAT_LONGTIME;
@@ -975,13 +984,33 @@ bool Sequencer::feed(double *frame){
     for (int i=0; i < bufferSamples; i++) frame[i] = 0.0;
 
     int32_t frameTime = (int32_t)(bufferingTime*1000.0f);
+    int32_t preOnTimeInt = (int32_t)preOnTime;
+    
+    // Update currentTimeForPreOnOff (preOnOff sequence time, 0-based, no preOnTime offset)
+    currentTimeForPreOnOff = currentTime + frameTime;
+    
+    // Parse preOnOff sequence (if preOnTime > 0 and MIDI file is loaded)
+    if (preOnTime > 0.0f && midi.getNumOfTracks() > 0) {
+        int32_t preOnOffTill = currentTimeForPreOnOff + preOnTimeInt; // Look ahead by preOnTime
+        Note preNote;
+        while(isSet) {
+            preNote = midi.parse(preOnOffTill, true); // forPreOnOff = true
+            if (preNote.state == NState::NS_END || preNote.state == NState::NS_EMPTY) {
+                break;
+            }
+            if (checkNewNote(preNote, true) == false) break; // forPreOnOff = true
+        }
+    }
+    
+    // Parse normal sequence
     Note oneNote;
+    int32_t normalSequenceTill = currentTime + frameTime;
     while(isSet) {
-        oneNote = midi.parse(currentTime + frameTime);
+        oneNote = midi.parse(normalSequenceTill, false); // forPreOnOff = false
         if (oneNote.state == NState::NS_END || oneNote.state == NState::NS_EMPTY) {
             break;
         }
-        if (checkNewNote(oneNote) == false) break ;
+        if (checkNewNote(oneNote, false) == false) break; // forPreOnOff = false
     }
     currentTime += frameTime;
     int32_t noiseBufIndex = frameCount*bufferSamples;

@@ -338,6 +338,7 @@ private:
     int32_t bufferSamples;
 
     int32_t currentTime = 0;
+    int32_t currentTimeForPreOnOff = 0; // Current time for preOnOff sequence (0-based, no preOnTime offset)
     int32_t frameCount = 0;
     int32_t noiseBufSize;
     int32_t noiseBuffer;
@@ -349,7 +350,7 @@ private:
     
     float asumedConcurrentTone = 4.0f;
     float preOnTime = 0.0f; // Pre-on signal time in milliseconds (0 = disabled)
-    bool checkNewNote(Note);
+    bool checkNewNote(Note, bool forPreOnOff = false);
     int32_t logLevel = 1;
 public:
     double maxValue = 0.0;

@@ -111,6 +111,7 @@ private:
         Note nextNote;
     };
     std::vector<Track> tracks;
+    std::vector<Track> tracksPreOnOff; // For preOnOff sequence (independent context)
 
     struct Tempo {
         uint32_t tick, tempo;
@@ -121,6 +122,7 @@ private:
     };
     std::vector<Tempo> tempos;
     std::unique_ptr<uint8_t []> binary_data;
+    float preOnTime = 0.0f; // Pre-on signal time in milliseconds (0 = disabled)
 public:
     size_t filesize = 0;
     SMFParser();
@@ -129,7 +131,10 @@ public:
     bool load(const godot::String &);
     void unload(void);
     void restart(void);
-    Note parse(int32_t);
+    Note parse(int32_t, bool forPreOnOff = false);
     void setUnitOfTime(float);
     float getUnitOfTime() const;
+    void setPreOnTime(float pTime) { preOnTime = pTime; }
+    float getPreOnTime() const { return preOnTime; }
+    uint32_t getNumOfTracks() const { return numOfTracks; }
 };

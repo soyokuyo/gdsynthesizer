@@ -128,6 +128,8 @@ bool SMFParser::load(const char *name) {
         tracks.back().tick = 0;
         tracks.back().state = TState::TS_EMPTY;
     }
+    // Initialize tracksPreOnOff from tracks (independent context for preOnOff sequence)
+    tracksPreOnOff = tracks;
     return true;
 }
 
@@ -204,6 +206,8 @@ bool SMFParser::load(const godot::String &name) {
         tracks.back().tick = 0;
         tracks.back().state = TState::TS_EMPTY;
     }
+    // Initialize tracksPreOnOff from tracks (independent context for preOnOff sequence)
+    tracksPreOnOff = tracks;
     return true;
 }
 
@@ -221,79 +225,99 @@ void SMFParser::restart(void) {
         tracks[i].state = TState::TS_EMPTY;
         tracks[i].nextNote.startTick = 0;
     }
+    // Restart tracksPreOnOff as well
+    for (int32_t i = 0; i < numOfTracks; ++i) {
+        tracksPreOnOff[i].tempo = tempo;
+        tracksPreOnOff[i].position = tracksPreOnOff[i].top;
+        tracksPreOnOff[i].previousEvent = 0;
+        tracksPreOnOff[i].program = 0;
+        tracksPreOnOff[i].tick = 0;
+        tracksPreOnOff[i].state = TState::TS_EMPTY;
+        tracksPreOnOff[i].nextNote.startTick = 0;
+    }
 }
 
 
-Note SMFParser::parse(int32_t till) {
+Note SMFParser::parse(int32_t till, bool forPreOnOff) {
     Note retNote;
     retNote.state = NState::NS_EMPTY;
+    
+    // Early exit if no MIDI file is loaded
+    if (numOfTracks == 0) {
+        retNote.state = NState::NS_EMPTY;
+        return retNote;
+    }
+    
+    // Select tracks to use (preOnOff sequence or normal sequence)
+    std::vector<Track>& activeTracks = forPreOnOff ? tracksPreOnOff : tracks;
+    
     int32_t numServed = 0;
     for (uint32_t i = 0; i < numOfTracks; ++i) {
-        if (tracks[i].position >= tracks[i].tail){
-            tracks[i].state = TState::TS_SERVED;
-            tracks[i].nextNote.startTick = (uint32_t)(-1);
+        if (activeTracks[i].position >= activeTracks[i].tail){
+            activeTracks[i].state = TState::TS_SERVED;
+            activeTracks[i].nextNote.startTick = (uint32_t)(-1);
         }
-        while(tracks[i].state == TState::TS_EMPTY && tracks[i].position < tracks[i].tail) {
-            tracks[i].tick += getVarLen(&(tracks[i].position));
-            uint8_t event = getByte(&(tracks[i].position));
+        while(activeTracks[i].state == TState::TS_EMPTY && activeTracks[i].position < activeTracks[i].tail) {
+            activeTracks[i].tick += getVarLen(&(activeTracks[i].position));
+            uint8_t event = getByte(&(activeTracks[i].position));
 
             if (event < 0x80) {
-                event = tracks[i].previousEvent;
-                skipByte(-1, &(tracks[i].position));
+                event = activeTracks[i].previousEvent;
+                skipByte(-1, &(activeTracks[i].position));
                 if(event == 0) continue; // SysEx event
             } else 
-                tracks[i].previousEvent = ((event & 0xf0) != 0xf0) ? event : 0;
+                activeTracks[i].previousEvent = ((event & 0xf0) != 0xf0) ? event : 0;
             uint8_t channel = event & 0xf;
 
             switch(event & 0xf0) {
                 case 0x80: // note off
                     {
-                        int8_t key = getByte(&(tracks[i].position));
-                        int8_t velocity = getByte(&(tracks[i].position));
+                        int8_t key = getByte(&(activeTracks[i].position));
+                        int8_t velocity = getByte(&(activeTracks[i].position));
 
-                        tracks[i].nextNote = {
+                        activeTracks[i].nextNote = {
                             .state        = NState::NS_OFF,
                             .trackNum     = (int32_t)i,
                             .channel      = (int32_t)channel,
                             .key          = (int32_t)key,
                             .velocity     = (int32_t)velocity,
-                            .program      = (int32_t)tracks[i].program,
-                            .startTick    = tracks[i].tick,
+                            .program      = (int32_t)activeTracks[i].program,
+                            .startTick    = activeTracks[i].tick,
                             .startTime    = 0,
                             .tempo        = 0
                         };
-                        tracks[i].state = TState::TS_FOUND;
+                        activeTracks[i].state = TState::TS_FOUND;
                     }
                     break;
 
                 case 0x90: // note on
                     {
-                        int8_t key = getByte(&(tracks[i].position));
-                        int8_t velocity = getByte(&(tracks[i].position));
+                        int8_t key = getByte(&(activeTracks[i].position));
+                        int8_t velocity = getByte(&(activeTracks[i].position));
 
                         NState state = NState::NS_OFF;
                         if (velocity != 0) state = NState::NS_ON_FOREVER;
 
-                        tracks[i].nextNote = {
+                        activeTracks[i].nextNote = {
                             .state        = state,
                             .trackNum     = (int32_t)i,
                             .channel      = (int32_t)channel,
                             .key          = (int32_t)key,
                             .velocity     = (int32_t)velocity,
-                            .program      = (int32_t)tracks[i].program,
-                            .startTick    = tracks[i].tick,
+                            .program      = (int32_t)activeTracks[i].program,
+                            .startTick    = activeTracks[i].tick,
                             .startTime    = 0,
                             .tempo        = 0
                         };
-                        tracks[i].state = TState::TS_FOUND;
+                        activeTracks[i].state = TState::TS_FOUND;
                     }
                     break;
 
                 case 0xa0: //Polyphonic Pressure (ignored)
                     {
-                        int8_t key = getByte(&(tracks[i].position));
-                        int8_t pressure = getByte(&(tracks[i].position));   
-//                        skipByte(2, &(tracks[i].position));
+                        int8_t key = getByte(&(activeTracks[i].position));
+                        int8_t pressure = getByte(&(activeTracks[i].position));   
+//                        skipByte(2, &(activeTracks[i].position));
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
                         godot::UtilityFunctions::print("Polyphonic Pressure: ", key, " ", pressure, " ch=", channel);
 #endif // DEBUG_ENABLED
@@ -303,8 +327,8 @@ Note SMFParser::parse(int32_t till) {
 
                 case 0xb0: // Controller (ignored)
                     {
-                        int8_t controller = getByte(&(tracks[i].position));
-                        int8_t value = getByte(&(tracks[i].position));  
+                        int8_t controller = getByte(&(activeTracks[i].position));
+                        int8_t value = getByte(&(activeTracks[i].position));  
 //#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
 //                        godot::UtilityFunctions::print("Controller: ",controller, " ", value, " ch=", channel);
 //#endif // DEBUG_ENABLED
@@ -313,14 +337,14 @@ Note SMFParser::parse(int32_t till) {
 
                 case 0xc0: // program change
                     {
-                        tracks[i].program = getByte(&(tracks[i].position));
+                        activeTracks[i].program = getByte(&(activeTracks[i].position));
                     }
                     break;
 
                 case 0xd0: // Channel Pressure (ignored)
                     {
-                        int8_t pressure = getByte(&(tracks[i].position));
-//                        skipByte(1, &(tracks[i].position));
+                        int8_t pressure = getByte(&(activeTracks[i].position));
+//                        skipByte(1, &(activeTracks[i].position));
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
                         godot::UtilityFunctions::print("Channel Pressure: ", pressure, " ch=", channel);
 #endif // DEBUG_ENABLED
@@ -329,8 +353,8 @@ Note SMFParser::parse(int32_t till) {
 
                 case 0xe0: // pitch bend (currently, ignored)
                     {
-                        int8_t lsb = getByte(&(tracks[i].position)); // note that it is only little endian.
-                        int8_t msb = getByte(&(tracks[i].position));
+                        int8_t lsb = getByte(&(activeTracks[i].position)); // note that it is only little endian.
+                        int8_t msb = getByte(&(activeTracks[i].position));
                         int16_t pitchBend = (int16_t)lsb + ((int16_t)msb)*256; // msb
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
                         godot::UtilityFunctions::print("Pitch bend: ",pitchBend, " ch=", channel);
@@ -341,25 +365,25 @@ Note SMFParser::parse(int32_t till) {
                 case 0xf0: // SysEx event
                     {
                         if (event == 0xf0) {// System Exclusive Message Begin
-                            skipByte(getVarLen(&(tracks[i].position)));
+                            skipByte(getVarLen(&(activeTracks[i].position)));
                         }
                         else if (event == 0xf7) { // System Exclusive Message End
-                            skipByte(getVarLen(&(tracks[i].position)));
+                            skipByte(getVarLen(&(activeTracks[i].position)));
                         }
                         else if (event == 0xff) {
-                            uint8_t type = getByte(&(tracks[i].position));
-                            uint32_t value = getVarLen(&(tracks[i].position));
+                            uint8_t type = getByte(&(activeTracks[i].position));
+                            uint32_t value = getVarLen(&(activeTracks[i].position));
 
                             switch(type) {
                                 case 0x00: // MetaSequence
                                     {
-                                        skipByte(2, &(tracks[i].position));
+                                        skipByte(2, &(activeTracks[i].position));
                                     }
                                     break;
 
                                 case 0x01: // MetaText
                                     {
-                                        std::string str = getStr(value, &(tracks[i].position));
+                                        std::string str = getStr(value, &(activeTracks[i].position));
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
                                         godot::UtilityFunctions::print("Track", i, " MetaText: ", str.c_str());
 #endif // DEBUG_ENABLED
@@ -368,7 +392,7 @@ Note SMFParser::parse(int32_t till) {
 
                                 case 0x02: // MetaCopyright
                                     {
-                                        std::string str = getStr(value, &(tracks[i].position));
+                                        std::string str = getStr(value, &(activeTracks[i].position));
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
                                         godot::UtilityFunctions::print("Track", i, " MetaCopyright: ", str.c_str());
 #endif // DEBUG_ENABLED
@@ -377,7 +401,7 @@ Note SMFParser::parse(int32_t till) {
 
                                 case 0x03: // MetaTrackName
                                     {
-                                        std::string str = getStr(value, &(tracks[i].position));
+                                        std::string str = getStr(value, &(activeTracks[i].position));
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
                                         godot::UtilityFunctions::print("Track", i, " MetaTrackName: ", str.c_str());
 #endif // DEBUG_ENABLED
@@ -386,7 +410,7 @@ Note SMFParser::parse(int32_t till) {
 
                                 case 0x04: // MetaInstrumentName
                                     {
-                                        std::string str = getStr(value, &(tracks[i].position));
+                                        std::string str = getStr(value, &(activeTracks[i].position));
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
                                         godot::UtilityFunctions::print("Track", i, " MetaInstrumentName: ", str.c_str());
 #endif // DEBUG_ENABLED
@@ -395,47 +419,47 @@ Note SMFParser::parse(int32_t till) {
 
                                 case 0x05: // MetaLyrics
                                     {
-                                        skipByte(value, &(tracks[i].position));
+                                        skipByte(value, &(activeTracks[i].position));
                                     }
                                     break;
 
                                 case 0x06: // MetaMarker
                                     {
-                                        skipByte(value, &(tracks[i].position));
+                                        skipByte(value, &(activeTracks[i].position));
                                     }
                                     break;
 
                                 case 0x07: // MetaCuePoint
                                     {
-                                        skipByte(value, &(tracks[i].position));
+                                        skipByte(value, &(activeTracks[i].position));
                                     }
                                     break;
 
                                 case 0x20: // MetaChannelPrefix
                                     {
-                                        skipByte(1, &(tracks[i].position));
+                                        skipByte(1, &(activeTracks[i].position));
                                     }
                                     break;
 
                                 case 0x2f: // END OF TRACK
                                     {
-                                        tracks[i].state = TState::TS_SERVED;
+                                        activeTracks[i].state = TState::TS_SERVED;
                                     }
                                     break;
 
                                 case 0x51: // MetaSetTempo
                                     {
-                                        uint32_t metaSetTempo = getBytes(3, &(tracks[i].position));
+                                        uint32_t metaSetTempo = getBytes(3, &(activeTracks[i].position));
                                         const uint32_t BPM = 60000000 / metaSetTempo;
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
                                         godot::UtilityFunctions::print("MetaSetTempo: ", metaSetTempo);
                                         godot::UtilityFunctions::print("       Track: ", i);
-                                        godot::UtilityFunctions::print("        tick: ", tracks[i].tick);
+                                        godot::UtilityFunctions::print("        tick: ", activeTracks[i].tick);
                                         godot::UtilityFunctions::print("         BPM: ", BPM);
 #endif // DEBUG_ENABLED
-                                        if(tracks[i].tick == 0) tempos[0].tempo = BPM;
+                                        if(activeTracks[i].tick == 0) tempos[0].tempo = BPM;
                                         else {
-                                            tempos.push_back({tracks[i].tick, BPM});
+                                            tempos.push_back({activeTracks[i].tick, BPM});
                                             std::sort(tempos.begin(), tempos.end());
                                     
                                             float elapsedTicks = 0.0f;
@@ -451,25 +475,25 @@ Note SMFParser::parse(int32_t till) {
 
                                 case 0x54: // MetaSMPTEOffset
                                     {
-                                        skipByte(5, &(tracks[i].position));
+                                        skipByte(5, &(activeTracks[i].position));
                                     }
                                     break;
 
                                 case 0x58: // MetaTimeSignature
                                     {
-                                        skipByte(4, &(tracks[i].position));
+                                        skipByte(4, &(activeTracks[i].position));
                                     }
                                     break;
 
                                 case 0x59: // MetaKeySignature
                                     {
-                                        skipByte(2, &(tracks[i].position));
+                                        skipByte(2, &(activeTracks[i].position));
                                     }
                                     break;
 
                                 case 0x7f: // MetaSequencerSpecific
                                     {
-                                        skipByte(value, &(tracks[i].position));
+                                        skipByte(value, &(activeTracks[i].position));
                                     }
                                     break;
 
@@ -483,7 +507,7 @@ Note SMFParser::parse(int32_t till) {
                 default:break;
             }
         }
-        if (tracks[i].state == TState::TS_SERVED) numServed += 1;
+        if (activeTracks[i].state == TState::TS_SERVED) numServed += 1;
     }
 
     if (numServed == numOfTracks){
@@ -493,23 +517,27 @@ Note SMFParser::parse(int32_t till) {
         int32_t minTick = 0x7fffffff; // set very large number
         int32_t j = 0;
         for (int32_t i = 0; i < numOfTracks; ++i) {
-            if(tracks[i].nextNote.startTick < minTick) {
-                minTick = tracks[i].nextNote.startTick;
+            if(activeTracks[i].nextNote.startTick < minTick) {
+                minTick = activeTracks[i].nextNote.startTick;
                 j = i;
             }
         }
 
         auto it = std::find_if(tempos.begin(), tempos.end(), [&](const Tempo &bpm) {
-            return (tracks[j].nextNote.startTick < bpm.tick);
+            return (activeTracks[j].nextNote.startTick < bpm.tick);
         }) - 1;
         if (it != tempos.end()) {
             const float TEMPO = ((unitOfTime / it->tempo) /  timeDivision);
-            tracks[j].nextNote.tempo = (int32_t)it->tempo;
-            tracks[j].nextNote.startTime = (int32_t)(it->time + ((tracks[j].nextNote.startTick - it->tick) * TEMPO));
+            activeTracks[j].nextNote.tempo = (int32_t)it->tempo;
+            activeTracks[j].nextNote.startTime = (int32_t)(it->time + ((activeTracks[j].nextNote.startTick - it->tick) * TEMPO));
+            // For normal sequence (not preOnOff), add preOnTime offset
+            if (!forPreOnOff && preOnTime > 0.0f) {
+                activeTracks[j].nextNote.startTime += (int32_t)preOnTime;
+            }
         }
-        if(tracks[j].nextNote.startTime < till){
-            tracks[j].state = TState::TS_EMPTY;
-            retNote = tracks[j].nextNote;
+        if(activeTracks[j].nextNote.startTime < till){
+            activeTracks[j].state = TState::TS_EMPTY;
+            retNote = activeTracks[j].nextNote;
         }
     }
     return retNote;
