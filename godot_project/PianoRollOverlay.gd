@@ -12,6 +12,7 @@ var scroll_speed: float = 0.0  # Pixels per second (calculated as viewport_heigh
 var start_time_offset: float = -1.0  # Time offset for scrolling (-1 means not initialized yet)
 var default_note_height: float = 0.0  # Default note height for 10 minutes (600 seconds)
 var is_started: bool = false  # Whether playback has started (first note received)
+var last_smf_filename: String = ""  # Track SMF filename changes to clear notes on load/unload
 
 func _ready():
 	# Find GDSynthesizer node
@@ -129,6 +130,15 @@ func _on_pre_note_changed(state: String, note: Dictionary):
 				break
 
 func _process(delta):
+	# Check for MIDI file load/unload and clear notes
+	var current_smf_filename = Globalv.smf_filename
+	if current_smf_filename != last_smf_filename:
+		# MIDI file was loaded, reloaded, or unloaded - clear all notes
+		active_notes.clear()
+		is_started = false
+		start_time_offset = -1.0
+		last_smf_filename = current_smf_filename
+	
 	queue_redraw()
 
 func _draw():
