@@ -15,7 +15,8 @@ var is_started: bool = false  # Whether playback has started (first note receive
 
 func _ready():
 	# Find GDSynthesizer node
-	var parent_node = get_parent().get_parent()
+	# Node structure: FrontCase -> PianoRoll -> TextureRect -> PianoRollOverlay
+	var parent_node = get_parent().get_parent().get_parent()
 	if parent_node:
 		gd_synthesizer = parent_node.get_node_or_null("GDSynthesizer")
 		if gd_synthesizer:

@@ -111,6 +111,10 @@ func _ready()->void:
 	var ctr_params = get_control_params()
 	Globalv.num_division = ctr_params["divisionNum"]
 	percussion_params_array = get_percussion_params()
+	
+	# Set preOnTime to 5 seconds (5000ms) for piano roll visualization
+	ctr_params["preOnTime"] = 5000.0
+	set_control_params(ctr_params)
 
 	play(0.0)
 

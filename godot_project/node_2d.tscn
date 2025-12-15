@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://chvbmg3vcgsmx"]
+[gd_scene load_steps=6 format=3 uid="uid://chvbmg3vcgsmx"]
 
 [ext_resource type="Script" path="res://FrontCase.gd" id="1_gstdt"]
 [ext_resource type="Script" path="res://GDSynthesizer.gd" id="1_yny12"]
 [ext_resource type="Texture2D" uid="uid://bty60jgkpa63e" path="res://panel_silk.svg" id="2_gog28"]
 [ext_resource type="PackedScene" uid="uid://lmx8rmjigqy1" path="res://knob.tscn" id="3_5shy8"]
+[ext_resource type="Script" path="res://PianoRollOverlay.gd" id="3_pianoroll_script"]
 
 [node name="FrontCase" type="Node2D"]
 script = ExtResource("1_gstdt")
@@ -1369,6 +1370,28 @@ horizontal_alignment = 2
 [node name="GDSynthesizer" type="GDSynthesizer" parent="."]
 script = ExtResource("1_yny12")
 
+[node name="PianoRoll" type="Node2D" parent="."]
+visible = false
+z_index = 1000
+position = Vector2(10, 0)
+
+[node name="TextureRect" type="TextureRect" parent="PianoRoll"]
+z_index = 1000
+offset_right = 1024.0
+offset_bottom = 340.0
+mouse_filter = 0
+
+[node name="PianoRollOverlay" type="Control" parent="PianoRoll/TextureRect"]
+z_index = 1001
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("3_pianoroll_script")
+
 [node name="ButtonSelectSMF" type="Button" parent="."]
 offset_left = 761.0
 offset_top = 368.0
@@ -1479,6 +1502,15 @@ offset_bottom = 42.0
 scale = Vector2(0.5, 0.5)
 text = "Key select"
 
+[node name="ButtonPianoroll" type="Button" parent="ControlPercussion"]
+layout_mode = 0
+offset_left = -208.0
+offset_top = 33.0
+offset_right = -104.0
+offset_bottom = 64.0
+scale = Vector2(0.5, 0.5)
+text = "PianoRoll"
+
 [node name="ButtonRegistProgram" type="Button" parent="ControlPercussion"]
 layout_mode = 0
 offset_left = 35.0
@@ -1572,6 +1604,7 @@ text = "Close"
 [connection signal="file_selected" from="ButtonSaveData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_save_file_selected"]
 [connection signal="pressed" from="ButtonLicens" to="." method="_on_button_licens_pressed"]
 [connection signal="pressed" from="ControlPercussion/ButtonKeySelect" to="." method="_on_button_key_select_pressed"]
+[connection signal="pressed" from="ControlPercussion/ButtonPianoroll" to="." method="_on_button_pianoroll_pressed"]
 [connection signal="pressed" from="ControlPercussion/ButtonRegistProgram" to="." method="_on_button_regist_program_pressed"]
 [connection signal="pressed" from="ControlPercussion/ButtonRegistNote" to="." method="_on_button_regist_note_pressed"]
 [connection signal="pressed" from="ControlLicens/Button" to="." method="_on_button_pressed"]

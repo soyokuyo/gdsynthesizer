@@ -579,6 +579,12 @@ func _on_button_key_select_pressed()->void:
 				.get_node("keyled2").color = Color(0.0, 1.0, 0.0, 1)
 
 
+func _on_button_pianoroll_pressed()->void:
+	var piano_roll = get_node_or_null("PianoRoll")
+	if piano_roll:
+		piano_roll.visible = not piano_roll.visible
+
+
 func _on_button_regist_program_pressed()->void:
 	if    Globalv.is_percussion_key_select == false\
 	  and Globalv.is_percussion_prog_select == false\
