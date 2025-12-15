@@ -66,20 +66,9 @@ func _ready():
 var last_program: int = -1
 
 func _on_pre_note_changed(state: String, note: Dictionary):
-	# Only process notes for the currently selected PROGRAM
+	# Process notes for all PROGRAMS (not just the currently selected one)
 	var current_program = Globalv.program
 	var note_program = note.get("instrumentNum", -1)
-	
-	if current_program != last_program:
-		last_program = current_program
-		# Clear active notes when program changes
-		active_notes.clear()
-		# Reset start time when program changes
-		is_started = false
-		start_time_offset = -1.0
-	
-	if note_program != current_program:
-		return
 	
 	# For pre_note_changed signals, the key is stored as "key2"
 	var key = note.get("key2", -1)
@@ -119,7 +108,8 @@ func _on_pre_note_changed(state: String, note: Dictionary):
 			"end_time": -1.0,  # Will be set when pre_note_off is received
 			"program": note_program,
 			"channel": channel,
-			"note_height": default_note_height  # Initial height: 10 minutes worth (will be adjusted on pre_note_off)
+			"note_height": default_note_height,  # Initial height: 10 minutes worth (will be adjusted on pre_note_off)
+			"visible": (note_program == current_program)  # Visible if matches currently selected program
 		}
 		active_notes.append(note_data)
 		# pre_note_on handled
@@ -153,6 +143,14 @@ func _draw():
 	
 	# Calculate key width (equal spacing for all keys)
 	var key_width = rect_size.x / Globalv.num_keyboard_key
+
+	# Check for program change and update visibility flags for all notes
+	var current_program = Globalv.program
+	if current_program != last_program:
+		last_program = current_program
+		# Update visibility flags for all notes based on currently selected program
+		for n in active_notes:
+			n["visible"] = (n.get("program", -1) == current_program)
 
 	# Draw key backgrounds (white keys, black keys) - Always draw, independent of music loading/playing
 	var sharp_note_mods = [1, 3, 6, 8, 10]  # C#, D#, F#, G#, A# (corrected)
@@ -191,6 +189,10 @@ func _draw():
 	# On pre_note_off: top edge is adjusted to y=0, bottom edge is below
 	# Notes scroll down at scroll_speed pixels per second
 	for note in active_notes:
+		# Only draw notes that are visible (match currently selected program)
+		if not note.get("visible", false):
+			continue
+		
 		var key = note["key"]
 		var key_index = key - Globalv.most_left_key_num
 		
