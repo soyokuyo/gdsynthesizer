@@ -52,8 +52,8 @@ func _ready():
 	# start_time_offset will be set when first pre_note_on is received
 	
 	# Set size explicitly to match parent TextureRect
-	size = Vector2(1024, 340)
-	custom_minimum_size = Vector2(1024, 340)
+	size = Vector2(1000, 340)
+	custom_minimum_size = Vector2(1000, 340)
 	
 	
 	# Ensure Control can receive mouse events and draw children
