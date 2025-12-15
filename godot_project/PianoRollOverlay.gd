@@ -7,7 +7,7 @@ extends Control
 var gd_synthesizer: Node = null
 var active_notes: Array[Dictionary] = []  # Array of {key: int, start_time: float, end_time: float, program: int, channel: int, note_height: float}
 var pre_on_time: float = 5.0  # preOnTime in seconds (matches GDSynthesizer setting)
-var viewport_height: float = 340.0  # Piano roll viewport height in pixels
+var viewport_height: float = 350.0  # Piano roll viewport height in pixels
 var scroll_speed: float = 0.0  # Pixels per second (calculated as viewport_height / pre_on_time)
 var start_time_offset: float = -1.0  # Time offset for scrolling (-1 means not initialized yet)
 var default_note_height: float = 0.0  # Default note height for 10 minutes (600 seconds)
@@ -53,7 +53,7 @@ func _ready():
 	# start_time_offset will be set when first pre_note_on is received
 	
 	# Set size explicitly to match parent TextureRect
-	size = Vector2(1000, 340)
+	size = Vector2(1000, 350)
 	custom_minimum_size = Vector2(1000, 340)
 	
 	

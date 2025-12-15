@@ -1378,7 +1378,7 @@ position = Vector2(10, 0)
 [node name="TextureRect" type="TextureRect" parent="PianoRoll"]
 z_index = 1000
 offset_right = 1000.0
-offset_bottom = 340.0
+offset_bottom = 350.0
 mouse_filter = 0
 
 [node name="PianoRollOverlay" type="Control" parent="PianoRoll/TextureRect"]
@@ -1597,11 +1597,11 @@ text = "Close"
 [connection signal="file_selected" from="ButtonSelectSMF/FileDialog" to="GDSynthesizer" method="_on_file_dialog_file_selected"]
 [connection signal="button_up" from="ButtonUnselectSMF" to="GDSynthesizer" method="_on_button_unselect_smf_button_up"]
 [connection signal="button_up" from="ButtonLoadData" to="GDSynthesizer" method="_on_button_load_data_button_up"]
-[connection signal="file_selected" from="ButtonLoadData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_load_file_selected"]
 [connection signal="file_selected" from="ButtonLoadData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_file_selected"]
+[connection signal="file_selected" from="ButtonLoadData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_load_file_selected"]
 [connection signal="button_up" from="ButtonSaveData" to="GDSynthesizer" method="_on_button_save_data_button_up"]
-[connection signal="file_selected" from="ButtonSaveData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_save_file_selected"]
 [connection signal="file_selected" from="ButtonSaveData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_file_selected"]
+[connection signal="file_selected" from="ButtonSaveData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_save_file_selected"]
 [connection signal="pressed" from="ButtonLicens" to="." method="_on_button_licens_pressed"]
 [connection signal="pressed" from="ControlPercussion/ButtonKeySelect" to="." method="_on_button_key_select_pressed"]
 [connection signal="pressed" from="ControlPercussion/ButtonPianoroll" to="." method="_on_button_pianoroll_pressed"]
