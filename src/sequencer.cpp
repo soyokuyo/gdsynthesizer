@@ -821,9 +821,7 @@ bool Sequencer::checkNewNote(Note oneNote, bool forPreOnOff){
             mainteinDuration[ringingIdx] = (float)(oneNote.startTime - ringingTone.note.startTime);
             ringingTone.note.state = NState::NS_OFF;
 
-            {
             enqueueNoteEvent(0, ringingTone, program[ringingIdx], key[ringingIdx]);
-            }
 
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
             if (logLevel > 1){
@@ -1027,9 +1025,10 @@ bool Sequencer::feed(double *frame){
     int32_t preOnTimeInt = (int32_t)preOnTime;
     
     // Parse preOnOff sequence (if preOnTime > 0 and MIDI file is loaded)
-    // Use common currentTime for both sequences
+    // preOnOff sequence parses without delay (no preOnTime offset)
+    // The delay for normal sequence is handled in SMFParser::parse()
     if (preOnTime > 0.0f && midi.getNumOfTracks() > 0) {
-        int32_t preOnOffTill = currentTime + frameTime + preOnTimeInt; // Look ahead by preOnTime
+        int32_t preOnOffTill = currentTime + frameTime;
         Note preNote;
         while(isSet) {
             preNote = midi.parse(preOnOffTill, true); // forPreOnOff = true

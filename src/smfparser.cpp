@@ -30,7 +30,6 @@
 
 #include <godot_cpp/classes/file_access.hpp>
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-#include <godot_cpp/variant/utility_functions.hpp> // for "UtilityFunctions::print()".
 #endif // DEBUG_ENABLED
 
 SMFParser::SMFParser() : unitOfTime(60000.0f), position(0), tempo(60) {
@@ -50,6 +49,7 @@ void SMFParser::unload(void) {
     timeDivision = 0;
     binary_data.reset();
     tempos.clear();
+    temposPreOnOff.clear(); // Clear temposPreOnOff as well
     tracks.clear();
     
 }
@@ -106,12 +106,11 @@ bool SMFParser::load(const char *name) {
 
     tempo = 60; // as default
     tempos.push_back({0, tempo, 0.0});
+    temposPreOnOff.push_back({0, tempo, 0.0}); // Initialize temposPreOnOff as well
     for (int32_t i = 0; i < numOfTracks; ++i) {
         std::string str = getStr(4);
         if (str.compare("MTrk") != 0) {
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-            godot::UtilityFunctions::print("Error: MTrk mark not found.");
-            godot::UtilityFunctions::print("    Track", i, " MTrk header: ",  str.c_str());
 #endif // DEBUG_ENABLED
             return false;
         }
@@ -184,12 +183,11 @@ bool SMFParser::load(const godot::String &name) {
 
     tempo = 60; // as default
     tempos.push_back({0, tempo, 0.0});
+    temposPreOnOff.push_back({0, tempo, 0.0}); // Initialize temposPreOnOff as well
     for (int32_t i = 0; i < numOfTracks; ++i) {
         std::string str = getStr(4);
         if (str.compare("MTrk") != 0) {
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-            godot::UtilityFunctions::print("Error: MTrk mark not found.");
-            godot::UtilityFunctions::print("    Track", i, " MTrk header: ",  str.c_str());
 #endif // DEBUG_ENABLED
             return false;
         }
@@ -216,6 +214,8 @@ bool SMFParser::load(const godot::String &name) {
 void SMFParser::restart(void) {
     tempos.clear();
     tempos.push_back({0, tempo, 0.0});
+    temposPreOnOff.clear();
+    temposPreOnOff.push_back({0, tempo, 0.0}); // Reset temposPreOnOff as well
     for (int32_t i = 0; i < numOfTracks; ++i) {
         tracks[i].tempo = tempo;
         tracks[i].position = tracks[i].top;
@@ -319,7 +319,7 @@ Note SMFParser::parse(int32_t till, bool forPreOnOff) {
                         int8_t pressure = getByte(&(activeTracks[i].position));   
 //                        skipByte(2, &(activeTracks[i].position));
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-                        godot::UtilityFunctions::print("Polyphonic Pressure: ", key, " ", pressure, " ch=", channel);
+                        // debug print removed
 #endif // DEBUG_ENABLED
                         
                     }
@@ -330,7 +330,7 @@ Note SMFParser::parse(int32_t till, bool forPreOnOff) {
                         int8_t controller = getByte(&(activeTracks[i].position));
                         int8_t value = getByte(&(activeTracks[i].position));  
 //#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-//                        godot::UtilityFunctions::print("Controller: ",controller, " ", value, " ch=", channel);
+//                        debug print removed
 //#endif // DEBUG_ENABLED
                     }
                     break;
@@ -346,7 +346,7 @@ Note SMFParser::parse(int32_t till, bool forPreOnOff) {
                         int8_t pressure = getByte(&(activeTracks[i].position));
 //                        skipByte(1, &(activeTracks[i].position));
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-                        godot::UtilityFunctions::print("Channel Pressure: ", pressure, " ch=", channel);
+                        // debug print removed
 #endif // DEBUG_ENABLED
                     }
                     break;
@@ -357,7 +357,7 @@ Note SMFParser::parse(int32_t till, bool forPreOnOff) {
                         int8_t msb = getByte(&(activeTracks[i].position));
                         int16_t pitchBend = (int16_t)lsb + ((int16_t)msb)*256; // msb
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-                        godot::UtilityFunctions::print("Pitch bend: ",pitchBend, " ch=", channel);
+                        // debug print removed
 #endif // DEBUG_ENABLED
                     }
                     break;
@@ -385,7 +385,7 @@ Note SMFParser::parse(int32_t till, bool forPreOnOff) {
                                     {
                                         std::string str = getStr(value, &(activeTracks[i].position));
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-                                        godot::UtilityFunctions::print("Track", i, " MetaText: ", str.c_str());
+                                        // debug print removed
 #endif // DEBUG_ENABLED
                                     }
                                     break;
@@ -394,7 +394,7 @@ Note SMFParser::parse(int32_t till, bool forPreOnOff) {
                                     {
                                         std::string str = getStr(value, &(activeTracks[i].position));
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-                                        godot::UtilityFunctions::print("Track", i, " MetaCopyright: ", str.c_str());
+                                        // debug print removed
 #endif // DEBUG_ENABLED
                                     }
                                     break;
@@ -403,7 +403,7 @@ Note SMFParser::parse(int32_t till, bool forPreOnOff) {
                                     {
                                         std::string str = getStr(value, &(activeTracks[i].position));
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-                                        godot::UtilityFunctions::print("Track", i, " MetaTrackName: ", str.c_str());
+                                        // debug print removed
 #endif // DEBUG_ENABLED
                                     }
                                     break;
@@ -412,7 +412,7 @@ Note SMFParser::parse(int32_t till, bool forPreOnOff) {
                                     {
                                         std::string str = getStr(value, &(activeTracks[i].position));
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-                                        godot::UtilityFunctions::print("Track", i, " MetaInstrumentName: ", str.c_str());
+                                        // debug print removed
 #endif // DEBUG_ENABLED
                                     }
                                     break;
@@ -452,22 +452,23 @@ Note SMFParser::parse(int32_t till, bool forPreOnOff) {
                                         uint32_t metaSetTempo = getBytes(3, &(activeTracks[i].position));
                                         const uint32_t BPM = 60000000 / metaSetTempo;
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-                                        godot::UtilityFunctions::print("MetaSetTempo: ", metaSetTempo);
-                                        godot::UtilityFunctions::print("       Track: ", i);
-                                        godot::UtilityFunctions::print("        tick: ", activeTracks[i].tick);
-                                        godot::UtilityFunctions::print("         BPM: ", BPM);
+                                        // debug print removed
 #endif // DEBUG_ENABLED
-                                        if(activeTracks[i].tick == 0) tempos[0].tempo = BPM;
+                                        // Select appropriate tempos array based on forPreOnOff
+                                        std::vector<Tempo>& activeTempos = forPreOnOff ? temposPreOnOff : tempos;
+                                        if(activeTracks[i].tick == 0) {
+                                            activeTempos[0].tempo = BPM;
+                                        }
                                         else {
-                                            tempos.push_back({activeTracks[i].tick, BPM});
-                                            std::sort(tempos.begin(), tempos.end());
+                                            activeTempos.push_back({activeTracks[i].tick, BPM});
+                                            std::sort(activeTempos.begin(), activeTempos.end());
                                     
                                             float elapsedTicks = 0.0f;
                                             float time = 0.0f;
-                                            for (int32_t j = 1; j < tempos.size(); ++j) {
-                                                time += (unitOfTime/tempos[j-1].tempo)*((tempos[j].tick-elapsedTicks)/timeDivision);
-                                                elapsedTicks = tempos[j].tick;
-                                                tempos[j].time = time;
+                                            for (int32_t j = 1; j < activeTempos.size(); ++j) {
+                                                time += (unitOfTime/activeTempos[j-1].tempo)*((activeTempos[j].tick-elapsedTicks)/timeDivision);
+                                                elapsedTicks = activeTempos[j].tick;
+                                                activeTempos[j].time = time;
                                             }
                                         }
                                     }
@@ -523,18 +524,24 @@ Note SMFParser::parse(int32_t till, bool forPreOnOff) {
             }
         }
 
-        auto it = std::find_if(tempos.begin(), tempos.end(), [&](const Tempo &bpm) {
+        // Select appropriate tempos array based on forPreOnOff
+        std::vector<Tempo>& activeTempos = forPreOnOff ? temposPreOnOff : tempos;
+        auto it = std::find_if(activeTempos.begin(), activeTempos.end(), [&](const Tempo &bpm) {
             return (activeTracks[j].nextNote.startTick < bpm.tick);
         }) - 1;
-        if (it != tempos.end()) {
+        if (it != activeTempos.end()) {
             const float TEMPO = ((unitOfTime / it->tempo) /  timeDivision);
             activeTracks[j].nextNote.tempo = (int32_t)it->tempo;
-            activeTracks[j].nextNote.startTime = (int32_t)(it->time + ((activeTracks[j].nextNote.startTick - it->tick) * TEMPO));
+            int32_t startTimeBeforeOffset = (int32_t)(it->time + ((activeTracks[j].nextNote.startTick - it->tick) * TEMPO));
+            activeTracks[j].nextNote.startTime = startTimeBeforeOffset;
             // For normal sequence (not preOnOff), add preOnTime offset
+            // This makes the note's startTime relative to the delayed playback start
             if (!forPreOnOff && preOnTime > 0.0f) {
                 activeTracks[j].nextNote.startTime += (int32_t)preOnTime;
             }
         }
+        // For normal sequence, the note's startTime already includes preOnTime offset
+        // So we can use till directly (no need to subtract preOnTime)
         if(activeTracks[j].nextNote.startTime < till){
             activeTracks[j].state = TState::TS_EMPTY;
             retNote = activeTracks[j].nextNote;

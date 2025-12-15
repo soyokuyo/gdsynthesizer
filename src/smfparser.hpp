@@ -120,7 +120,8 @@ private:
             return tick < another.tick;
         }
     };
-    std::vector<Tempo> tempos;
+    std::vector<Tempo> tempos; // For normal sequence
+    std::vector<Tempo> temposPreOnOff; // For preOnOff sequence (independent context)
     std::unique_ptr<uint8_t []> binary_data;
     float preOnTime = 0.0f; // Pre-on signal time in milliseconds (0 = disabled)
 public:

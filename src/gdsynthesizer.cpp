@@ -111,27 +111,13 @@ void GDSynthesizer::unloadMidi(void)
 
 int GDSynthesizer::loadMidi(const String &file_path)
 {
-#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-	UtilityFunctions::print("input strings: ", file_path.utf8().ptr());
-	UtilityFunctions::print("input strings: ", file_path);
-#endif // DEBUG_ENABLED
-
     if(FileAccess::file_exists(file_path)){
-#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-        UtilityFunctions::print("file exist, type 1");
-#endif // DEBUG_ENABLED
         sequencer.smfLoad(file_path, 60000.0);
     }
     else if (std::filesystem::is_regular_file(file_path.utf8().ptr())) {
-#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-        UtilityFunctions::print("file exist, type 2");
-#endif // DEBUG_ENABLED
         sequencer.smfLoad(file_path.utf8().ptr(), 60000.0);
     }
     else {
-#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-        UtilityFunctions::print(std::filesystem::current_path().c_str(), " is not file");
-#endif // DEBUG_ENABLED
         return 0;
     }
     return 1;
