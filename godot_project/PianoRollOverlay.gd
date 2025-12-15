@@ -142,11 +142,6 @@ func _process(delta):
 	queue_redraw()
 
 func _draw():
-	# Skip drawing if not started yet
-	if start_time_offset < 0:
-		return
-	
-	var current_time = Time.get_ticks_msec() / 1000.0 - start_time_offset
 	var rect_size = size
 	
 	if not has_meta("first_draw"):
@@ -158,6 +153,19 @@ func _draw():
 	
 	# Calculate key width (equal spacing for all keys)
 	var key_width = rect_size.x / Globalv.num_keyboard_key
+
+	# Draw key backgrounds (white keys, black keys) - Always draw, independent of music loading/playing
+	var sharp_note_mods = [1, 3, 6, 8, 10]  # C#, D#, F#, G#, A# (corrected)
+	for i in range(Globalv.num_keyboard_key):
+		var key = Globalv.most_left_key_num + i
+		var note_mod = key % 12
+		var x = i * key_width
+		if note_mod in sharp_note_mods:
+			# Black keys
+			draw_rect(Rect2(x, 0, key_width, rect_size.y), Color(0.0, 0.0, 0.0, 1.0))
+		else:
+			# White keys (match keyboard color)
+			draw_rect(Rect2(x, 0, key_width, rect_size.y), Color(1.0, 0.9, 0.9, 1.0))
 	
 	# Draw grid lines for each key (vertical lines) - Blue color
 	for i in range(Globalv.num_keyboard_key + 1):
@@ -170,6 +178,12 @@ func _draw():
 	for i in range(int(rect_size.y / horizontal_line_spacing) + 1):
 		var y = i * horizontal_line_spacing
 		draw_line(Vector2(0, y), Vector2(rect_size.x, y), Color(0.2, 0.4, 1.0, 0.5), 1.0)
+	
+	# Skip note drawing if not started yet
+	if start_time_offset < 0:
+		return
+	
+	var current_time = Time.get_ticks_msec() / 1000.0 - start_time_offset
 	
 	# Draw active notes (scrolling from top to bottom)
 	# Notes appear at y=0 (top of viewport) and scroll down over 5 seconds
