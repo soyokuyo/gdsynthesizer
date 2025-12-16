@@ -4,10 +4,14 @@ extends Control
 # Displays notes for the currently selected PROGRAM as scrolling rectangles
 # Notes flow from top to bottom, divided equally for each key
 
+# ★ 定数を一箇所に集約 - ここを変更すればすべてに反映されます ★
+const PIANO_ROLL_WIDTH: float = 1000.0
+const PIANO_ROLL_HEIGHT: float = 350.0
+
 var gd_synthesizer: Node = null
 var active_notes: Array[Dictionary] = []  # Array of {key: int, start_time: float, end_time: float, program: int, channel: int, note_height: float}
 var pre_on_time: float = 5.0  # preOnTime in seconds (matches GDSynthesizer setting)
-var viewport_height: float = 350.0  # Piano roll viewport height in pixels
+var viewport_height: float = PIANO_ROLL_HEIGHT  # Piano roll viewport height in pixels (use constant)
 var scroll_speed: float = 0.0  # Pixels per second (calculated as viewport_height / pre_on_time)
 var start_time_offset: float = -1.0  # Time offset for scrolling (-1 means not initialized yet)
 var default_note_height: float = 0.0  # Default note height for 10 minutes (600 seconds)
@@ -15,6 +19,16 @@ var is_started: bool = false  # Whether playback has started (first note receive
 var last_smf_filename: String = ""  # Track SMF filename changes to clear notes on load/unload
 
 func _ready():
+	# Find parent TextureRect and set its size dynamically
+	var texture_rect = get_parent()  # PianoRoll/TextureRect
+	if texture_rect and texture_rect is TextureRect:
+		# Set TextureRect size using constants
+		texture_rect.custom_minimum_size = Vector2(PIANO_ROLL_WIDTH, PIANO_ROLL_HEIGHT)
+		texture_rect.size = Vector2(PIANO_ROLL_WIDTH, PIANO_ROLL_HEIGHT)
+		# Set offset_right and offset_bottom to match size
+		texture_rect.offset_right = PIANO_ROLL_WIDTH
+		texture_rect.offset_bottom = PIANO_ROLL_HEIGHT
+	
 	# Find GDSynthesizer node
 	# Node structure: FrontCase -> PianoRoll -> TextureRect -> PianoRollOverlay
 	var parent_node = get_parent().get_parent().get_parent()
@@ -52,9 +66,9 @@ func _ready():
 	set_process(true)
 	# start_time_offset will be set when first pre_note_on is received
 	
-	# Set size explicitly to match parent TextureRect
-	size = Vector2(1000, 350)
-	custom_minimum_size = Vector2(1000, 340)
+	# Set size explicitly to match parent TextureRect (use constants)
+	size = Vector2(PIANO_ROLL_WIDTH, PIANO_ROLL_HEIGHT)
+	custom_minimum_size = Vector2(PIANO_ROLL_WIDTH, PIANO_ROLL_HEIGHT)
 	
 	
 	# Ensure Control can receive mouse events and draw children
