@@ -32,11 +32,20 @@ func _ready():
 	# Find parent TextureRect and set its size dynamically
 	var texture_rect = get_parent()  # PianoRoll/TextureRect
 	if texture_rect and texture_rect is TextureRect:
+		# Set anchors to fix top-left corner (prevents position shift when size changes) - step 5
+		# These are constant values, so set them once in _ready()
+		texture_rect.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		texture_rect.anchor_left = 0.0
+		texture_rect.anchor_top = 0.0
+		texture_rect.anchor_right = 0.0
+		texture_rect.anchor_bottom = 0.0
+		texture_rect.offset_left = 0.0
+		texture_rect.offset_top = 0.0
+		texture_rect.offset_right = PIANO_ROLL_WIDTH  # Constant value
+		
 		# Set TextureRect size using constants
 		texture_rect.custom_minimum_size = Vector2(PIANO_ROLL_WIDTH, PIANO_ROLL_HEIGHT)
 		texture_rect.size = Vector2(PIANO_ROLL_WIDTH, PIANO_ROLL_HEIGHT)
-		# Set offset_right and offset_bottom to match size
-		texture_rect.offset_right = PIANO_ROLL_WIDTH
 		texture_rect.offset_bottom = PIANO_ROLL_HEIGHT
 	
 	# Find GDSynthesizer node
@@ -102,8 +111,21 @@ func _gui_input(event: InputEvent):
 			accept_event()
 
 func _switch_height():
-	# Temporary empty function - will be implemented in step 3
-	pass
+	# Update parent TextureRect size (step 4)
+	var texture_rect = get_parent()  # PianoRoll/TextureRect
+	if texture_rect and texture_rect is TextureRect:
+		# Only update size-related properties that depend on current_height
+		# (anchors and offset_left/offset_top/offset_right are set once in _ready())
+		texture_rect.offset_bottom = current_height
+		texture_rect.custom_minimum_size = Vector2(PIANO_ROLL_WIDTH, current_height)
+		texture_rect.size = Vector2(PIANO_ROLL_WIDTH, current_height)
+	
+	# Update PianoRollOverlay size
+	size = Vector2(PIANO_ROLL_WIDTH, current_height)
+	custom_minimum_size = Vector2(PIANO_ROLL_WIDTH, current_height)
+	
+	# Force redraw
+	queue_redraw()
 
 func _on_pre_note_changed(state: String, note: Dictionary):
 	# Process notes for all PROGRAMS (not just the currently selected one)
