@@ -85,16 +85,14 @@ func _ready():
 	set_process(true)
 	# start_time_offset will be set when first pre_note_on is received
 	
-	# Set size explicitly to match parent TextureRect (use constants)
-	size = Vector2(PIANO_ROLL_WIDTH, PIANO_ROLL_HEIGHT)
-	custom_minimum_size = Vector2(PIANO_ROLL_WIDTH, PIANO_ROLL_HEIGHT)
-	
 	# Ensure Control can receive mouse events (left-click for height toggle)
 	mouse_filter = Control.MOUSE_FILTER_STOP  # Stop mouse events to handle left-click
 	clip_contents = true  # Clip drawing to this node's rectangle
 	
-	# Call _switch_height() for future use (currently empty, will be implemented in step 3)
-	_switch_height()
+	# Initialize scroll speed and default note height based on initial height
+	if pre_on_time > 0.0:
+		scroll_speed = viewport_height / pre_on_time
+		default_note_height = 600.0 * scroll_speed
 	
 	# Force initial redraw
 	queue_redraw()
@@ -106,11 +104,21 @@ func _gui_input(event: InputEvent):
 	if event is InputEventMouseButton:
 		var mouse_event = event as InputEventMouseButton
 		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
-			_switch_height()  # Will be implemented in step 3
+			_switch_height()
 			# Accept the event to prevent it from propagating
 			accept_event()
 
 func _switch_height():
+	# Cycle through height options: 350 → 414 → 447 → 350 → ... (step 3)
+	height_index = (height_index + 1) % HEIGHT_OPTIONS.size()
+	current_height = HEIGHT_OPTIONS[height_index]
+	viewport_height = current_height
+	
+	# Recalculate scroll speed based on new height (step 3)
+	if pre_on_time > 0.0:
+		scroll_speed = viewport_height / pre_on_time
+		default_note_height = 600.0 * scroll_speed
+	
 	# Update parent TextureRect size (step 4)
 	var texture_rect = get_parent()  # PianoRoll/TextureRect
 	if texture_rect and texture_rect is TextureRect:
@@ -120,9 +128,8 @@ func _switch_height():
 		texture_rect.custom_minimum_size = Vector2(PIANO_ROLL_WIDTH, current_height)
 		texture_rect.size = Vector2(PIANO_ROLL_WIDTH, current_height)
 	
-	# Update PianoRollOverlay size
-	size = Vector2(PIANO_ROLL_WIDTH, current_height)
-	custom_minimum_size = Vector2(PIANO_ROLL_WIDTH, current_height)
+	# PianoRollOverlay size will automatically follow parent TextureRect size
+	# (due to PRESET_FULL_RECT anchors), so no need to set it explicitly
 	
 	# Force redraw
 	queue_redraw()
