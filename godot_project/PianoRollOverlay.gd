@@ -6,12 +6,17 @@ extends Control
 
 # ★ 定数を一箇所に集約 - ここを変更すればすべてに反映されます ★
 const PIANO_ROLL_WIDTH: float = 1000.0
-const PIANO_ROLL_HEIGHT: float = 350.0
+const PIANO_ROLL_HEIGHT: float = 350.0  # Initial height (default)
+
+# Height options for right-click toggle: 350 → 414 → 447 → 350 → ...
+const HEIGHT_OPTIONS: Array[float] = [350.0, 414.0, 447.0]
 
 var gd_synthesizer: Node = null
 var active_notes: Array[Dictionary] = []  # Array of {key: int, start_time: float, end_time: float, program: int, channel: int, note_height: float}
 var pre_on_time: float = 5.0  # preOnTime in seconds (matches GDSynthesizer setting)
-var viewport_height: float = PIANO_ROLL_HEIGHT  # Piano roll viewport height in pixels (use constant)
+var current_height: float = PIANO_ROLL_HEIGHT  # Current piano roll height (can be changed by right-click)
+var viewport_height: float = PIANO_ROLL_HEIGHT  # Piano roll viewport height in pixels (synced with current_height)
+var height_index: int = 0  # Current index in HEIGHT_OPTIONS array
 var scroll_speed: float = 0.0  # Pixels per second (calculated as viewport_height / pre_on_time)
 var start_time_offset: float = -1.0  # Time offset for scrolling (-1 means not initialized yet)
 var default_note_height: float = 0.0  # Default note height for 10 minutes (600 seconds)
@@ -19,6 +24,11 @@ var is_started: bool = false  # Whether playback has started (first note receive
 var last_smf_filename: String = ""  # Track SMF filename changes to clear notes on load/unload
 
 func _ready():
+	# Initialize height settings
+	current_height = PIANO_ROLL_HEIGHT
+	height_index = 0
+	viewport_height = current_height
+	
 	# Find parent TextureRect and set its size dynamically
 	var texture_rect = get_parent()  # PianoRoll/TextureRect
 	if texture_rect and texture_rect is TextureRect:
@@ -70,15 +80,30 @@ func _ready():
 	size = Vector2(PIANO_ROLL_WIDTH, PIANO_ROLL_HEIGHT)
 	custom_minimum_size = Vector2(PIANO_ROLL_WIDTH, PIANO_ROLL_HEIGHT)
 	
-	
-	# Ensure Control can receive mouse events and draw children
-	mouse_filter = Control.MOUSE_FILTER_IGNORE  # Ignore mouse events to pass them to underlying controls
+	# Ensure Control can receive mouse events (left-click for height toggle)
+	mouse_filter = Control.MOUSE_FILTER_STOP  # Stop mouse events to handle left-click
 	clip_contents = true  # Clip drawing to this node's rectangle
+	
+	# Call _switch_height() for future use (currently empty, will be implemented in step 3)
+	_switch_height()
 	
 	# Force initial redraw
 	queue_redraw()
 
 var last_program: int = -1
+
+func _gui_input(event: InputEvent):
+	# Handle left-click to toggle piano roll height
+	if event is InputEventMouseButton:
+		var mouse_event = event as InputEventMouseButton
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
+			_switch_height()  # Will be implemented in step 3
+			# Accept the event to prevent it from propagating
+			accept_event()
+
+func _switch_height():
+	# Temporary empty function - will be implemented in step 3
+	pass
 
 func _on_pre_note_changed(state: String, note: Dictionary):
 	# Process notes for all PROGRAMS (not just the currently selected one)
@@ -195,11 +220,14 @@ func _draw():
 		# Blue color for better visibility
 		draw_line(Vector2(x, 0), Vector2(x, rect_size.y), Color(0.2, 0.4, 1.0, 0.8), 1.0)
 	
-	# Draw horizontal grid lines every 50 pixels for time reference - Blue color
-	var horizontal_line_spacing = 50.0
-	for i in range(int(rect_size.y / horizontal_line_spacing) + 1):
-		var y = i * horizontal_line_spacing
-		draw_line(Vector2(0, y), Vector2(rect_size.x, y), Color(0.2, 0.4, 1.0, 0.5), 1.0)
+	# Draw horizontal grid lines every 1 second for time reference - Blue color
+	# Calculate 1 second in pixels: viewport_height represents pre_on_time seconds
+	if pre_on_time > 0.0:
+		var one_second_pixels: float = viewport_height / pre_on_time
+		if one_second_pixels > 0.0 and not is_inf(one_second_pixels) and not is_nan(one_second_pixels):
+			for i in range(int(rect_size.y / one_second_pixels) + 1):
+				var y = i * one_second_pixels
+				draw_line(Vector2(0, y), Vector2(rect_size.x, y), Color(0.2, 0.4, 1.0, 0.5), 1.0)
 	
 	# Skip note drawing if not started yet
 	if start_time_offset < 0:
