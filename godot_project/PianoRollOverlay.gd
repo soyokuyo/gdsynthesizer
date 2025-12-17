@@ -11,6 +11,13 @@ const PIANO_ROLL_HEIGHT: float = 350.0  # Initial height (default)
 # Height options for right-click toggle: 350 → 414 → 447 → 350 → ...
 const HEIGHT_OPTIONS: Array[float] = [350.0, 414.0, 447.0]
 
+# Piano roll color constants - Change these to adjust all related colors
+const COLOR_WHITE_KEY: Color = Color(0.6, 0.55, 0.55, 1.0)  # Gray for white keys
+const COLOR_BLACK_KEY: Color = Color(0.0, 0.0, 0.0, 1.0)    # Black for black keys
+const COLOR_GRID_VERTICAL: Color = Color(0.1, 0.2, 0.4, 0.8)  # Blue for vertical grid lines
+const COLOR_GRID_HORIZONTAL: Color = Color(0.1, 0.2, 0.4, 0.5)  # Blue for horizontal grid lines
+const COLOR_FALLBACK: Color = Color(1.0, 0.0, 0.0, 0.9)  # Red fallback color
+
 var gd_synthesizer: Node = null
 var active_notes: Array[Dictionary] = []  # Array of {key: int, start_time: float, end_time: float, program: int, channel: int, note_height: float}
 var pre_on_time: float = 5.0  # preOnTime in seconds (matches GDSynthesizer setting)
@@ -23,6 +30,7 @@ var default_note_height: float = 0.0  # Default note height for 10 minutes (600 
 var is_started: bool = false  # Whether playback has started (first note received)
 var last_smf_filename: String = ""  # Track SMF filename changes to clear notes on load/unload
 var show_all_programs: bool = false  # Display mode: false = single program, true = all programs
+var program_color_map: Array[Color] = []  # Color map for 128 programs (indexed by program number)
 
 func _ready():
 	# Initialize height settings
@@ -95,10 +103,157 @@ func _ready():
 		scroll_speed = viewport_height / pre_on_time
 		default_note_height = 600.0 * scroll_speed
 	
+	# Generate color map for programs
+	program_color_map = _generate_color_map()
+	
 	# Force initial redraw
 	queue_redraw()
 
 var last_program: int = -1
+
+func _generate_color_map() -> Array[Color]:
+	# Fixed color table with 128 colors that satisfy:
+	# 1. 64 <= R+G+B < 192 (brightness)
+	# 2. At least one RGB component differs by 128+ (saturation)
+	# 3. Colors are sufficiently different from each other
+	
+	return [
+		# Red-dominant colors (R high, G/B low) - 36 colors
+		Color(0.75, 0.0, 0.0, 0.9),    # 192, 0, 0
+		Color(0.8, 0.05, 0.0, 0.9),    # 204, 13, 0
+		Color(0.85, 0.1, 0.0, 0.9),    # 217, 26, 0
+		Color(0.9, 0.15, 0.0, 0.9),    # 230, 38, 0
+		Color(0.95, 0.2, 0.0, 0.9),    # 242, 51, 0
+		Color(1.0, 0.25, 0.0, 0.9),    # 255, 64, 0
+		Color(0.75, 0.0, 0.05, 0.9),   # 192, 0, 13
+		Color(0.8, 0.05, 0.05, 0.9),   # 204, 13, 13
+		Color(0.85, 0.1, 0.05, 0.9),   # 217, 26, 13
+		Color(0.9, 0.15, 0.05, 0.9),   # 230, 38, 13
+		Color(0.95, 0.2, 0.05, 0.9),   # 242, 51, 13
+		Color(1.0, 0.25, 0.05, 0.9),   # 255, 64, 13
+		Color(0.75, 0.0, 0.1, 0.9),    # 192, 0, 26
+		Color(0.8, 0.05, 0.1, 0.9),    # 204, 13, 26
+		Color(0.85, 0.1, 0.1, 0.9),    # 217, 26, 26
+		Color(0.9, 0.15, 0.1, 0.9),    # 230, 38, 26
+		Color(0.95, 0.2, 0.1, 0.9),    # 242, 51, 26
+		Color(1.0, 0.25, 0.1, 0.9),    # 255, 64, 26
+		Color(0.75, 0.0, 0.15, 0.9),   # 192, 0, 38
+		Color(0.8, 0.05, 0.15, 0.9),   # 204, 13, 38
+		Color(0.85, 0.1, 0.15, 0.9),   # 217, 26, 38
+		Color(0.9, 0.15, 0.15, 0.9),   # 230, 38, 38
+		Color(0.95, 0.2, 0.15, 0.9),   # 242, 51, 38
+		Color(1.0, 0.25, 0.15, 0.9),   # 255, 64, 38
+		Color(0.75, 0.0, 0.2, 0.9),    # 192, 0, 51
+		Color(0.8, 0.05, 0.2, 0.9),    # 204, 13, 51
+		Color(0.85, 0.1, 0.2, 0.9),    # 217, 26, 51
+		Color(0.9, 0.15, 0.2, 0.9),    # 230, 38, 51
+		Color(0.95, 0.2, 0.2, 0.9),    # 242, 51, 51
+		Color(1.0, 0.25, 0.2, 0.9),    # 255, 64, 51
+		Color(0.75, 0.0, 0.25, 0.9),   # 192, 0, 64
+		Color(0.8, 0.05, 0.25, 0.9),   # 204, 13, 64
+		Color(0.85, 0.1, 0.25, 0.9),   # 217, 26, 64
+		Color(0.9, 0.15, 0.25, 0.9),   # 230, 38, 64
+		Color(0.95, 0.2, 0.25, 0.9),   # 242, 51, 64
+		Color(1.0, 0.25, 0.25, 0.9),   # 255, 64, 64
+		
+		# Green-dominant colors (G high, R/B low) - 36 colors
+		Color(0.0, 0.75, 0.0, 0.9),    # 0, 192, 0
+		Color(0.05, 0.8, 0.0, 0.9),    # 13, 204, 0
+		Color(0.1, 0.85, 0.0, 0.9),    # 26, 217, 0
+		Color(0.15, 0.9, 0.0, 0.9),    # 38, 230, 0
+		Color(0.2, 0.95, 0.0, 0.9),    # 51, 242, 0
+		Color(0.25, 1.0, 0.0, 0.9),    # 64, 255, 0
+		Color(0.0, 0.75, 0.05, 0.9),   # 0, 192, 13
+		Color(0.05, 0.8, 0.05, 0.9),   # 13, 204, 13
+		Color(0.1, 0.85, 0.05, 0.9),   # 26, 217, 13
+		Color(0.15, 0.9, 0.05, 0.9),   # 38, 230, 13
+		Color(0.2, 0.95, 0.05, 0.9),   # 51, 242, 13
+		Color(0.25, 1.0, 0.05, 0.9),   # 64, 255, 13
+		Color(0.0, 0.75, 0.1, 0.9),    # 0, 192, 26
+		Color(0.05, 0.8, 0.1, 0.9),    # 13, 204, 26
+		Color(0.1, 0.85, 0.1, 0.9),    # 26, 217, 26
+		Color(0.15, 0.9, 0.1, 0.9),    # 38, 230, 26
+		Color(0.2, 0.95, 0.1, 0.9),    # 51, 242, 26
+		Color(0.25, 1.0, 0.1, 0.9),    # 64, 255, 26
+		Color(0.0, 0.75, 0.15, 0.9),   # 0, 192, 38
+		Color(0.05, 0.8, 0.15, 0.9),   # 13, 204, 38
+		Color(0.1, 0.85, 0.15, 0.9),   # 26, 217, 38
+		Color(0.15, 0.9, 0.15, 0.9),   # 38, 230, 38
+		Color(0.2, 0.95, 0.15, 0.9),   # 51, 242, 38
+		Color(0.25, 1.0, 0.15, 0.9),   # 64, 255, 38
+		Color(0.0, 0.75, 0.2, 0.9),    # 0, 192, 51
+		Color(0.05, 0.8, 0.2, 0.9),    # 13, 204, 51
+		Color(0.1, 0.85, 0.2, 0.9),    # 26, 217, 51
+		Color(0.15, 0.9, 0.2, 0.9),    # 38, 230, 51
+		Color(0.2, 0.95, 0.2, 0.9),    # 51, 242, 51
+		Color(0.25, 1.0, 0.2, 0.9),    # 64, 255, 51
+		Color(0.0, 0.75, 0.25, 0.9),   # 0, 192, 64
+		Color(0.05, 0.8, 0.25, 0.9),   # 13, 204, 64
+		Color(0.1, 0.85, 0.25, 0.9),   # 26, 217, 64
+		Color(0.15, 0.9, 0.25, 0.9),   # 38, 230, 64
+		Color(0.2, 0.95, 0.25, 0.9),   # 51, 242, 64
+		Color(0.25, 1.0, 0.25, 0.9),   # 64, 255, 64
+		
+		# Blue-dominant colors (B high, R/G low) - 36 colors
+		Color(0.0, 0.0, 0.75, 0.9),    # 0, 0, 192
+		Color(0.05, 0.0, 0.8, 0.9),    # 13, 0, 204
+		Color(0.1, 0.0, 0.85, 0.9),    # 26, 0, 217
+		Color(0.15, 0.0, 0.9, 0.9),    # 38, 0, 230
+		Color(0.2, 0.0, 0.95, 0.9),    # 51, 0, 242
+		Color(0.25, 0.0, 1.0, 0.9),    # 64, 0, 255
+		Color(0.0, 0.05, 0.75, 0.9),   # 0, 13, 192
+		Color(0.05, 0.05, 0.8, 0.9),   # 13, 13, 204
+		Color(0.1, 0.05, 0.85, 0.9),   # 26, 13, 217
+		Color(0.15, 0.05, 0.9, 0.9),   # 38, 13, 230
+		Color(0.2, 0.05, 0.95, 0.9),   # 51, 13, 242
+		Color(0.25, 0.05, 1.0, 0.9),   # 64, 13, 255
+		Color(0.0, 0.1, 0.75, 0.9),    # 0, 26, 192
+		Color(0.05, 0.1, 0.8, 0.9),    # 13, 26, 204
+		Color(0.1, 0.1, 0.85, 0.9),    # 26, 26, 217
+		Color(0.15, 0.1, 0.9, 0.9),    # 38, 26, 230
+		Color(0.2, 0.1, 0.95, 0.9),    # 51, 26, 242
+		Color(0.25, 0.1, 1.0, 0.9),    # 64, 26, 255
+		Color(0.0, 0.15, 0.75, 0.9),   # 0, 38, 192
+		Color(0.05, 0.15, 0.8, 0.9),   # 13, 38, 204
+		Color(0.1, 0.15, 0.85, 0.9),   # 26, 38, 217
+		Color(0.15, 0.15, 0.9, 0.9),   # 38, 38, 230
+		Color(0.2, 0.15, 0.95, 0.9),   # 51, 38, 242
+		Color(0.25, 0.15, 1.0, 0.9),   # 64, 38, 255
+		Color(0.0, 0.2, 0.75, 0.9),    # 0, 51, 192
+		Color(0.05, 0.2, 0.8, 0.9),    # 13, 51, 204
+		Color(0.1, 0.2, 0.85, 0.9),    # 26, 51, 217
+		Color(0.15, 0.2, 0.9, 0.9),    # 38, 51, 230
+		Color(0.2, 0.2, 0.95, 0.9),    # 51, 51, 242
+		Color(0.25, 0.2, 1.0, 0.9),    # 64, 51, 255
+		Color(0.0, 0.25, 0.75, 0.9),   # 0, 64, 192
+		Color(0.05, 0.25, 0.8, 0.9),   # 13, 64, 204
+		Color(0.1, 0.25, 0.85, 0.9),   # 26, 64, 217
+		Color(0.15, 0.25, 0.9, 0.9),   # 38, 64, 230
+		Color(0.2, 0.25, 0.95, 0.9),   # 51, 64, 242
+		Color(0.25, 0.25, 1.0, 0.9),   # 64, 64, 255
+		
+		# Mixed colors (two components high, one low) - 20 colors
+		Color(0.75, 0.75, 0.0, 0.9),   # 192, 192, 0
+		Color(0.8, 0.75, 0.0, 0.9),    # 204, 192, 0
+		Color(0.75, 0.8, 0.0, 0.9),    # 192, 204, 0
+		Color(0.8, 0.8, 0.0, 0.9),     # 204, 204, 0
+		Color(0.75, 0.0, 0.75, 0.9),   # 192, 0, 192
+		Color(0.8, 0.0, 0.75, 0.9),    # 204, 0, 192
+		Color(0.75, 0.0, 0.8, 0.9),    # 192, 0, 204
+		Color(0.8, 0.0, 0.8, 0.9),     # 204, 0, 204
+		Color(0.0, 0.75, 0.75, 0.9),   # 0, 192, 192
+		Color(0.0, 0.8, 0.75, 0.9),    # 0, 204, 192
+		Color(0.0, 0.75, 0.8, 0.9),    # 0, 192, 204
+		Color(0.0, 0.8, 0.8, 0.9),     # 0, 204, 204
+		Color(0.7, 0.7, 0.1, 0.9),     # 179, 179, 26
+		Color(0.7, 0.1, 0.7, 0.9),     # 179, 26, 179
+		Color(0.1, 0.7, 0.7, 0.9),     # 26, 179, 179
+		Color(0.65, 0.65, 0.2, 0.9),   # 166, 166, 51
+		Color(0.65, 0.2, 0.65, 0.9),   # 166, 51, 166
+		Color(0.2, 0.65, 0.65, 0.9),   # 51, 166, 166
+		Color(0.6, 0.6, 0.3, 0.9),     # 153, 153, 77
+		Color(0.6, 0.3, 0.6, 0.9),     # 153, 77, 153
+	]
 
 func _gui_input(event: InputEvent):
 	# Handle left-click to toggle piano roll height
@@ -232,6 +387,16 @@ func _process(delta):
 	
 	queue_redraw()
 
+func _get_program_color(program: int) -> Color:
+	# Get color for a given program number (0-255)
+	# Use modulo to map program to color map index (0-127)
+	if program_color_map.size() == 0:
+		# Fallback to red if color map not initialized
+		return COLOR_FALLBACK
+	
+	var color_index: int = program % program_color_map.size()
+	return program_color_map[color_index]
+
 func _draw():
 	var rect_size = size
 	
@@ -264,25 +429,24 @@ func _draw():
 		var x = i * key_width
 		if note_mod in sharp_note_mods:
 			# Black keys
-			draw_rect(Rect2(x, 0, key_width, rect_size.y), Color(0.0, 0.0, 0.0, 1.0))
+			draw_rect(Rect2(x, 0, key_width, rect_size.y), COLOR_BLACK_KEY)
 		else:
-			# White keys (match keyboard color)
-			draw_rect(Rect2(x, 0, key_width, rect_size.y), Color(1.0, 0.9, 0.9, 1.0))
+			# White keys (dark gray)
+			draw_rect(Rect2(x, 0, key_width, rect_size.y), COLOR_WHITE_KEY)
 	
-	# Draw grid lines for each key (vertical lines) - Blue color
+	# Draw grid lines for each key (vertical lines)
 	for i in range(Globalv.num_keyboard_key + 1):
 		var x = i * key_width
-		# Blue color for better visibility
-		draw_line(Vector2(x, 0), Vector2(x, rect_size.y), Color(0.2, 0.4, 1.0, 0.8), 1.0)
+		draw_line(Vector2(x, 0), Vector2(x, rect_size.y), COLOR_GRID_VERTICAL, 1.0)
 	
-	# Draw horizontal grid lines every 1 second for time reference - Blue color
+	# Draw horizontal grid lines every 1 second for time reference
 	# Calculate 1 second in pixels: viewport_height represents pre_on_time seconds
 	if pre_on_time > 0.0:
 		var one_second_pixels: float = viewport_height / pre_on_time
 		if one_second_pixels > 0.0 and not is_inf(one_second_pixels) and not is_nan(one_second_pixels):
 			for i in range(int(rect_size.y / one_second_pixels) + 1):
 				var y = i * one_second_pixels
-				draw_line(Vector2(0, y), Vector2(rect_size.x, y), Color(0.2, 0.4, 1.0, 0.5), 1.0)
+				draw_line(Vector2(0, y), Vector2(rect_size.x, y), COLOR_GRID_HORIZONTAL, 1.0)
 	
 	# Skip note drawing if not started yet
 	if start_time_offset < 0:
@@ -356,8 +520,11 @@ func _draw():
 			var visible_height = visible_bottom - visible_top
 			
 			if visible_height > 0:
-				# Draw note rectangle - Red color
-				var note_color = Color(1.0, 0.0, 0.0, 0.9)  # Red color
+				# Get color for this note's program
+				var note_program = note.get("program", -1)
+				var note_color = _get_program_color(note_program)
+				
+				# Draw note rectangle with program-specific color
 				draw_rect(Rect2(note_x + 1, visible_top, note_width, visible_height), note_color)
 	
 	# Remove notes that have scrolled off screen (top edge below y=340)
