@@ -129,9 +129,14 @@ func modify_synthe_params()->void:
 	modify_program_params()
 	set_synthe_params(synthe_params_array)
 	set_percussion_params(percussion_params_array)
+	
+	# Get current control params to preserve preOnTime
+	var current_ctr_params = get_control_params()
 	var ctr_params = {
 		"divisionNum": Globalv.num_division,
-		"logLevel": Globalv.log_level}
+		"logLevel": Globalv.log_level,
+		"preOnTime": current_ctr_params.get("preOnTime", 5000.0)  # Preserve preOnTime (default to 5000.0 if not set)
+	}
 	set_control_params(ctr_params)
 	$"..".redraw_signal_allocation_bar()
 
