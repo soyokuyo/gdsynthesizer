@@ -22,6 +22,7 @@ var start_time_offset: float = -1.0  # Time offset for scrolling (-1 means not i
 var default_note_height: float = 0.0  # Default note height for 10 minutes (600 seconds)
 var is_started: bool = false  # Whether playback has started (first note received)
 var last_smf_filename: String = ""  # Track SMF filename changes to clear notes on load/unload
+var show_all_programs: bool = false  # Display mode: false = single program, true = all programs
 
 func _ready():
 	# Initialize height settings
@@ -101,10 +102,15 @@ var last_program: int = -1
 
 func _gui_input(event: InputEvent):
 	# Handle left-click to toggle piano roll height
+	# Handle right-click to toggle display mode (single program / all programs)
 	if event is InputEventMouseButton:
 		var mouse_event = event as InputEventMouseButton
 		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
 			_switch_height()
+			# Accept the event to prevent it from propagating
+			accept_event()
+		elif mouse_event.button_index == MOUSE_BUTTON_RIGHT and mouse_event.pressed:
+			_toggle_display_mode()
 			# Accept the event to prevent it from propagating
 			accept_event()
 
@@ -130,6 +136,23 @@ func _switch_height():
 	
 	# PianoRollOverlay size will automatically follow parent TextureRect size
 	# (due to PRESET_FULL_RECT anchors), so no need to set it explicitly
+	
+	# Force redraw
+	queue_redraw()
+
+func _toggle_display_mode():
+	# Toggle between single program and all programs display mode
+	show_all_programs = not show_all_programs
+	
+	# Update visibility flags for all notes based on display mode
+	var current_program = Globalv.program
+	for n in active_notes:
+		if show_all_programs:
+			# Show all programs
+			n["visible"] = true
+		else:
+			# Show only selected program
+			n["visible"] = (n.get("program", -1) == current_program)
 	
 	# Force redraw
 	queue_redraw()
@@ -178,7 +201,7 @@ func _on_pre_note_changed(state: String, note: Dictionary):
 			"program": note_program,
 			"channel": channel,
 			"note_height": default_note_height,  # Initial height: 10 minutes worth (will be adjusted on pre_note_off)
-			"visible": (note_program == current_program)  # Visible if matches currently selected program
+			"visible": show_all_programs or (note_program == current_program)  # Visible based on display mode
 		}
 		active_notes.append(note_data)
 		# pre_note_on handled
@@ -226,9 +249,12 @@ func _draw():
 	var current_program = Globalv.program
 	if current_program != last_program:
 		last_program = current_program
-		# Update visibility flags for all notes based on currently selected program
+		# Update visibility flags for all notes based on display mode and selected program
 		for n in active_notes:
-			n["visible"] = (n.get("program", -1) == current_program)
+			if show_all_programs:
+				n["visible"] = true
+			else:
+				n["visible"] = (n.get("program", -1) == current_program)
 
 	# Draw key backgrounds (white keys, black keys) - Always draw, independent of music loading/playing
 	var sharp_note_mods = [1, 3, 6, 8, 10]  # C#, D#, F#, G#, A# (corrected)
