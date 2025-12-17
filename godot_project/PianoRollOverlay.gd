@@ -113,147 +113,310 @@ var last_program: int = -1
 
 func _generate_color_map() -> Array[Color]:
 	# Fixed color table with 128 colors that satisfy:
-	# 1. 64 <= R+G+B < 192 (brightness)
-	# 2. At least one RGB component differs by 128+ (saturation)
+	# 1. 1.0 <= R+G+B <= 3.0 (brightness not too low)
+	# 2. At least one RGB component differs by 0.5+ from others (saturation)
 	# 3. Colors are sufficiently different from each other
 	
-	return [
-		# Red-dominant colors (R high, G/B low) - 36 colors
-		Color(0.75, 0.0, 0.0, 0.9),    # 192, 0, 0
-		Color(0.8, 0.05, 0.0, 0.9),    # 204, 13, 0
-		Color(0.85, 0.1, 0.0, 0.9),    # 217, 26, 0
-		Color(0.9, 0.15, 0.0, 0.9),    # 230, 38, 0
-		Color(0.95, 0.2, 0.0, 0.9),    # 242, 51, 0
-		Color(1.0, 0.25, 0.0, 0.9),    # 255, 64, 0
-		Color(0.75, 0.0, 0.05, 0.9),   # 192, 0, 13
-		Color(0.8, 0.05, 0.05, 0.9),   # 204, 13, 13
-		Color(0.85, 0.1, 0.05, 0.9),   # 217, 26, 13
-		Color(0.9, 0.15, 0.05, 0.9),   # 230, 38, 13
-		Color(0.95, 0.2, 0.05, 0.9),   # 242, 51, 13
-		Color(1.0, 0.25, 0.05, 0.9),   # 255, 64, 13
-		Color(0.75, 0.0, 0.1, 0.9),    # 192, 0, 26
-		Color(0.8, 0.05, 0.1, 0.9),    # 204, 13, 26
-		Color(0.85, 0.1, 0.1, 0.9),    # 217, 26, 26
-		Color(0.9, 0.15, 0.1, 0.9),    # 230, 38, 26
-		Color(0.95, 0.2, 0.1, 0.9),    # 242, 51, 26
-		Color(1.0, 0.25, 0.1, 0.9),    # 255, 64, 26
-		Color(0.75, 0.0, 0.15, 0.9),   # 192, 0, 38
-		Color(0.8, 0.05, 0.15, 0.9),   # 204, 13, 38
-		Color(0.85, 0.1, 0.15, 0.9),   # 217, 26, 38
-		Color(0.9, 0.15, 0.15, 0.9),   # 230, 38, 38
-		Color(0.95, 0.2, 0.15, 0.9),   # 242, 51, 38
-		Color(1.0, 0.25, 0.15, 0.9),   # 255, 64, 38
-		Color(0.75, 0.0, 0.2, 0.9),    # 192, 0, 51
-		Color(0.8, 0.05, 0.2, 0.9),    # 204, 13, 51
-		Color(0.85, 0.1, 0.2, 0.9),    # 217, 26, 51
-		Color(0.9, 0.15, 0.2, 0.9),    # 230, 38, 51
-		Color(0.95, 0.2, 0.2, 0.9),    # 242, 51, 51
-		Color(1.0, 0.25, 0.2, 0.9),    # 255, 64, 51
-		Color(0.75, 0.0, 0.25, 0.9),   # 192, 0, 64
-		Color(0.8, 0.05, 0.25, 0.9),   # 204, 13, 64
-		Color(0.85, 0.1, 0.25, 0.9),   # 217, 26, 64
-		Color(0.9, 0.15, 0.25, 0.9),   # 230, 38, 64
-		Color(0.95, 0.2, 0.25, 0.9),   # 242, 51, 64
-		Color(1.0, 0.25, 0.25, 0.9),   # 255, 64, 64
-		
-		# Green-dominant colors (G high, R/B low) - 36 colors
-		Color(0.0, 0.75, 0.0, 0.9),    # 0, 192, 0
-		Color(0.05, 0.8, 0.0, 0.9),    # 13, 204, 0
-		Color(0.1, 0.85, 0.0, 0.9),    # 26, 217, 0
-		Color(0.15, 0.9, 0.0, 0.9),    # 38, 230, 0
-		Color(0.2, 0.95, 0.0, 0.9),    # 51, 242, 0
-		Color(0.25, 1.0, 0.0, 0.9),    # 64, 255, 0
-		Color(0.0, 0.75, 0.05, 0.9),   # 0, 192, 13
-		Color(0.05, 0.8, 0.05, 0.9),   # 13, 204, 13
-		Color(0.1, 0.85, 0.05, 0.9),   # 26, 217, 13
-		Color(0.15, 0.9, 0.05, 0.9),   # 38, 230, 13
-		Color(0.2, 0.95, 0.05, 0.9),   # 51, 242, 13
-		Color(0.25, 1.0, 0.05, 0.9),   # 64, 255, 13
-		Color(0.0, 0.75, 0.1, 0.9),    # 0, 192, 26
-		Color(0.05, 0.8, 0.1, 0.9),    # 13, 204, 26
-		Color(0.1, 0.85, 0.1, 0.9),    # 26, 217, 26
-		Color(0.15, 0.9, 0.1, 0.9),    # 38, 230, 26
-		Color(0.2, 0.95, 0.1, 0.9),    # 51, 242, 26
-		Color(0.25, 1.0, 0.1, 0.9),    # 64, 255, 26
-		Color(0.0, 0.75, 0.15, 0.9),   # 0, 192, 38
-		Color(0.05, 0.8, 0.15, 0.9),   # 13, 204, 38
-		Color(0.1, 0.85, 0.15, 0.9),   # 26, 217, 38
-		Color(0.15, 0.9, 0.15, 0.9),   # 38, 230, 38
-		Color(0.2, 0.95, 0.15, 0.9),   # 51, 242, 38
-		Color(0.25, 1.0, 0.15, 0.9),   # 64, 255, 38
-		Color(0.0, 0.75, 0.2, 0.9),    # 0, 192, 51
-		Color(0.05, 0.8, 0.2, 0.9),    # 13, 204, 51
-		Color(0.1, 0.85, 0.2, 0.9),    # 26, 217, 51
-		Color(0.15, 0.9, 0.2, 0.9),    # 38, 230, 51
-		Color(0.2, 0.95, 0.2, 0.9),    # 51, 242, 51
-		Color(0.25, 1.0, 0.2, 0.9),    # 64, 255, 51
-		Color(0.0, 0.75, 0.25, 0.9),   # 0, 192, 64
-		Color(0.05, 0.8, 0.25, 0.9),   # 13, 204, 64
-		Color(0.1, 0.85, 0.25, 0.9),   # 26, 217, 64
-		Color(0.15, 0.9, 0.25, 0.9),   # 38, 230, 64
-		Color(0.2, 0.95, 0.25, 0.9),   # 51, 242, 64
-		Color(0.25, 1.0, 0.25, 0.9),   # 64, 255, 64
-		
-		# Blue-dominant colors (B high, R/G low) - 36 colors
-		Color(0.0, 0.0, 0.75, 0.9),    # 0, 0, 192
-		Color(0.05, 0.0, 0.8, 0.9),    # 13, 0, 204
-		Color(0.1, 0.0, 0.85, 0.9),    # 26, 0, 217
-		Color(0.15, 0.0, 0.9, 0.9),    # 38, 0, 230
-		Color(0.2, 0.0, 0.95, 0.9),    # 51, 0, 242
-		Color(0.25, 0.0, 1.0, 0.9),    # 64, 0, 255
-		Color(0.0, 0.05, 0.75, 0.9),   # 0, 13, 192
-		Color(0.05, 0.05, 0.8, 0.9),   # 13, 13, 204
-		Color(0.1, 0.05, 0.85, 0.9),   # 26, 13, 217
-		Color(0.15, 0.05, 0.9, 0.9),   # 38, 13, 230
-		Color(0.2, 0.05, 0.95, 0.9),   # 51, 13, 242
-		Color(0.25, 0.05, 1.0, 0.9),   # 64, 13, 255
-		Color(0.0, 0.1, 0.75, 0.9),    # 0, 26, 192
-		Color(0.05, 0.1, 0.8, 0.9),    # 13, 26, 204
-		Color(0.1, 0.1, 0.85, 0.9),    # 26, 26, 217
-		Color(0.15, 0.1, 0.9, 0.9),    # 38, 26, 230
-		Color(0.2, 0.1, 0.95, 0.9),    # 51, 26, 242
-		Color(0.25, 0.1, 1.0, 0.9),    # 64, 26, 255
-		Color(0.0, 0.15, 0.75, 0.9),   # 0, 38, 192
-		Color(0.05, 0.15, 0.8, 0.9),   # 13, 38, 204
-		Color(0.1, 0.15, 0.85, 0.9),   # 26, 38, 217
-		Color(0.15, 0.15, 0.9, 0.9),   # 38, 38, 230
-		Color(0.2, 0.15, 0.95, 0.9),   # 51, 38, 242
-		Color(0.25, 0.15, 1.0, 0.9),   # 64, 38, 255
-		Color(0.0, 0.2, 0.75, 0.9),    # 0, 51, 192
-		Color(0.05, 0.2, 0.8, 0.9),    # 13, 51, 204
-		Color(0.1, 0.2, 0.85, 0.9),    # 26, 51, 217
-		Color(0.15, 0.2, 0.9, 0.9),    # 38, 51, 230
-		Color(0.2, 0.2, 0.95, 0.9),    # 51, 51, 242
-		Color(0.25, 0.2, 1.0, 0.9),    # 64, 51, 255
-		Color(0.0, 0.25, 0.75, 0.9),   # 0, 64, 192
-		Color(0.05, 0.25, 0.8, 0.9),   # 13, 64, 204
-		Color(0.1, 0.25, 0.85, 0.9),   # 26, 64, 217
-		Color(0.15, 0.25, 0.9, 0.9),   # 38, 64, 230
-		Color(0.2, 0.25, 0.95, 0.9),   # 51, 64, 242
-		Color(0.25, 0.25, 1.0, 0.9),   # 64, 64, 255
-		
-		# Mixed colors (two components high, one low) - 20 colors
-		Color(0.75, 0.75, 0.0, 0.9),   # 192, 192, 0
-		Color(0.8, 0.75, 0.0, 0.9),    # 204, 192, 0
-		Color(0.75, 0.8, 0.0, 0.9),    # 192, 204, 0
-		Color(0.8, 0.8, 0.0, 0.9),     # 204, 204, 0
-		Color(0.75, 0.0, 0.75, 0.9),   # 192, 0, 192
-		Color(0.8, 0.0, 0.75, 0.9),    # 204, 0, 192
-		Color(0.75, 0.0, 0.8, 0.9),    # 192, 0, 204
-		Color(0.8, 0.0, 0.8, 0.9),     # 204, 0, 204
-		Color(0.0, 0.75, 0.75, 0.9),   # 0, 192, 192
-		Color(0.0, 0.8, 0.75, 0.9),    # 0, 204, 192
-		Color(0.0, 0.75, 0.8, 0.9),    # 0, 192, 204
-		Color(0.0, 0.8, 0.8, 0.9),     # 0, 204, 204
-		Color(0.7, 0.7, 0.1, 0.9),     # 179, 179, 26
-		Color(0.7, 0.1, 0.7, 0.9),     # 179, 26, 179
-		Color(0.1, 0.7, 0.7, 0.9),     # 26, 179, 179
-		Color(0.65, 0.65, 0.2, 0.9),   # 166, 166, 51
-		Color(0.65, 0.2, 0.65, 0.9),   # 166, 51, 166
-		Color(0.2, 0.65, 0.65, 0.9),   # 51, 166, 166
-		Color(0.6, 0.6, 0.3, 0.9),     # 153, 153, 77
-		Color(0.6, 0.3, 0.6, 0.9),     # 153, 77, 153
+	var colors: Array[Color] = []
+	
+	# Red-dominant colors (R high, G/B low) - 43 colors
+	var r_dominant = [
+		Color(0.5, 0.0, 0.5, 0.9),    # R+G+B=1.0, diff=0.5
+		Color(0.6, 0.0, 0.4, 0.9),    # R+G+B=1.0, diff=0.6
+		Color(0.7, 0.0, 0.3, 0.9),    # R+G+B=1.0, diff=0.7
+		Color(0.8, 0.0, 0.2, 0.9),    # R+G+B=1.0, diff=0.8
+		Color(0.9, 0.0, 0.1, 0.9),    # R+G+B=1.0, diff=0.9
+		Color(1.0, 0.0, 0.0, 0.9),    # R+G+B=1.0, diff=1.0
+		Color(0.5, 0.1, 0.4, 0.9),    # R+G+B=1.0, diff=0.5
+		Color(0.6, 0.1, 0.3, 0.9),    # R+G+B=1.0, diff=0.6
+		Color(0.7, 0.1, 0.2, 0.9),    # R+G+B=1.0, diff=0.7
+		Color(0.8, 0.1, 0.1, 0.9),    # R+G+B=1.0, diff=0.8
+		Color(0.9, 0.1, 0.0, 0.9),    # R+G+B=1.0, diff=0.9
+		Color(1.0, 0.1, 0.0, 0.9),    # R+G+B=1.1, diff=1.0
+		Color(0.5, 0.2, 0.3, 0.9),    # R+G+B=1.0, diff=0.5
+		Color(0.6, 0.2, 0.2, 0.9),    # R+G+B=1.0, diff=0.6
+		Color(0.7, 0.2, 0.1, 0.9),    # R+G+B=1.0, diff=0.7
+		Color(0.8, 0.2, 0.0, 0.9),    # R+G+B=1.0, diff=0.8
+		Color(0.9, 0.2, 0.0, 0.9),    # R+G+B=1.1, diff=0.9
+		Color(1.0, 0.2, 0.0, 0.9),    # R+G+B=1.2, diff=1.0
+		Color(0.5, 0.3, 0.2, 0.9),    # R+G+B=1.0, diff=0.5
+		Color(0.6, 0.3, 0.1, 0.9),    # R+G+B=1.0, diff=0.6
+		Color(0.7, 0.3, 0.0, 0.9),    # R+G+B=1.0, diff=0.7
+		Color(0.8, 0.3, 0.0, 0.9),    # R+G+B=1.1, diff=0.8
+		Color(0.9, 0.3, 0.0, 0.9),    # R+G+B=1.2, diff=0.9
+		Color(1.0, 0.3, 0.0, 0.9),    # R+G+B=1.3, diff=1.0
+		Color(0.5, 0.4, 0.1, 0.9),    # R+G+B=1.0, diff=0.5
+		Color(0.6, 0.4, 0.0, 0.9),    # R+G+B=1.0, diff=0.6
+		Color(0.7, 0.4, 0.0, 0.9),    # R+G+B=1.1, diff=0.7
+		Color(0.8, 0.4, 0.0, 0.9),    # R+G+B=1.2, diff=0.8
+		Color(0.9, 0.4, 0.0, 0.9),    # R+G+B=1.3, diff=0.9
+		Color(1.0, 0.4, 0.0, 0.9),    # R+G+B=1.4, diff=1.0
+		Color(0.6, 0.0, 0.5, 0.9),    # R+G+B=1.1, diff=0.6
+		Color(0.7, 0.0, 0.4, 0.9),    # R+G+B=1.1, diff=0.7
+		Color(0.8, 0.0, 0.3, 0.9),    # R+G+B=1.1, diff=0.8
+		Color(0.9, 0.0, 0.2, 0.9),    # R+G+B=1.1, diff=0.9
+		Color(1.0, 0.0, 0.1, 0.9),    # R+G+B=1.1, diff=1.0
+		Color(0.7, 0.0, 0.5, 0.9),    # R+G+B=1.2, diff=0.7
+		Color(0.8, 0.0, 0.4, 0.9),    # R+G+B=1.2, diff=0.8
+		Color(0.9, 0.0, 0.3, 0.9),    # R+G+B=1.2, diff=0.9
+		Color(1.0, 0.0, 0.2, 0.9),    # R+G+B=1.2, diff=1.0
+		Color(0.8, 0.0, 0.5, 0.9),    # R+G+B=1.3, diff=0.8
+		Color(0.9, 0.0, 0.4, 0.9),    # R+G+B=1.3, diff=0.9
+		Color(1.0, 0.0, 0.3, 0.9),    # R+G+B=1.3, diff=1.0
+		Color(0.9, 0.0, 0.5, 0.9),    # R+G+B=1.4, diff=0.9
+		Color(1.0, 0.0, 0.4, 0.9),    # R+G+B=1.4, diff=1.0
 	]
+	colors.append_array(r_dominant)
+	
+	# Green-dominant colors (G high, R/B low) - 43 colors
+	var g_dominant = [
+		Color(0.0, 0.5, 0.5, 0.9),    # R+G+B=1.0, diff=0.5
+		Color(0.0, 0.6, 0.4, 0.9),    # R+G+B=1.0, diff=0.6
+		Color(0.0, 0.7, 0.3, 0.9),    # R+G+B=1.0, diff=0.7
+		Color(0.0, 0.8, 0.2, 0.9),    # R+G+B=1.0, diff=0.8
+		Color(0.0, 0.9, 0.1, 0.9),    # R+G+B=1.0, diff=0.9
+		Color(0.0, 1.0, 0.0, 0.9),    # R+G+B=1.0, diff=1.0
+		Color(0.1, 0.5, 0.4, 0.9),    # R+G+B=1.0, diff=0.5
+		Color(0.1, 0.6, 0.3, 0.9),    # R+G+B=1.0, diff=0.6
+		Color(0.1, 0.7, 0.2, 0.9),    # R+G+B=1.0, diff=0.7
+		Color(0.1, 0.8, 0.1, 0.9),    # R+G+B=1.0, diff=0.8
+		Color(0.1, 0.9, 0.0, 0.9),    # R+G+B=1.0, diff=0.9
+		Color(0.1, 1.0, 0.0, 0.9),    # R+G+B=1.1, diff=1.0
+		Color(0.2, 0.5, 0.3, 0.9),    # R+G+B=1.0, diff=0.5
+		Color(0.2, 0.6, 0.2, 0.9),    # R+G+B=1.0, diff=0.6
+		Color(0.2, 0.7, 0.1, 0.9),    # R+G+B=1.0, diff=0.7
+		Color(0.2, 0.8, 0.0, 0.9),    # R+G+B=1.0, diff=0.8
+		Color(0.2, 0.9, 0.0, 0.9),    # R+G+B=1.1, diff=0.9
+		Color(0.2, 1.0, 0.0, 0.9),    # R+G+B=1.2, diff=1.0
+		Color(0.3, 0.5, 0.2, 0.9),    # R+G+B=1.0, diff=0.5
+		Color(0.3, 0.6, 0.1, 0.9),    # R+G+B=1.0, diff=0.6
+		Color(0.3, 0.7, 0.0, 0.9),    # R+G+B=1.0, diff=0.7
+		Color(0.3, 0.8, 0.0, 0.9),    # R+G+B=1.1, diff=0.8
+		Color(0.3, 0.9, 0.0, 0.9),    # R+G+B=1.2, diff=0.9
+		Color(0.3, 1.0, 0.0, 0.9),    # R+G+B=1.3, diff=1.0
+		Color(0.4, 0.5, 0.1, 0.9),    # R+G+B=1.0, diff=0.5
+		Color(0.4, 0.6, 0.0, 0.9),    # R+G+B=1.0, diff=0.6
+		Color(0.4, 0.7, 0.0, 0.9),    # R+G+B=1.1, diff=0.7
+		Color(0.4, 0.8, 0.0, 0.9),    # R+G+B=1.2, diff=0.8
+		Color(0.4, 0.9, 0.0, 0.9),    # R+G+B=1.3, diff=0.9
+		Color(0.4, 1.0, 0.0, 0.9),    # R+G+B=1.4, diff=1.0
+		Color(0.0, 0.6, 0.5, 0.9),    # R+G+B=1.1, diff=0.6
+		Color(0.0, 0.7, 0.4, 0.9),    # R+G+B=1.1, diff=0.7
+		Color(0.0, 0.8, 0.3, 0.9),    # R+G+B=1.1, diff=0.8
+		Color(0.0, 0.9, 0.2, 0.9),    # R+G+B=1.1, diff=0.9
+		Color(0.0, 1.0, 0.1, 0.9),    # R+G+B=1.1, diff=1.0
+		Color(0.0, 0.7, 0.5, 0.9),    # R+G+B=1.2, diff=0.7
+		Color(0.0, 0.8, 0.4, 0.9),    # R+G+B=1.2, diff=0.8
+		Color(0.0, 0.9, 0.3, 0.9),    # R+G+B=1.2, diff=0.9
+		Color(0.0, 1.0, 0.2, 0.9),    # R+G+B=1.2, diff=1.0
+		Color(0.0, 0.8, 0.5, 0.9),    # R+G+B=1.3, diff=0.8
+		Color(0.0, 0.9, 0.4, 0.9),    # R+G+B=1.3, diff=0.9
+		Color(0.0, 1.0, 0.3, 0.9),    # R+G+B=1.3, diff=1.0
+		Color(0.0, 0.9, 0.5, 0.9),    # R+G+B=1.4, diff=0.9
+		Color(0.0, 1.0, 0.4, 0.9),    # R+G+B=1.4, diff=1.0
+	]
+	colors.append_array(g_dominant)
+	
+	# Blue-dominant colors (B high, R/G low) - 42 colors
+	var b_dominant = [
+		Color(0.4, 0.0, 0.6, 0.9),    # R+G+B=1.0, diff=0.6
+		Color(0.3, 0.0, 0.7, 0.9),    # R+G+B=1.0, diff=0.7
+		Color(0.2, 0.0, 0.8, 0.9),    # R+G+B=1.0, diff=0.8
+		Color(0.1, 0.0, 0.9, 0.9),    # R+G+B=1.0, diff=0.9
+		Color(0.0, 0.0, 1.0, 0.9),    # R+G+B=1.0, diff=1.0
+		Color(0.4, 0.1, 0.5, 0.9),    # R+G+B=1.0, diff=0.5
+		Color(0.3, 0.1, 0.6, 0.9),    # R+G+B=1.0, diff=0.6
+		Color(0.2, 0.1, 0.7, 0.9),    # R+G+B=1.0, diff=0.7
+		Color(0.1, 0.1, 0.8, 0.9),    # R+G+B=1.0, diff=0.8
+		Color(0.0, 0.1, 0.9, 0.9),    # R+G+B=1.0, diff=0.9
+		Color(0.0, 0.1, 1.0, 0.9),    # R+G+B=1.1, diff=1.0
+		Color(0.3, 0.2, 0.5, 0.9),    # R+G+B=1.0, diff=0.5
+		Color(0.2, 0.2, 0.6, 0.9),    # R+G+B=1.0, diff=0.6
+		Color(0.1, 0.2, 0.7, 0.9),    # R+G+B=1.0, diff=0.7
+		Color(0.0, 0.2, 0.8, 0.9),    # R+G+B=1.0, diff=0.8
+		Color(0.0, 0.2, 0.9, 0.9),    # R+G+B=1.1, diff=0.9
+		Color(0.0, 0.2, 1.0, 0.9),    # R+G+B=1.2, diff=1.0
+		Color(0.2, 0.3, 0.5, 0.9),    # R+G+B=1.0, diff=0.5
+		Color(0.1, 0.3, 0.6, 0.9),    # R+G+B=1.0, diff=0.6
+		Color(0.0, 0.3, 0.7, 0.9),    # R+G+B=1.0, diff=0.7
+		Color(0.0, 0.3, 0.8, 0.9),    # R+G+B=1.1, diff=0.8
+		Color(0.0, 0.3, 0.9, 0.9),    # R+G+B=1.2, diff=0.9
+		Color(0.0, 0.3, 1.0, 0.9),    # R+G+B=1.3, diff=1.0
+		Color(0.1, 0.4, 0.5, 0.9),    # R+G+B=1.0, diff=0.5
+		Color(0.0, 0.4, 0.6, 0.9),    # R+G+B=1.0, diff=0.6
+		Color(0.0, 0.4, 0.7, 0.9),    # R+G+B=1.1, diff=0.7
+		Color(0.0, 0.4, 0.8, 0.9),    # R+G+B=1.2, diff=0.8
+		Color(0.0, 0.4, 0.9, 0.9),    # R+G+B=1.3, diff=0.9
+		Color(0.0, 0.4, 1.0, 0.9),    # R+G+B=1.4, diff=1.0
+		Color(0.0, 0.5, 0.6, 0.9),    # R+G+B=1.1, diff=0.6
+		Color(0.0, 0.5, 0.7, 0.9),    # R+G+B=1.2, diff=0.7
+		Color(0.0, 0.5, 0.8, 0.9),    # R+G+B=1.3, diff=0.8
+		Color(0.0, 0.5, 0.9, 0.9),    # R+G+B=1.4, diff=0.9
+		Color(0.0, 0.5, 1.0, 0.9),    # R+G+B=1.5, diff=1.0
+		Color(0.5, 0.0, 0.6, 0.9),    # R+G+B=1.1, diff=0.6
+		Color(0.4, 0.0, 0.7, 0.9),    # R+G+B=1.1, diff=0.7
+		Color(0.3, 0.0, 0.8, 0.9),    # R+G+B=1.1, diff=0.8
+		Color(0.2, 0.0, 0.9, 0.9),    # R+G+B=1.1, diff=0.9
+		Color(0.1, 0.0, 1.0, 0.9),    # R+G+B=1.1, diff=1.0
+		Color(0.5, 0.0, 0.7, 0.9),    # R+G+B=1.2, diff=0.7
+		Color(0.4, 0.0, 0.8, 0.9),    # R+G+B=1.2, diff=0.8
+		Color(0.3, 0.0, 0.9, 0.9),    # R+G+B=1.2, diff=0.9
+		Color(0.2, 0.0, 1.0, 0.9),    # R+G+B=1.2, diff=1.0
+	]
+	colors.append_array(b_dominant)
+	
+	# Mixed colors (two components high, one low) - 42 colors
+	# R+G high, B low
+	var mixed_rg = [
+		Color(0.6, 0.4, 0.0, 0.9),    # R+G+B=1.0, diff=0.6
+		Color(0.7, 0.3, 0.0, 0.9),    # R+G+B=1.0, diff=0.7
+		Color(0.8, 0.2, 0.0, 0.9),    # R+G+B=1.0, diff=0.8
+		Color(0.9, 0.1, 0.0, 0.9),    # R+G+B=1.0, diff=0.9
+		Color(0.4, 0.6, 0.0, 0.9),    # R+G+B=1.0, diff=0.6
+		Color(0.3, 0.7, 0.0, 0.9),    # R+G+B=1.0, diff=0.7
+		Color(0.2, 0.8, 0.0, 0.9),    # R+G+B=1.0, diff=0.8
+		Color(0.1, 0.9, 0.0, 0.9),    # R+G+B=1.0, diff=0.9
+		Color(0.6, 0.5, 0.0, 0.9),    # R+G+B=1.1, diff=0.6
+		Color(0.7, 0.4, 0.0, 0.9),    # R+G+B=1.1, diff=0.7
+		Color(0.8, 0.3, 0.0, 0.9),    # R+G+B=1.1, diff=0.8
+		Color(0.9, 0.2, 0.0, 0.9),    # R+G+B=1.1, diff=0.9
+		Color(0.5, 0.6, 0.0, 0.9),    # R+G+B=1.1, diff=0.6
+		Color(0.4, 0.7, 0.0, 0.9),    # R+G+B=1.1, diff=0.7
+		Color(0.3, 0.8, 0.0, 0.9),    # R+G+B=1.1, diff=0.8
+		Color(0.2, 0.9, 0.0, 0.9),    # R+G+B=1.1, diff=0.9
+		Color(0.7, 0.5, 0.0, 0.9),    # R+G+B=1.2, diff=0.7
+		Color(0.8, 0.4, 0.0, 0.9),    # R+G+B=1.2, diff=0.8
+		Color(0.9, 0.3, 0.0, 0.9),    # R+G+B=1.2, diff=0.9
+		Color(0.6, 0.6, 0.0, 0.9),    # R+G+B=1.2, diff=0.6
+		Color(0.7, 0.6, 0.0, 0.9),    # R+G+B=1.3, diff=0.7
+		Color(0.8, 0.6, 0.0, 0.9),    # R+G+B=1.4, diff=0.8
+		Color(0.9, 0.6, 0.0, 0.9),    # R+G+B=1.5, diff=0.9
+		Color(0.6, 0.7, 0.0, 0.9),    # R+G+B=1.3, diff=0.7
+		Color(0.7, 0.7, 0.0, 0.9),    # R+G+B=1.4, diff=0.7
+		Color(0.8, 0.7, 0.0, 0.9),    # R+G+B=1.5, diff=0.8
+		Color(0.9, 0.7, 0.0, 0.9),    # R+G+B=1.6, diff=0.9
+		Color(0.6, 0.8, 0.0, 0.9),    # R+G+B=1.4, diff=0.8
+		Color(0.7, 0.8, 0.0, 0.9),    # R+G+B=1.5, diff=0.8
+		Color(0.8, 0.8, 0.0, 0.9),    # R+G+B=1.6, diff=0.8
+		Color(0.9, 0.8, 0.0, 0.9),    # R+G+B=1.7, diff=0.9
+		Color(0.6, 0.9, 0.0, 0.9),    # R+G+B=1.5, diff=0.9
+		Color(0.7, 0.9, 0.0, 0.9),    # R+G+B=1.6, diff=0.9
+		Color(0.8, 0.9, 0.0, 0.9),    # R+G+B=1.7, diff=0.9
+		Color(0.9, 0.9, 0.0, 0.9),    # R+G+B=1.8, diff=0.9
+		Color(0.6, 1.0, 0.0, 0.9),    # R+G+B=1.6, diff=1.0
+		Color(0.7, 1.0, 0.0, 0.9),    # R+G+B=1.7, diff=1.0
+		Color(0.8, 1.0, 0.0, 0.9),    # R+G+B=1.8, diff=1.0
+		Color(0.9, 1.0, 0.0, 0.9),    # R+G+B=1.9, diff=1.0
+		Color(1.0, 1.0, 0.0, 0.9),    # R+G+B=2.0, diff=1.0
+	]
+	colors.append_array(mixed_rg)
+	
+	# R+B high, G low (avoiding duplicates with r_dominant)
+	var mixed_rb = [
+		Color(0.6, 0.0, 0.6, 0.9),    # R+G+B=1.2, diff=0.6
+		Color(0.7, 0.0, 0.7, 0.9),    # R+G+B=1.4, diff=0.7
+		Color(0.8, 0.0, 0.8, 0.9),    # R+G+B=1.6, diff=0.8
+		Color(0.9, 0.0, 0.9, 0.9),    # R+G+B=1.8, diff=0.9
+		Color(1.0, 0.0, 1.0, 0.9),    # R+G+B=2.0, diff=1.0
+		Color(0.6, 0.1, 0.5, 0.9),    # R+G+B=1.2, diff=0.6
+		Color(0.7, 0.1, 0.6, 0.9),    # R+G+B=1.4, diff=0.7
+		Color(0.8, 0.1, 0.7, 0.9),    # R+G+B=1.6, diff=0.8
+		Color(0.9, 0.1, 0.8, 0.9),    # R+G+B=1.8, diff=0.9
+		Color(1.0, 0.1, 0.9, 0.9),    # R+G+B=2.0, diff=1.0
+		Color(0.5, 0.2, 0.5, 0.9),    # R+G+B=1.2, diff=0.5
+		Color(0.6, 0.2, 0.4, 0.9),    # R+G+B=1.2, diff=0.6
+		Color(0.7, 0.2, 0.3, 0.9),    # R+G+B=1.2, diff=0.7
+		Color(0.8, 0.2, 0.2, 0.9),    # R+G+B=1.2, diff=0.8
+		Color(0.9, 0.2, 0.1, 0.9),    # R+G+B=1.2, diff=0.9
+		Color(0.5, 0.3, 0.4, 0.9),    # R+G+B=1.2, diff=0.5
+		Color(0.6, 0.3, 0.3, 0.9),    # R+G+B=1.2, diff=0.6
+		Color(0.7, 0.3, 0.2, 0.9),    # R+G+B=1.2, diff=0.7
+		Color(0.8, 0.3, 0.1, 0.9),    # R+G+B=1.2, diff=0.8
+		Color(0.5, 0.4, 0.3, 0.9),    # R+G+B=1.2, diff=0.5
+		Color(0.6, 0.4, 0.2, 0.9),    # R+G+B=1.2, diff=0.6
+		Color(0.7, 0.4, 0.1, 0.9),    # R+G+B=1.2, diff=0.7
+	]
+	# Filter out duplicates
+	for c in mixed_rb:
+		var is_duplicate = false
+		for existing in colors:
+			if existing.r == c.r and existing.g == c.g and existing.b == c.b:
+				is_duplicate = true
+				break
+		if not is_duplicate:
+			colors.append(c)
+	
+	# G+B high, R low (avoiding duplicates with g_dominant and b_dominant)
+	var mixed_gb = [
+		Color(0.0, 0.6, 0.6, 0.9),    # R+G+B=1.2, diff=0.6
+		Color(0.0, 0.7, 0.7, 0.9),    # R+G+B=1.4, diff=0.7
+		Color(0.0, 0.8, 0.8, 0.9),    # R+G+B=1.6, diff=0.8
+		Color(0.0, 0.9, 0.9, 0.9),    # R+G+B=1.8, diff=0.9
+		Color(0.0, 1.0, 1.0, 0.9),    # R+G+B=2.0, diff=1.0
+		Color(0.1, 0.6, 0.5, 0.9),    # R+G+B=1.2, diff=0.6
+		Color(0.1, 0.7, 0.6, 0.9),    # R+G+B=1.4, diff=0.7
+		Color(0.1, 0.8, 0.7, 0.9),    # R+G+B=1.6, diff=0.8
+		Color(0.1, 0.9, 0.8, 0.9),    # R+G+B=1.8, diff=0.9
+		Color(0.1, 1.0, 0.9, 0.9),    # R+G+B=2.0, diff=1.0
+		Color(0.2, 0.6, 0.4, 0.9),    # R+G+B=1.2, diff=0.6
+		Color(0.2, 0.7, 0.3, 0.9),    # R+G+B=1.2, diff=0.7
+		Color(0.2, 0.8, 0.2, 0.9),    # R+G+B=1.2, diff=0.8
+		Color(0.2, 0.9, 0.1, 0.9),    # R+G+B=1.2, diff=0.9
+		Color(0.3, 0.6, 0.3, 0.9),    # R+G+B=1.2, diff=0.6
+		Color(0.3, 0.7, 0.2, 0.9),    # R+G+B=1.2, diff=0.7
+		Color(0.3, 0.8, 0.1, 0.9),    # R+G+B=1.2, diff=0.8
+		Color(0.4, 0.6, 0.2, 0.9),    # R+G+B=1.2, diff=0.6
+		Color(0.4, 0.7, 0.1, 0.9),    # R+G+B=1.2, diff=0.7
+	]
+	# Filter out duplicates
+	for c in mixed_gb:
+		var is_duplicate = false
+		for existing in colors:
+			if existing.r == c.r and existing.g == c.g and existing.b == c.b:
+				is_duplicate = true
+				break
+		if not is_duplicate:
+			colors.append(c)
+	
+	# Ensure we have exactly 128 colors
+	# If we have less, add more mixed colors
+	# If we have more, trim to 128
+	while colors.size() < 128:
+		# Add more high-brightness mixed colors
+		for r in range(5, 11):  # 0.5 to 1.0
+			for g in range(5, 11):
+				for b in range(0, 5):  # 0.0 to 0.4
+					var r_val = r * 0.1
+					var g_val = g * 0.1
+					var b_val = b * 0.1
+					var sum = r_val + g_val + b_val
+					if sum >= 1.0 and sum <= 3.0:
+						var max_val = max(r_val, g_val, b_val)
+						var min_val = min(r_val, g_val, b_val)
+						if max_val - min_val >= 0.5:
+							var c = Color(r_val, g_val, b_val, 0.9)
+							var is_duplicate = false
+							for existing in colors:
+								if existing.r == c.r and existing.g == c.g and existing.b == c.b:
+									is_duplicate = true
+									break
+							if not is_duplicate:
+								colors.append(c)
+								if colors.size() >= 128:
+									break
+				if colors.size() >= 128:
+					break
+			if colors.size() >= 128:
+				break
+		if colors.size() < 128:
+			# If still not enough, add more variations
+			break
+	
+	# Trim to exactly 128 if we have more
+	if colors.size() > 128:
+		colors = colors.slice(0, 128)
+	
+	return colors
 
 func _gui_input(event: InputEvent):
 	# Handle left-click to toggle piano roll height
