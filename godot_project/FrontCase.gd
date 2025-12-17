@@ -317,7 +317,15 @@ func _on_gd_synthesizer_note_changed(state, note)->void:
 	if not Globalv.is_percussion_prog_select:
 		var color:Color = Color(0.2, 0.2, 0, 1)
 		if (state == "note_on"):
-			color = Color(1.0, 1.0, 0, 1)
+			# Check if piano roll is visible and get color from PianoRollOverlay
+			var piano_roll = get_node_or_null("PianoRoll")
+			var piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlay")
+			if piano_roll and piano_roll.visible and piano_roll_overlay and inst < 128:
+				# Use program color from piano roll
+				color = piano_roll_overlay._get_program_color(inst)
+			else:
+				# Default yellow color when piano roll is not visible
+				color = Color(1.0, 1.0, 0, 1)
 		get_node("LED"+str(inst)).get_node("Led").color = color
 
 	if Globalv.is_percussion == 0:
