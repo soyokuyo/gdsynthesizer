@@ -15,7 +15,7 @@ func redraw_signal_allocation_bar()->void:
 
 
 func alocation_bar_preparation()->void:
-	const bar_pos_y:int = 395
+	const bar_pos_y:int = 395+25
 
 	var white_back_bar:ColorRect = ColorRect.new()
 	white_back_bar.name = str("Bar_aloc_white_back")
@@ -73,7 +73,7 @@ func alocation_bar_preparation()->void:
 
 
 func levelbar_preparation()->void:
-	const bar_pos_y:int = 404
+	const bar_pos_y:int = 404+25
 	var green_back_bar:ColorRect = ColorRect.new()
 	green_back_bar.name = str("Bar_green_back")
 	green_back_bar.color = Color(0.0, 1.0, 0.0, 1)
@@ -229,7 +229,7 @@ func keyboard_preparation()->void:
 	var collision:Array[CollisionShape2D] = []
 	var index:int = Globalv.most_left_key_num
 	var pos_x:int = 10
-	var pos_y:int = 455
+	var pos_y:int = 505
 	for i in range(Globalv.num_keyboard_key):
 		keyboard.push_back(Area2D.new())
 		keyoff.push_back(ColorRect.new())
@@ -251,7 +251,7 @@ func keyboard_preparation()->void:
 		var j:int = i % 12
 		if j == 1 or j == 4 or j == 6 or j == 9 or j == 11:
 			# Black keys: position 50 pixels lower to overlap white keys
-			keyboard[i].position = Vector2(pos_x-7,pos_y+50)
+			keyboard[i].position = Vector2(pos_x-7,pos_y+0)
 			# Set z_index higher than white keys so black keys handle clicks in overlap area
 			keyboard[i].z_index = 1
 			keyled[i].position = Vector2(0,-3)
@@ -266,7 +266,7 @@ func keyboard_preparation()->void:
 			collision[i].position = Vector2(7,15)
 		else:
 			# White keys: keep original position, z_index lower than black keys
-			keyboard[i].position = Vector2(pos_x,pos_y+50)
+			keyboard[i].position = Vector2(pos_x,pos_y+0)
 			keyboard[i].z_index = 0
 			keyled[i].position = Vector2(0,60+1)
 			keyled2[i].position = Vector2(0,60+1+3)

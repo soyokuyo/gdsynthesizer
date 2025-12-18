@@ -12,7 +12,7 @@ var percussion_prog:int = -1
 var percussion_note:int = -1
 
 var num_division:float = 5.0
-var pled_pos_y:int = 412
+var pled_pos_y:int = 462
 var num_elements:int = 0
 var num_execution:int = 0
 var is_loaded:bool = true

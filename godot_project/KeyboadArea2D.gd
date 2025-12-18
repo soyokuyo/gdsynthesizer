@@ -38,14 +38,14 @@ func _on_input_event(viewport:Node, event:InputEvent , shape_idx:int)->void:
 					var local_pos = $"..".to_local(click_pos)
 					
 					# Check if there's a black key that overlaps with this position
-					# Black keys are positioned at pos_x-7, pos_y+50 with size 14x30
-					# White keys are positioned at pos_x, pos_y+50 with size 14x60
-					# Overlap area: black key bottom is at pos_y+50+30 = pos_y+80
-					# White key top is at pos_y+50, so overlap is from pos_y+50 to pos_y+80
+					# Black keys are positioned at pos_x-7, pos_y+0 with size 14x30
+					# White keys are positioned at pos_x, pos_y+0 with size 14x60
+					# Overlap area: black key bottom is at pos_y+0+30 = pos_y+30
+					# White key top is at pos_y+0, so overlap is from pos_y+0 to pos_y+30
 					
-					# Check if click is in the overlap area (y between pos_y+50 and pos_y+80)
-					var pos_y = 455  # Base position from FrontCase.gd
-					if local_pos.y >= pos_y + 50 and local_pos.y <= pos_y + 80:
+					# Check if click is in the overlap area (y between pos_y+0 and pos_y+30)
+					var pos_y = 505  # Base position from FrontCase.gd
+					if local_pos.y >= pos_y + 0 and local_pos.y <= pos_y + 30:
 						# Check if there's a black key at this x position
 						var black_key_note = -1
 						if note_mod == 0:  # C -> C# (1)
