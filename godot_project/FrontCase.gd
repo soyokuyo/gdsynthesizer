@@ -250,20 +250,20 @@ func keyboard_preparation()->void:
 		keyled2[i].color = Color(0.2, 0.2, 0.0, 1)
 		var j:int = i % 12
 		if j == 1 or j == 4 or j == 6 or j == 9 or j == 11:
-			# Black keys: position 10 pixels lower to overlap white keys
-			keyboard[i].position = Vector2(pos_x-7,pos_y+10)
+			# Black keys: position 50 pixels lower to overlap white keys
+			keyboard[i].position = Vector2(pos_x-7,pos_y+50)
 			# Set z_index higher than white keys so black keys handle clicks in overlap area
 			keyboard[i].z_index = 1
 			keyled[i].position = Vector2(0,-3)
 			keyled2[i].position = Vector2(0,-3-3)
-			keyon[i].size = Vector2(14,50)
-			keyoff[i].size = Vector2(14,50)
+			keyon[i].size = Vector2(14,30)
+			keyoff[i].size = Vector2(14,30)
 			var shape:RectangleShape2D = RectangleShape2D.new()
-			shape.size = Vector2(14,50)
+			shape.size = Vector2(14,30)
 			collision[i].set_shape(shape)
 			keyon[i].color = Color(1.0, 0.0, 0.0, 1)
 			keyoff[i].color = Color(0.0, 0.0, 0.0, 1)
-			collision[i].position = Vector2(7,25)
+			collision[i].position = Vector2(7,15)
 		else:
 			# White keys: keep original position, z_index lower than black keys
 			keyboard[i].position = Vector2(pos_x,pos_y+50)
