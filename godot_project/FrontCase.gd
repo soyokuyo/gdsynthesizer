@@ -212,9 +212,11 @@ func _init()->void:
 	alocation_bar_preparation()
 	led_preparation()
 	keyboard_preparation()
+	piano_roll_background_preparation()
 
 var keyb = []
 var is_sift = false
+var piano_roll_background: ColorRect = null
 
 
 func keyboard_preparation()->void:
@@ -299,6 +301,27 @@ func keyboard_preparation()->void:
 		get_node("KEY"+str(index)).add_child(collision[i])
 		collision[i].owner = keyboard[i]
 		index += 1
+
+	# Add keyboard area for right-click detection (covers entire keyboard area including gaps, excluding LEDs)
+	var keyboard_area:Area2D = Area2D.new()
+	keyboard_area.name = "KeyboardArea"
+	# Calculate keyboard area dimensions
+	# Width: from first white key (pos_x=10) to last white key + key width
+	var keyboard_width = (Globalv.num_keyboard_key - 1) * 17 + 14  # Last key doesn't add spacing
+	# Height: from top of white keys to bottom of white keys (excluding LEDs)
+	var keyboard_height = 60  # White key height only
+	var keyboard_area_shape:CollisionShape2D = CollisionShape2D.new()
+	var shape:RectangleShape2D = RectangleShape2D.new()
+	shape.size = Vector2(keyboard_width, keyboard_height)
+	keyboard_area_shape.set_shape(shape)
+	keyboard_area_shape.position = Vector2(keyboard_width / 2, keyboard_height / 2)
+	keyboard_area.position = Vector2(10, pos_y)  # Start from top of white keys
+	keyboard_area.z_index = -1  # Behind keys so keys handle left clicks
+	keyboard_area.set_script(load("res://KeyboardArea2D.gd"))
+	add_child(keyboard_area)
+	keyboard_area.owner = self
+	keyboard_area.add_child(keyboard_area_shape)
+	keyboard_area_shape.owner = keyboard_area
 
 
 func keyboard_clear_if_requied()->void:
@@ -592,10 +615,58 @@ func _on_button_key_select_pressed()->void:
 				.get_node("keyled2").color = Color(0.0, 1.0, 0.0, 1)
 
 
-func _on_button_pianoroll_pressed()->void:
+func piano_roll_background_preparation()->void:
+	# Create background ColorRect to hide objects behind piano roll
+	piano_roll_background = ColorRect.new()
+	piano_roll_background.name = "PianoRollBackground"
+	# Use background color matching the default viewport background (#4C4C4C)
+	# #4C4C4C = RGB(76, 76, 76) = Color(76.0/255.0, 76.0/255.0, 76.0/255.0, 1.0)
+	piano_roll_background.color = Color(76.0/255.0, 76.0/255.0, 76.0/255.0, 1.0)  # #4C4C4C
+	piano_roll_background.z_index = 999  # Behind piano roll (1000) but above other elements
+	piano_roll_background.visible = false  # Initially hidden
+	add_child(piano_roll_background)
+	piano_roll_background.owner = self
+
+func toggle_piano_roll()->void:
 	var piano_roll = get_node_or_null("PianoRoll")
 	if piano_roll:
 		piano_roll.visible = not piano_roll.visible
+		# Also toggle background visibility
+		if piano_roll_background:
+			piano_roll_background.visible = piano_roll.visible
+			# Update size and position when toggling (in case piano roll size changed)
+			if piano_roll.visible:
+				var piano_roll_texture_rect = get_node_or_null("PianoRoll/TextureRect")
+				if piano_roll_texture_rect:
+					var viewport = get_viewport()
+					var screen_width = viewport.get_visible_rect().size.x
+					var piano_roll_height = piano_roll_texture_rect.size.y
+					var piano_roll_y = piano_roll.position.y
+					# Cover from screen left edge to screen right edge
+					var background_width = screen_width
+					var background_x = 0  # Start from screen left edge
+					
+					piano_roll_background.size = Vector2(background_width, piano_roll_height)
+					piano_roll_background.position = Vector2(background_x, piano_roll_y)
+
+func update_piano_roll_background_size()->void:
+	if piano_roll_background and piano_roll_background.visible:
+		var piano_roll = get_node_or_null("PianoRoll")
+		var piano_roll_texture_rect = get_node_or_null("PianoRoll/TextureRect")
+		if piano_roll and piano_roll_texture_rect:
+			var viewport = get_viewport()
+			var screen_width = viewport.get_visible_rect().size.x
+			var piano_roll_height = piano_roll_texture_rect.size.y
+			var piano_roll_y = piano_roll.position.y
+			# Cover from screen left edge to screen right edge
+			var background_width = screen_width
+			var background_x = 0  # Start from screen left edge
+			
+			piano_roll_background.size = Vector2(background_width, piano_roll_height)
+			piano_roll_background.position = Vector2(background_x, piano_roll_y)
+
+func _on_button_pianoroll_pressed()->void:
+	toggle_piano_roll()
 
 
 func _on_button_regist_program_pressed()->void:

@@ -6,10 +6,10 @@ extends Control
 
 # ★ 定数を一箇所に集約 - ここを変更すればすべてに反映されます ★
 const PIANO_ROLL_WIDTH: float = 1000.0
-const PIANO_ROLL_HEIGHT: float = 350.0  # Initial height (default)
 
 # Height options for right-click toggle: 350 → 414 → 447 → 350 → ...
-const HEIGHT_OPTIONS: Array[float] = [350.0, 414.0, 447.0]
+const HEIGHT_OPTIONS: Array[float] = [350.0+65.0, 414.0+50.0, 447.0+50.0]
+const PIANO_ROLL_HEIGHT: float = HEIGHT_OPTIONS[0]  # Initial height (default)
 
 # Piano roll color constants - Change these to adjust all related colors
 const COLOR_WHITE_KEY: Color = Color(0.6, 0.55, 0.55, 1.0)  # Gray for white keys
@@ -451,6 +451,12 @@ func _switch_height():
 		texture_rect.offset_bottom = current_height
 		texture_rect.custom_minimum_size = Vector2(PIANO_ROLL_WIDTH, current_height)
 		texture_rect.size = Vector2(PIANO_ROLL_WIDTH, current_height)
+	
+	# Update background mask size in FrontCase
+	# Node structure: FrontCase -> PianoRoll -> TextureRect -> PianoRollOverlay
+	var front_case = get_parent().get_parent().get_parent()  # FrontCase
+	if front_case and front_case.has_method("update_piano_roll_background_size"):
+		front_case.update_piano_roll_background_size()
 	
 	# PianoRollOverlay size will automatically follow parent TextureRect size
 	# (due to PRESET_FULL_RECT anchors), so no need to set it explicitly
