@@ -1312,19 +1312,19 @@ theme_override_font_sizes/font_size = 9
 text = "2:Pink"
 
 [node name="LabelInfoProg" type="Label" parent="."]
-offset_left = 16.0
-offset_top = 349.0
-offset_right = 314.0
-offset_bottom = 363.0
+offset_left = 324.0
+offset_top = 446.0
+offset_right = 622.0
+offset_bottom = 460.0
 theme_override_colors/font_color = Color(1, 0.501961, 0, 1)
 theme_override_font_sizes/font_size = 10
 text = "str"
 
 [node name="LabelInfoPercussion" type="Label" parent="."]
 offset_left = 100.0
-offset_top = 363.0
+offset_top = 412.0
 offset_right = 259.0
-offset_bottom = 411.0
+offset_bottom = 460.0
 theme_override_colors/font_color = Color(1, 0.501961, 0, 1)
 theme_override_font_sizes/font_size = 10
 text = "str
@@ -1333,36 +1333,36 @@ str"
 
 [node name="LabelPercussionParam" type="Label" parent="."]
 offset_left = 14.0
-offset_top = 363.0
+offset_top = 412.0
 offset_right = 96.0
-offset_bottom = 380.0
+offset_bottom = 429.0
 theme_override_font_sizes/font_size = 10
 text = "Edit percussions"
 horizontal_alignment = 2
 
 [node name="LabelInfoSMF" type="Label" parent="."]
 offset_left = 761.0
-offset_top = 394.0
+offset_top = 444.0
 offset_right = 1016.0
-offset_bottom = 408.0
+offset_bottom = 458.0
 theme_override_colors/font_color = Color(1, 0.501961, 0, 1)
 theme_override_font_sizes/font_size = 10
 text = "str"
 
 [node name="LabelSignalOutputLevel" type="Label" parent="."]
 offset_left = 321.0
-offset_top = 399.0
+offset_top = 425.0
 offset_right = 407.0
-offset_bottom = 413.0
+offset_bottom = 439.0
 theme_override_font_sizes/font_size = 9
 text = "Signal output level: "
 horizontal_alignment = 2
 
 [node name="LabelSignalAllocation" type="Label" parent="."]
 offset_left = 324.0
-offset_top = 390.0
+offset_top = 415.0
 offset_right = 404.0
-offset_bottom = 404.0
+offset_bottom = 429.0
 theme_override_font_sizes/font_size = 9
 text = "Signal Allocation:"
 horizontal_alignment = 2
@@ -1394,9 +1394,9 @@ script = ExtResource("3_pianoroll_script")
 
 [node name="ButtonSelectSMF" type="Button" parent="."]
 offset_left = 761.0
-offset_top = 368.0
+offset_top = 418.0
 offset_right = 873.0
-offset_bottom = 412.0
+offset_bottom = 462.0
 scale = Vector2(0.5, 0.5)
 text = "Select SMF"
 
@@ -1410,17 +1410,17 @@ filters = PackedStringArray("*.mid")
 
 [node name="ButtonUnselectSMF" type="Button" parent="."]
 offset_left = 819.0
-offset_top = 368.0
+offset_top = 418.0
 offset_right = 931.0
-offset_bottom = 412.0
+offset_bottom = 462.0
 scale = Vector2(0.5, 0.5)
 text = "Unselect SMF"
 
 [node name="ButtonLoadData" type="Button" parent="."]
 offset_left = 881.0
-offset_top = 368.0
+offset_top = 418.0
 offset_right = 967.0
-offset_bottom = 412.0
+offset_bottom = 462.0
 scale = Vector2(0.5, 0.5)
 text = "Load tone"
 
@@ -1435,9 +1435,9 @@ filters = PackedStringArray("*.json")
 
 [node name="ButtonSaveData" type="Button" parent="."]
 offset_left = 926.0
-offset_top = 368.0
+offset_top = 418.0
 offset_right = 1010.0
-offset_bottom = 412.0
+offset_bottom = 462.0
 scale = Vector2(0.5, 0.5)
 text = "Save tone"
 
@@ -1450,9 +1450,9 @@ filters = PackedStringArray("*.json")
 
 [node name="ButtonLicens" type="Button" parent="."]
 offset_left = 975.0
-offset_top = 368.0
+offset_top = 418.0
 offset_right = 1059.0
-offset_bottom = 412.0
+offset_bottom = 462.0
 scale = Vector2(0.5, 0.5)
 text = "LICENSE"
 
@@ -1489,9 +1489,9 @@ color = Color(0, 0, 1, 1)
 layout_mode = 3
 anchors_preset = 0
 offset_left = 226.0
-offset_top = 366.0
+offset_top = 415.0
 offset_right = 313.0
-offset_bottom = 415.0
+offset_bottom = 464.0
 
 [node name="ButtonKeySelect" type="Button" parent="ControlPercussion"]
 layout_mode = 0
@@ -1504,10 +1504,10 @@ text = "Key select"
 
 [node name="ButtonPianoroll" type="Button" parent="ControlPercussion"]
 layout_mode = 0
-offset_left = -208.0
-offset_top = 33.0
-offset_right = -104.0
-offset_bottom = 64.0
+offset_left = 467.0
+offset_top = 32.0
+offset_right = 571.0
+offset_bottom = 63.0
 scale = Vector2(0.5, 0.5)
 text = "PianoRoll"
 
