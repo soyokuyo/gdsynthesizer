@@ -344,17 +344,64 @@ func _on_gd_synthesizer_note_changed(state, note)->void:
 	var inst = note["instrumentNum"]
 	if not Globalv.is_percussion_prog_select:
 		var color:Color = Color(0.2, 0.2, 0, 1)
+		# 使用するprogram値を決定（スコープを広げるため、ifブロックの外で定義）
+		var program_to_use: int = inst
+		
 		if (state == "note_on"):
-			# Check if piano roll is visible and get color from PianoRollOverlay
-			var piano_roll = get_node_or_null("PianoRoll")
+			# パーカッションモード状態を取得
+			var is_perc_mode = is_percussion_mode
+			
+			# ノートのチャンネルを確認
+			var channel = note.get("channel", -1)
+			var is_percussion_channel = (channel == 9 or channel == 25)
+			
+			# パーカッションノートの場合、percussion_params_arrayからprogram値を取得
+			if is_percussion_channel:
+				var gd_synthesizer = get_node_or_null("GDSynthesizer")
+				if gd_synthesizer:
+					var percussion_array = gd_synthesizer.percussion_params_array
+					var key = note.get("key", -1)
+					if percussion_array != null and percussion_array.size() > key and key >= 0:
+						var percussion_item = percussion_array[key]
+						if percussion_item != null and percussion_item.has("program"):
+							program_to_use = percussion_item["program"]
+						# フォールバック: 通常のinstrumentNumを使用
+					# フォールバック: 通常のinstrumentNumを使用
+			
+			# PianoRollOverlayから色を取得（パーカッションモードを考慮）
 			var piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlay")
-			if piano_roll and piano_roll.visible and piano_roll_overlay and inst < 128:
-				# Use program color from piano roll
-				color = piano_roll_overlay._get_program_color(inst)
+			if piano_roll_overlay:
+				# _get_program_color()はパーカッションモードを考慮している
+				color = piano_roll_overlay._get_program_color(program_to_use)
 			else:
-				# Default yellow color when piano roll is not visible
-				color = Color(1.0, 1.0, 0, 1)
-		get_node("LED"+str(inst)).get_node("Led").color = color
+				# PianoRollOverlayが取得できない場合のフォールバック
+				# パーカッションモードに応じた色を手動で設定
+				if is_perc_mode:
+					# パーカッションモード時: 1-128は黄色、129-256はカラーインデックス
+					if program_to_use >= 0 and program_to_use < 128:
+						color = Color(1.0, 1.0, 0, 1)  # 黄色
+					elif program_to_use >= 128 and program_to_use < 256:
+						# カラーインデックスとして使用（簡易版：黄色）
+						color = Color(1.0, 1.0, 0, 1)  # フォールバック: 黄色
+					else:
+						color = Color(1.0, 1.0, 0, 1)  # デフォルト: 黄色
+				else:
+					# 非パーカッションモード時: 1-128はカラーインデックス、129-256は黄色
+					if program_to_use >= 0 and program_to_use < 128:
+						# カラーインデックスとして使用（簡易版：黄色）
+						color = Color(1.0, 1.0, 0, 1)  # フォールバック: 黄色
+					elif program_to_use >= 128 and program_to_use < 256:
+						color = Color(1.0, 1.0, 0, 1)  # 黄色
+					else:
+						color = Color(1.0, 1.0, 0, 1)  # デフォルト: 黄色
+		
+		# LEDのインデックスはprogram_to_useを使用（パーカッションノートの場合はprogram値）
+		# ただし、LED配列のサイズを考慮する必要がある
+		var led_index = program_to_use
+		if led_index >= 0 and led_index < 256:
+			var led_node = get_node_or_null("LED"+str(led_index))
+			if led_node:
+				led_node.get_node("Led").color = color
 
 	if Globalv.is_percussion == 0:
 		var key = note["key"]
