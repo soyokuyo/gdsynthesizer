@@ -668,6 +668,39 @@ func update_piano_roll_background_size()->void:
 func _on_button_pianoroll_pressed()->void:
 	toggle_piano_roll()
 
+var is_percussion_mode: bool = false  # パーカッションモードフラグ
+
+func _on_button_percussionroll_pressed()->void:
+	var button = get_node_or_null("ControlPercussion/ButtonPercussionroll")
+	if button:
+		is_percussion_mode = not is_percussion_mode
+		print("ButtonPercussionroll pressed, is_percussion_mode: ", is_percussion_mode)
+		if is_percussion_mode:
+			# 黄色に変更（StyleBoxFlatを使用）
+			var style_box = StyleBoxFlat.new()
+			style_box.bg_color = Color(1.0, 1.0, 0, 1)
+			button.add_theme_stylebox_override("normal", style_box)
+			button.add_theme_stylebox_override("hover", style_box)
+			button.add_theme_stylebox_override("pressed", style_box)
+			# 文字色を黒に変更（すべての状態で）
+			button.add_theme_color_override("font_color", Color(0.0, 0.0, 0.0, 1.0))
+			button.add_theme_color_override("font_hover_color", Color(0.0, 0.0, 0.0, 1.0))
+			button.add_theme_color_override("font_pressed_color", Color(0.0, 0.0, 0.0, 1.0))
+			button.add_theme_color_override("font_focus_color", Color(0.0, 0.0, 0.0, 1.0))
+			button.add_theme_color_override("font_disabled_color", Color(0.0, 0.0, 0.0, 1.0))
+		else:
+			# 通常色に戻す
+			button.remove_theme_stylebox_override("normal")
+			button.remove_theme_stylebox_override("hover")
+			button.remove_theme_stylebox_override("pressed")
+			# 文字色を明示的に白に設定（removeでは戻らないため）
+			button.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
+			button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
+			button.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 1.0, 1.0))
+			button.add_theme_color_override("font_focus_color", Color(1.0, 1.0, 1.0, 1.0))
+			button.add_theme_color_override("font_disabled_color", Color(1.0, 1.0, 1.0, 1.0))
+	else:
+		print("ButtonPercussionroll not found!")
 
 func _on_button_regist_program_pressed()->void:
 	if    Globalv.is_percussion_key_select == false\
