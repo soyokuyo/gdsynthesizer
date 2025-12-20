@@ -337,81 +337,88 @@ func keyboard_clear_if_requied()->void:
 			var led = get_node("LED"+str(i)).get_node("Led") 
 			led.color = Color(0.2, 0.2, 0, 1)
 
-
 func _on_gd_synthesizer_note_changed(state, note)->void:
 	keyboard_clear_if_requied()
 		
 	var inst = note["instrumentNum"]
 	if not Globalv.is_percussion_prog_select:
-		var color:Color = Color(0.2, 0.2, 0, 1)
-		# 使用するprogram値を決定（スコープを広げるため、ifブロックの外で定義）
+		# ピアノロールの可視性を確認
+		var piano_roll = get_node_or_null("PianoRoll")
+		var is_piano_roll_visible = piano_roll != null and piano_roll.visible
+		
+		# パーカッションモード状態を取得
+		var is_perc_mode = is_percussion_mode
+		
+		# ノートのチャンネルを確認
+		var channel = note.get("channel", -1)
+		var is_percussion_channel = (channel == 9 or channel == 25)
+		
+		# 使用するprogram値を決定
 		var program_to_use: int = inst
+		if is_percussion_channel:
+			var gd_synthesizer = get_node_or_null("GDSynthesizer")
+			if gd_synthesizer:
+				var percussion_array = gd_synthesizer.percussion_params_array
+				var key = note.get("key", -1)
+				if percussion_array != null and percussion_array.size() > key and key >= 0:
+					var percussion_item = percussion_array[key]
+					if percussion_item != null and percussion_item.has("program"):
+						program_to_use = percussion_item["program"]
+		
+		# 点灯中のprogramを追跡（チャンネル情報も保存）
+		if state == "note_on":
+			active_programs[program_to_use] = is_percussion_channel
+		# note_offの時は、LEDがデフォルト色に戻った時に削除する
+		# ここでは削除しない（複数のノートが同じprogramを使う可能性があるため）
+		
+		var color:Color = Color(0.2, 0.2, 0, 1)
 		
 		if (state == "note_on"):
-			# パーカッションモード状態を取得
-			var is_perc_mode = is_percussion_mode
-			
-			# ノートのチャンネルを確認
-			var channel = note.get("channel", -1)
-			var is_percussion_channel = (channel == 9 or channel == 25)
-			
-			# パーカッションノートの場合、percussion_params_arrayからprogram値を取得
-			if is_percussion_channel:
-				var gd_synthesizer = get_node_or_null("GDSynthesizer")
-				if gd_synthesizer:
-					var percussion_array = gd_synthesizer.percussion_params_array
-					var key = note.get("key", -1)
-					if percussion_array != null and percussion_array.size() > key and key >= 0:
-						var percussion_item = percussion_array[key]
-						if percussion_item != null and percussion_item.has("program"):
-							program_to_use = percussion_item["program"]
-						# フォールバック: 通常のinstrumentNumを使用
-					# フォールバック: 通常のinstrumentNumを使用
-			
-			# PianoRollOverlayから色を取得（パーカッションモードを考慮）
-			# 現在のモードに応じたOverlayを取得
-			var piano_roll_overlay = null
-			if is_percussion_mode:
-				piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayPercussion")
+			# 色の決定ロジック
+			if not is_piano_roll_visible:
+				# ピアノロールが非表示の場合：常に黄色
+				color = Color(1.0, 1.0, 0.0, 1.0)
 			else:
-				piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayNonPercussion")
-			
-			# フォールバック: 既存のPianoRollOverlay（互換性のため）
-			if not piano_roll_overlay:
-				piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlay")
-			
-			if piano_roll_overlay:
-				# _get_program_color()はパーカッションモードを考慮している
-				color = piano_roll_overlay._get_program_color(program_to_use)
-			else:
-				# PianoRollOverlayが取得できない場合のフォールバック
-				# パーカッションモードに応じた色を手動で設定
+				# ピアノロールが表示されている場合
 				if is_perc_mode:
-					# パーカッションモード時: 1-128は黄色、129-256はカラーインデックス
-					if program_to_use >= 0 and program_to_use < 128:
-						color = Color(1.0, 1.0, 0, 1)  # 黄色
-					elif program_to_use >= 128 and program_to_use < 256:
-						# カラーインデックスとして使用（簡易版：黄色）
-						color = Color(1.0, 1.0, 0, 1)  # フォールバック: 黄色
+					# パーカッションモード表示時
+					if is_percussion_channel:
+						# パーカッションノート → カラーテーブル
+						var piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayPercussion")
+						if not piano_roll_overlay:
+							piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlay")
+						if piano_roll_overlay:
+							color = piano_roll_overlay._get_program_color(program_to_use)
+						else:
+							color = Color(1.0, 1.0, 0.0, 1.0)  # フォールバック: 黄色
 					else:
-						color = Color(1.0, 1.0, 0, 1)  # デフォルト: 黄色
+						# 非パーカッションノート → 黄色
+						color = Color(1.0, 1.0, 0.0, 1.0)
 				else:
-					# 非パーカッションモード時: 1-128はカラーインデックス、129-256は黄色
-					if program_to_use >= 0 and program_to_use < 128:
-						# カラーインデックスとして使用（簡易版：黄色）
-						color = Color(1.0, 1.0, 0, 1)  # フォールバック: 黄色
-					elif program_to_use >= 128 and program_to_use < 256:
-						color = Color(1.0, 1.0, 0, 1)  # 黄色
+					# 非パーカッションモード表示時
+					if is_percussion_channel:
+						# パーカッションノート → 黄色
+						color = Color(1.0, 1.0, 0.0, 1.0)
 					else:
-						color = Color(1.0, 1.0, 0, 1)  # デフォルト: 黄色
+						# 非パーカッションノート → カラーテーブル
+						var piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayNonPercussion")
+						if not piano_roll_overlay:
+							piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlay")
+						if piano_roll_overlay:
+							color = piano_roll_overlay._get_program_color(program_to_use)
+						else:
+							color = Color(1.0, 1.0, 0.0, 1.0)  # フォールバック: 黄色
 		
-		# LEDのインデックスはprogram_to_useを使用（パーカッションノートの場合はprogram値）
-		# ただし、LED配列のサイズを考慮する必要がある
+		# LEDの色を更新（ピアノロールの可視性に関わらず更新）
 		var led_index = program_to_use
 		if led_index >= 0 and led_index < 256:
 			var led_node = get_node_or_null("LED"+str(led_index))
 			if led_node:
 				led_node.get_node("Led").color = color
+				# LEDがデフォルト色に戻った場合、active_programsから削除
+				if color == Color(0.2, 0.2, 0, 1):
+					if active_programs.has(program_to_use):
+						active_programs.erase(program_to_use)
 
 	if Globalv.is_percussion == 0:
 		var key = note["key"]
@@ -717,6 +724,9 @@ func toggle_piano_roll()->void:
 					if piano_roll_overlay and piano_roll_overlay.has_method("get_show_all_programs"):
 						var show_all = piano_roll_overlay.get_show_all_programs()
 						update_allprograms_button_state(show_all)
+		
+		# ピアノロールの表示/非表示を切り替えた時、点灯中のPROGRAM LEDの色を更新
+		update_active_program_leds_color()
 
 func update_piano_roll_background_size()->void:
 	if piano_roll_background and piano_roll_background.visible:
@@ -738,6 +748,7 @@ func _on_button_pianoroll_pressed()->void:
 	toggle_piano_roll()
 
 var is_percussion_mode: bool = false  # パーカッションモードフラグ
+var active_programs: Dictionary = {}  # 現在点灯中のprogram値とチャンネル情報のマッピング {program: is_percussion_channel}
 
 func get_is_percussion_mode() -> bool:
 	return is_percussion_mode
@@ -788,8 +799,68 @@ func _on_button_percussionroll_pressed()->void:
 				piano_roll_overlay_non_perc.visible = true
 			if piano_roll_overlay_perc:
 				piano_roll_overlay_perc.visible = false
+		
+		# ピアノロールが表示されている場合、点灯中のPROGRAM LEDの色を更新
+		var piano_roll = get_node_or_null("PianoRoll")
+		if piano_roll and piano_roll.visible:
+			update_active_program_leds_color()
 	else:
 		print("ButtonPercussionroll not found!")
+
+func update_active_program_leds_color()->void:
+	# 点灯中の全てのprogram値に対して、新しい可視性状態に応じた色を計算して設定
+	var piano_roll = get_node_or_null("PianoRoll")
+	var is_piano_roll_visible = piano_roll != null and piano_roll.visible
+	
+	var is_perc_mode = is_percussion_mode
+	
+	# active_programsに登録されている全てのprogram値に対して色を更新
+	for program_value in active_programs.keys():
+		var is_percussion_channel = active_programs[program_value]
+		var color: Color = Color(0.2, 0.2, 0, 1)
+		
+		# 色の決定ロジック
+		if not is_piano_roll_visible:
+			# ピアノロールが非表示の場合：常に黄色
+			color = Color(1.0, 1.0, 0.0, 1.0)
+		else:
+			# ピアノロールが表示されている場合
+			if is_perc_mode:
+				# パーカッションモード表示時
+				if is_percussion_channel:
+					# パーカッションノート → カラーテーブル
+					var piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayPercussion")
+					if not piano_roll_overlay:
+						piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlay")
+					if piano_roll_overlay:
+						color = piano_roll_overlay._get_program_color(program_value)
+					else:
+						color = Color(1.0, 1.0, 0.0, 1.0)  # フォールバック: 黄色
+				else:
+					# 非パーカッションノート → 黄色
+					color = Color(1.0, 1.0, 0.0, 1.0)
+			else:
+				# 非パーカッションモード表示時
+				if is_percussion_channel:
+					# パーカッションノート → 黄色
+					color = Color(1.0, 1.0, 0.0, 1.0)
+				else:
+					# 非パーカッションノート → カラーテーブル
+					var piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayNonPercussion")
+					if not piano_roll_overlay:
+						piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlay")
+					if piano_roll_overlay:
+						color = piano_roll_overlay._get_program_color(program_value)
+					else:
+						color = Color(1.0, 1.0, 0.0, 1.0)  # フォールバック: 黄色
+		
+		# LEDの色を更新
+		if program_value >= 0 and program_value < 256:
+			var led_node = get_node_or_null("LED"+str(program_value))
+			if led_node:
+				var led = led_node.get_node_or_null("Led")
+				if led:
+					led.color = color
 
 func _on_button_allprograms_pressed()->void:
 	var button = get_node_or_null("ControlPercussion/ButtonAllPrograms")
