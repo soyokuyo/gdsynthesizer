@@ -157,6 +157,11 @@ func _on_file_dialog_file_selected(path:StringName)->void:
 	print(path)
 	$"..".info_change()
 
+	# PianoRollOverlayに直接クリアを指示（同じファイルを再ロードした場合でもクリアされる）
+	var piano_roll_overlay = $"..".get_node_or_null("PianoRoll/TextureRect/PianoRollOverlay")
+	if piano_roll_overlay:
+		piano_roll_overlay.clear_all_notes()
+
 	unload_midi()
 	Globalv.is_keyboard_clear = true 
 	$"..".keyboard_clear_if_requied()

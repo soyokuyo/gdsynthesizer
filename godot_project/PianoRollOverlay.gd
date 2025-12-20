@@ -544,14 +544,19 @@ func _on_pre_note_changed(state: String, note: Dictionary):
 				# pre_note_off handled
 				break
 
+func clear_all_notes()->void:
+	# Clear all notes and reset state (called when SMF file is loaded/reloaded)
+	active_notes.clear()
+	is_started = false
+	start_time_offset = -1.0
+	queue_redraw()
+
 func _process(delta):
 	# Check for MIDI file load/unload and clear notes
 	var current_smf_filename = Globalv.smf_filename
 	if current_smf_filename != last_smf_filename:
 		# MIDI file was loaded, reloaded, or unloaded - clear all notes
-		active_notes.clear()
-		is_started = false
-		start_time_offset = -1.0
+		clear_all_notes()
 		last_smf_filename = current_smf_filename
 	
 	queue_redraw()
