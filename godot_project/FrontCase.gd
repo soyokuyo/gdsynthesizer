@@ -213,6 +213,8 @@ func _init()->void:
 	led_preparation()
 	keyboard_preparation()
 	piano_roll_background_preparation()
+	# Globalv.is_percussionの初期値を設定（_process()で初回更新されるように）
+	last_is_percussion = Globalv.is_percussion
 
 var keyb = []
 var is_sift = false
@@ -747,8 +749,63 @@ func update_piano_roll_background_size()->void:
 func _on_button_pianoroll_pressed()->void:
 	toggle_piano_roll()
 
+func _on_button_percussion_mode_pressed()->void:
+	var button = get_node_or_null("ControlPercussion/ButtonPercussionMode")
+	if button:
+		# Globalv.is_percussionを切り替え（0 <-> 1）
+		if Globalv.is_percussion == 0:
+			Globalv.is_percussion = 1
+		else:
+			Globalv.is_percussion = 0
+		
+		# キーボードをクリア
+		Globalv.is_keyboard_clear = true
+		
+		# ボタンのスタイルを更新
+		update_percussion_mode_button_style()
+
+func update_percussion_mode_button_style()->void:
+	# Globalv.is_percussionの値に応じてボタンのスタイルを更新
+	var button = get_node_or_null("ControlPercussion/ButtonPercussionMode")
+	if not button:
+		return
+	
+	if Globalv.is_percussion != 0:
+		# パーカッション用：黄色地に黒文字
+		var style_box = StyleBoxFlat.new()
+		style_box.bg_color = Color(1.0, 1.0, 0.0, 1.0)  # 黄色
+		button.add_theme_stylebox_override("normal", style_box)
+		button.add_theme_stylebox_override("hover", style_box)
+		button.add_theme_stylebox_override("pressed", style_box)
+		# 文字色を黒に変更（すべての状態で）
+		button.add_theme_color_override("font_color", Color(0.0, 0.0, 0.0, 1.0))
+		button.add_theme_color_override("font_hover_color", Color(0.0, 0.0, 0.0, 1.0))
+		button.add_theme_color_override("font_pressed_color", Color(0.0, 0.0, 0.0, 1.0))
+		button.add_theme_color_override("font_focus_color", Color(0.0, 0.0, 0.0, 1.0))
+		button.add_theme_color_override("font_disabled_color", Color(0.0, 0.0, 0.0, 1.0))
+	else:
+		# 非パーカッション用：黒地に白文字
+		var style_box = StyleBoxFlat.new()
+		style_box.bg_color = Color(0.0, 0.0, 0.0, 1.0)  # 黒
+		button.add_theme_stylebox_override("normal", style_box)
+		button.add_theme_stylebox_override("hover", style_box)
+		button.add_theme_stylebox_override("pressed", style_box)
+		# 文字色を白に変更（すべての状態で）
+		button.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
+		button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
+		button.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 1.0, 1.0))
+		button.add_theme_color_override("font_focus_color", Color(1.0, 1.0, 1.0, 1.0))
+		button.add_theme_color_override("font_disabled_color", Color(1.0, 1.0, 1.0, 1.0))
+
+func _process(_delta):
+	# Globalv.is_percussionの変化を監視してボタンの状態を更新
+	if last_is_percussion != Globalv.is_percussion:
+		last_is_percussion = Globalv.is_percussion
+		update_percussion_mode_button_style()
+
 var is_percussion_mode: bool = false  # パーカッションモードフラグ
 var active_programs: Dictionary = {}  # 現在点灯中のprogram値とチャンネル情報のマッピング {program: is_percussion_channel}
+var last_is_percussion: int = -1  # Globalv.is_percussionの前回値を監視
 
 func get_is_percussion_mode() -> bool:
 	return is_percussion_mode

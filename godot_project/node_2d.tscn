@@ -1314,7 +1314,7 @@ text = "2:Pink"
 [node name="LabelInfoProg" type="Label" parent="."]
 offset_left = 324.0
 offset_top = 446.0
-offset_right = 622.0
+offset_right = 584.0
 offset_bottom = 460.0
 theme_override_colors/font_color = Color(1, 0.501961, 0, 1)
 theme_override_font_sizes/font_size = 10
@@ -1516,27 +1516,36 @@ text = "Key select"
 
 [node name="ButtonPercussionroll" type="Button" parent="ControlPercussion"]
 layout_mode = 0
-offset_left = 507.0
+offset_left = 511.0
 offset_top = 32.0
-offset_right = 543.0
+offset_right = 539.0
 offset_bottom = 63.0
 scale = Vector2(0.5, 0.5)
 text = "P"
 
 [node name="ButtonAllPrograms" type="Button" parent="ControlPercussion"]
 layout_mode = 0
-offset_left = 485.0
+offset_left = 495.0
 offset_top = 32.0
-offset_right = 521.0
+offset_right = 523.0
 offset_bottom = 63.0
 scale = Vector2(0.5, 0.5)
 text = "A"
 
+[node name="ButtonPercussionMode" type="Button" parent="ControlPercussion"]
+layout_mode = 0
+offset_left = 363.0
+offset_top = 32.0
+offset_right = 499.0
+offset_bottom = 63.0
+scale = Vector2(0.5, 0.5)
+text = "PercussionMode"
+
 [node name="ButtonPianoroll" type="Button" parent="ControlPercussion"]
 layout_mode = 0
-offset_left = 429.0
+offset_left = 439.0
 offset_top = 32.0
-offset_right = 533.0
+offset_right = 543.0
 offset_bottom = 63.0
 scale = Vector2(0.5, 0.5)
 text = "PianoRoll"
@@ -1627,8 +1636,8 @@ text = "Close"
 [connection signal="file_selected" from="ButtonSelectSMF/FileDialog" to="GDSynthesizer" method="_on_file_dialog_file_selected"]
 [connection signal="button_up" from="ButtonUnselectSMF" to="GDSynthesizer" method="_on_button_unselect_smf_button_up"]
 [connection signal="button_up" from="ButtonLoadData" to="GDSynthesizer" method="_on_button_load_data_button_up"]
-[connection signal="file_selected" from="ButtonLoadData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_load_file_selected"]
 [connection signal="file_selected" from="ButtonLoadData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_file_selected"]
+[connection signal="file_selected" from="ButtonLoadData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_load_file_selected"]
 [connection signal="button_up" from="ButtonSaveData" to="GDSynthesizer" method="_on_button_save_data_button_up"]
 [connection signal="file_selected" from="ButtonSaveData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_file_selected"]
 [connection signal="file_selected" from="ButtonSaveData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_save_file_selected"]
@@ -1636,6 +1645,7 @@ text = "Close"
 [connection signal="pressed" from="ControlPercussion/ButtonKeySelect" to="." method="_on_button_key_select_pressed"]
 [connection signal="pressed" from="ControlPercussion/ButtonPercussionroll" to="." method="_on_button_percussionroll_pressed"]
 [connection signal="pressed" from="ControlPercussion/ButtonAllPrograms" to="." method="_on_button_allprograms_pressed"]
+[connection signal="pressed" from="ControlPercussion/ButtonPercussionMode" to="." method="_on_button_percussion_mode_pressed"]
 [connection signal="pressed" from="ControlPercussion/ButtonPianoroll" to="." method="_on_button_pianoroll_pressed"]
 [connection signal="pressed" from="ControlPercussion/ButtonRegistProgram" to="." method="_on_button_regist_program_pressed"]
 [connection signal="pressed" from="ControlPercussion/ButtonRegistNote" to="." method="_on_button_regist_note_pressed"]
