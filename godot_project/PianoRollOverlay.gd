@@ -609,19 +609,30 @@ func _on_pre_note_changed(state: String, note: Dictionary):
 		active_notes.append(note_data)
 		# pre_note_on handled
 	elif state == "pre_note_off":
-		# Find and close the first matching note (FIFO: first match from the beginning)
-		for i in range(active_notes.size()):
+		# Find and close the most recent matching open note (LIFO: last match from the end)
+		# This handles the case where program changes between note_on and note_off
+		# Match by key and channel only (ignore program to handle program changes)
+		var matched_index = -1
+		var matched_start_time = -1.0
+		
+		# Search from the end to find the most recent matching note
+		for i in range(active_notes.size() - 1, -1, -1):
 			var n = active_notes[i]
-			if n["key"] == key and n["channel"] == channel and n["program"] == note_program and n["end_time"] < 0:
-				# Record the time when pre_note_off was received
-				# Don't change note_height - it will be calculated from start_time to end_time in _draw()
-				# Record the elapsed_time at this moment to fix the top edge position
-				var elapsed_at_off = current_time - start_time_offset - n["start_time"]
-				n["end_time"] = current_time - start_time_offset
-				n["elapsed_at_off"] = elapsed_at_off  # Store elapsed time when pre_note_off was received
-				var note_duration = n["end_time"] - n["start_time"]
-				# pre_note_off handled
-				break
+			# Match by key and channel only (ignore program to handle program changes)
+			if n["key"] == key and n["channel"] == channel and n["end_time"] < 0:
+				# Found a matching open note
+				if matched_index < 0 or n["start_time"] > matched_start_time:
+					# This is the most recent one
+					matched_index = i
+					matched_start_time = n["start_time"]
+		
+		if matched_index >= 0:
+			# Close the most recent matching note
+			var n = active_notes[matched_index]
+			var elapsed_at_off = current_time - start_time_offset - n["start_time"]
+			n["end_time"] = current_time - start_time_offset
+			n["elapsed_at_off"] = elapsed_at_off
+			# pre_note_off handled
 
 func clear_all_notes()->void:
 	# Clear all notes and reset state (called when SMF file is loaded/reloaded)
@@ -730,7 +741,7 @@ func _draw():
 	
 	# Calculate key width (equal spacing for all keys)
 	var key_width = rect_size.x / Globalv.num_keyboard_key
-
+	
 	# Check for program change and update visibility flags for all notes
 	var current_program = Globalv.program
 	if current_program != last_program:
