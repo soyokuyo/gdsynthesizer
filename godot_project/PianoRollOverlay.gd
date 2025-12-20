@@ -502,8 +502,16 @@ func _toggle_display_mode():
 			# Show only selected program
 			n["visible"] = (n.get("program", -1) == current_program)
 	
+	# FrontCaseに通知してボタンの状態を更新
+	if front_case and front_case.has_method("update_allprograms_button_state"):
+		front_case.update_allprograms_button_state(show_all_programs)
+	
 	# Force redraw
 	queue_redraw()
+
+func get_show_all_programs() -> bool:
+	# show_all_programsの状態を取得
+	return show_all_programs
 
 func _on_pre_note_changed(state: String, note: Dictionary):
 	# チャンネルを取得
