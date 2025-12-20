@@ -670,6 +670,9 @@ func _on_button_pianoroll_pressed()->void:
 
 var is_percussion_mode: bool = false  # パーカッションモードフラグ
 
+func get_is_percussion_mode() -> bool:
+	return is_percussion_mode
+
 func _on_button_percussionroll_pressed()->void:
 	var button = get_node_or_null("ControlPercussion/ButtonPercussionroll")
 	if button:
@@ -699,6 +702,15 @@ func _on_button_percussionroll_pressed()->void:
 			button.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 1.0, 1.0))
 			button.add_theme_color_override("font_focus_color", Color(1.0, 1.0, 1.0, 1.0))
 			button.add_theme_color_override("font_disabled_color", Color(1.0, 1.0, 1.0, 1.0))
+		
+		# PianoRollOverlayに通知して再描画
+		var piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlay")
+		if piano_roll_overlay:
+			# 不要なノートを削除
+			piano_roll_overlay.clear_notes_by_percussion_mode(is_percussion_mode)
+			# 可視性を更新
+			piano_roll_overlay.update_visibility_for_percussion_mode()
+			piano_roll_overlay.queue_redraw()
 	else:
 		print("ButtonPercussionroll not found!")
 
