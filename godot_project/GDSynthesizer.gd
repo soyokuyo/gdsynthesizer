@@ -156,7 +156,7 @@ func _on_file_dialog_file_selected(path:StringName)->void:
 	print(path)
 	$"..".info_change()
 
-	# 両方のPianoRollOverlayにクリアを指示（同じファイルを再ロードした場合でもクリアされる）
+	# Clear both PianoRollOverlay instances (also clears when same file is reloaded)
 	var piano_roll_overlay_non_perc = $"..".get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayNonPercussion")
 	var piano_roll_overlay_perc = $"..".get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayPercussion")
 	
@@ -165,7 +165,7 @@ func _on_file_dialog_file_selected(path:StringName)->void:
 	if piano_roll_overlay_perc:
 		piano_roll_overlay_perc.clear_all_notes()
 	
-	# フォールバック: 既存のPianoRollOverlay（互換性のため）
+	# Fallback: existing PianoRollOverlay (for compatibility)
 	var piano_roll_overlay = $"..".get_node_or_null("PianoRoll/TextureRect/PianoRollOverlay")
 	if piano_roll_overlay:
 		piano_roll_overlay.clear_all_notes()

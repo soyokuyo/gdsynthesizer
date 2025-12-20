@@ -213,7 +213,7 @@ func _init()->void:
 	led_preparation()
 	keyboard_preparation()
 	piano_roll_background_preparation()
-	# Globalv.is_percussionの初期値を設定（_process()で初回更新されるように）
+	# Set initial value of Globalv.is_percussion (will be updated on first _process() call)
 	last_is_percussion = Globalv.is_percussion
 
 var keyb = []
@@ -344,18 +344,14 @@ func _on_gd_synthesizer_note_changed(state, note)->void:
 		
 	var inst = note["instrumentNum"]
 	if not Globalv.is_percussion_prog_select:
-		# ピアノロールの可視性を確認
 		var piano_roll = get_node_or_null("PianoRoll")
 		var is_piano_roll_visible = piano_roll != null and piano_roll.visible
 		
-		# パーカッションモード状態を取得
 		var is_perc_mode = is_percussion_mode
 		
-		# ノートのチャンネルを確認
 		var channel = note.get("channel", -1)
 		var is_percussion_channel = (channel == 9 or channel == 25)
 		
-		# 使用するprogram値を決定
 		var program_to_use: int = inst
 		if is_percussion_channel:
 			var gd_synthesizer = get_node_or_null("GDSynthesizer")
@@ -367,57 +363,46 @@ func _on_gd_synthesizer_note_changed(state, note)->void:
 					if percussion_item != null and percussion_item.has("program"):
 						program_to_use = percussion_item["program"]
 		
-		# 点灯中のprogramを追跡（チャンネル情報も保存）
+		# Track active programs (also save channel information)
 		if state == "note_on":
 			active_programs[program_to_use] = is_percussion_channel
-		# note_offの時は、LEDがデフォルト色に戻った時に削除する
-		# ここでは削除しない（複数のノートが同じprogramを使う可能性があるため）
+		# For note_off, remove when LED returns to default color
+		# Do not remove here (multiple notes may use the same program)
 		
 		var color:Color = Color(0.2, 0.2, 0, 1)
 		
 		if (state == "note_on"):
-			# 色の決定ロジック
 			if not is_piano_roll_visible:
-				# ピアノロールが非表示の場合：常に黄色
 				color = Color(1.0, 1.0, 0.0, 1.0)
 			else:
-				# ピアノロールが表示されている場合
 				if is_perc_mode:
-					# パーカッションモード表示時
 					if is_percussion_channel:
-						# パーカッションノート → カラーテーブル
 						var piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayPercussion")
 						if not piano_roll_overlay:
 							piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlay")
 						if piano_roll_overlay:
 							color = piano_roll_overlay._get_program_color(program_to_use)
 						else:
-							color = Color(1.0, 1.0, 0.0, 1.0)  # フォールバック: 黄色
+							color = Color(1.0, 1.0, 0.0, 1.0)  # Fallback: yellow
 					else:
-						# 非パーカッションノート → 黄色
 						color = Color(1.0, 1.0, 0.0, 1.0)
 				else:
-					# 非パーカッションモード表示時
 					if is_percussion_channel:
-						# パーカッションノート → 黄色
 						color = Color(1.0, 1.0, 0.0, 1.0)
 					else:
-						# 非パーカッションノート → カラーテーブル
 						var piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayNonPercussion")
 						if not piano_roll_overlay:
 							piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlay")
 						if piano_roll_overlay:
 							color = piano_roll_overlay._get_program_color(program_to_use)
 						else:
-							color = Color(1.0, 1.0, 0.0, 1.0)  # フォールバック: 黄色
+							color = Color(1.0, 1.0, 0.0, 1.0)  # Fallback: yellow
 		
-		# LEDの色を更新（ピアノロールの可視性に関わらず更新）
 		var led_index = program_to_use
 		if led_index >= 0 and led_index < 256:
 			var led_node = get_node_or_null("LED"+str(led_index))
 			if led_node:
 				led_node.get_node("Led").color = color
-				# LEDがデフォルト色に戻った場合、active_programsから削除
 				if color == Color(0.2, 0.2, 0, 1):
 					if active_programs.has(program_to_use):
 						active_programs.erase(program_to_use)
@@ -715,19 +700,18 @@ func toggle_piano_roll()->void:
 					piano_roll_background.size = Vector2(background_width, piano_roll_height)
 					piano_roll_background.position = Vector2(background_x, piano_roll_y)
 				
-				# ピアノロールが表示されたときに、Aボタンの状態を更新
+				# Update A button state when piano roll is displayed
 				var piano_roll_overlay_non_perc = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayNonPercussion")
 				if piano_roll_overlay_non_perc:
 					var show_all = piano_roll_overlay_non_perc.get_show_all_programs()
 					update_allprograms_button_state(show_all)
 				else:
-					# フォールバック: 既存のPianoRollOverlay（互換性のため）
+					# Fallback: existing PianoRollOverlay (for compatibility)
 					var piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlay")
 					if piano_roll_overlay and piano_roll_overlay.has_method("get_show_all_programs"):
 						var show_all = piano_roll_overlay.get_show_all_programs()
 						update_allprograms_button_state(show_all)
 		
-		# ピアノロールの表示/非表示を切り替えた時、点灯中のPROGRAM LEDの色を更新
 		update_active_program_leds_color()
 
 func update_piano_roll_background_size()->void:
@@ -752,45 +736,37 @@ func _on_button_pianoroll_pressed()->void:
 func _on_button_percussion_mode_pressed()->void:
 	var button = get_node_or_null("ControlPercussion/ButtonPercussionMode")
 	if button:
-		# Globalv.is_percussionを切り替え（0 <-> 1）
 		if Globalv.is_percussion == 0:
 			Globalv.is_percussion = 1
 		else:
 			Globalv.is_percussion = 0
 		
-		# キーボードをクリア
 		Globalv.is_keyboard_clear = true
-		
-		# ボタンのスタイルを更新
 		update_percussion_mode_button_style()
 
 func update_percussion_mode_button_style()->void:
-	# Globalv.is_percussionの値に応じてボタンのスタイルを更新
+	# Update button style based on Globalv.is_percussion value
 	var button = get_node_or_null("ControlPercussion/ButtonPercussionMode")
 	if not button:
 		return
 	
 	if Globalv.is_percussion != 0:
-		# パーカッション用：黄色地に黒文字
 		var style_box = StyleBoxFlat.new()
-		style_box.bg_color = Color(1.0, 1.0, 0.0, 1.0)  # 黄色
+		style_box.bg_color = Color(1.0, 1.0, 0.0, 1.0)
 		button.add_theme_stylebox_override("normal", style_box)
 		button.add_theme_stylebox_override("hover", style_box)
 		button.add_theme_stylebox_override("pressed", style_box)
-		# 文字色を黒に変更（すべての状態で）
 		button.add_theme_color_override("font_color", Color(0.0, 0.0, 0.0, 1.0))
 		button.add_theme_color_override("font_hover_color", Color(0.0, 0.0, 0.0, 1.0))
 		button.add_theme_color_override("font_pressed_color", Color(0.0, 0.0, 0.0, 1.0))
 		button.add_theme_color_override("font_focus_color", Color(0.0, 0.0, 0.0, 1.0))
 		button.add_theme_color_override("font_disabled_color", Color(0.0, 0.0, 0.0, 1.0))
 	else:
-		# 非パーカッション用：黒地に白文字
 		var style_box = StyleBoxFlat.new()
-		style_box.bg_color = Color(0.0, 0.0, 0.0, 1.0)  # 黒
+		style_box.bg_color = Color(0.0, 0.0, 0.0, 1.0)
 		button.add_theme_stylebox_override("normal", style_box)
 		button.add_theme_stylebox_override("hover", style_box)
 		button.add_theme_stylebox_override("pressed", style_box)
-		# 文字色を白に変更（すべての状態で）
 		button.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
 		button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
 		button.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 1.0, 1.0))
@@ -798,14 +774,14 @@ func update_percussion_mode_button_style()->void:
 		button.add_theme_color_override("font_disabled_color", Color(1.0, 1.0, 1.0, 1.0))
 
 func _process(_delta):
-	# Globalv.is_percussionの変化を監視してボタンの状態を更新
+	# Monitor Globalv.is_percussion changes and update button state
 	if last_is_percussion != Globalv.is_percussion:
 		last_is_percussion = Globalv.is_percussion
 		update_percussion_mode_button_style()
 
-var is_percussion_mode: bool = false  # パーカッションモードフラグ
-var active_programs: Dictionary = {}  # 現在点灯中のprogram値とチャンネル情報のマッピング {program: is_percussion_channel}
-var last_is_percussion: int = -1  # Globalv.is_percussionの前回値を監視
+var is_percussion_mode: bool = false  # Percussion mode flag
+var active_programs: Dictionary = {}  # Mapping of currently active program values and channel information {program: is_percussion_channel}
+var last_is_percussion: int = -1  # Previous value of Globalv.is_percussion for monitoring
 
 func get_is_percussion_mode() -> bool:
 	return is_percussion_mode
@@ -816,48 +792,40 @@ func _on_button_percussionroll_pressed()->void:
 		is_percussion_mode = not is_percussion_mode
 		print("ButtonPercussionroll pressed, is_percussion_mode: ", is_percussion_mode)
 		if is_percussion_mode:
-			# 黄色に変更（StyleBoxFlatを使用）
 			var style_box = StyleBoxFlat.new()
 			style_box.bg_color = Color(1.0, 1.0, 0, 1)
 			button.add_theme_stylebox_override("normal", style_box)
 			button.add_theme_stylebox_override("hover", style_box)
 			button.add_theme_stylebox_override("pressed", style_box)
-			# 文字色を黒に変更（すべての状態で）
 			button.add_theme_color_override("font_color", Color(0.0, 0.0, 0.0, 1.0))
 			button.add_theme_color_override("font_hover_color", Color(0.0, 0.0, 0.0, 1.0))
 			button.add_theme_color_override("font_pressed_color", Color(0.0, 0.0, 0.0, 1.0))
 			button.add_theme_color_override("font_focus_color", Color(0.0, 0.0, 0.0, 1.0))
 			button.add_theme_color_override("font_disabled_color", Color(0.0, 0.0, 0.0, 1.0))
 		else:
-			# 通常色に戻す
 			button.remove_theme_stylebox_override("normal")
 			button.remove_theme_stylebox_override("hover")
 			button.remove_theme_stylebox_override("pressed")
-			# 文字色を明示的に白に設定（removeでは戻らないため）
+			# Explicitly set text color to white (remove doesn't restore it)
 			button.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
 			button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
 			button.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 1.0, 1.0))
 			button.add_theme_color_override("font_focus_color", Color(1.0, 1.0, 1.0, 1.0))
 			button.add_theme_color_override("font_disabled_color", Color(1.0, 1.0, 1.0, 1.0))
 		
-		# 対応するPianoRollOverlayを可視化/不可視化
 		var piano_roll_overlay_non_perc = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayNonPercussion")
 		var piano_roll_overlay_perc = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayPercussion")
 		
 		if is_percussion_mode:
-			# パーカッションモード: パーカッション用を可視化、非パーカッション用を不可視化
 			if piano_roll_overlay_perc:
 				piano_roll_overlay_perc.visible = true
 			if piano_roll_overlay_non_perc:
 				piano_roll_overlay_non_perc.visible = false
 		else:
-			# 非パーカッションモード: 非パーカッション用を可視化、パーカッション用を不可視化
 			if piano_roll_overlay_non_perc:
 				piano_roll_overlay_non_perc.visible = true
 			if piano_roll_overlay_perc:
 				piano_roll_overlay_perc.visible = false
-		
-		# ピアノロールが表示されている場合、点灯中のPROGRAM LEDの色を更新
 		var piano_roll = get_node_or_null("PianoRoll")
 		if piano_roll and piano_roll.visible:
 			update_active_program_leds_color()
@@ -865,53 +833,43 @@ func _on_button_percussionroll_pressed()->void:
 		print("ButtonPercussionroll not found!")
 
 func update_active_program_leds_color()->void:
-	# 点灯中の全てのprogram値に対して、新しい可視性状態に応じた色を計算して設定
+	# Calculate and set colors for all active program values based on new visibility state
 	var piano_roll = get_node_or_null("PianoRoll")
 	var is_piano_roll_visible = piano_roll != null and piano_roll.visible
 	
 	var is_perc_mode = is_percussion_mode
 	
-	# active_programsに登録されている全てのprogram値に対して色を更新
+	# Update colors for all program values registered in active_programs
 	for program_value in active_programs.keys():
 		var is_percussion_channel = active_programs[program_value]
 		var color: Color = Color(0.2, 0.2, 0, 1)
 		
-		# 色の決定ロジック
 		if not is_piano_roll_visible:
-			# ピアノロールが非表示の場合：常に黄色
 			color = Color(1.0, 1.0, 0.0, 1.0)
 		else:
-			# ピアノロールが表示されている場合
 			if is_perc_mode:
-				# パーカッションモード表示時
 				if is_percussion_channel:
-					# パーカッションノート → カラーテーブル
 					var piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayPercussion")
 					if not piano_roll_overlay:
 						piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlay")
 					if piano_roll_overlay:
 						color = piano_roll_overlay._get_program_color(program_value)
 					else:
-						color = Color(1.0, 1.0, 0.0, 1.0)  # フォールバック: 黄色
+						color = Color(1.0, 1.0, 0.0, 1.0)  # Fallback: yellow
 				else:
-					# 非パーカッションノート → 黄色
 					color = Color(1.0, 1.0, 0.0, 1.0)
 			else:
-				# 非パーカッションモード表示時
 				if is_percussion_channel:
-					# パーカッションノート → 黄色
 					color = Color(1.0, 1.0, 0.0, 1.0)
 				else:
-					# 非パーカッションノート → カラーテーブル
 					var piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayNonPercussion")
 					if not piano_roll_overlay:
 						piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlay")
 					if piano_roll_overlay:
 						color = piano_roll_overlay._get_program_color(program_value)
 					else:
-						color = Color(1.0, 1.0, 0.0, 1.0)  # フォールバック: 黄色
+						color = Color(1.0, 1.0, 0.0, 1.0)  # Fallback: yellow
 		
-		# LEDの色を更新
 		if program_value >= 0 and program_value < 256:
 			var led_node = get_node_or_null("LED"+str(program_value))
 			if led_node:
@@ -922,12 +880,12 @@ func update_active_program_leds_color()->void:
 func _on_button_allprograms_pressed()->void:
 	var button = get_node_or_null("ControlPercussion/ButtonAllPrograms")
 	if button:
-		# 非パーカッション用Overlayの_toggle_display_mode()を呼び出す
+		# Call _toggle_display_mode() for non-percussion overlay
 		var piano_roll_overlay_non_perc = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayNonPercussion")
 		if piano_roll_overlay_non_perc:
 			piano_roll_overlay_non_perc._toggle_display_mode()
 		else:
-			# フォールバック: 既存のPianoRollOverlay（互換性のため）
+			# Fallback: existing PianoRollOverlay (for compatibility)
 			var piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlay")
 			if piano_roll_overlay and not piano_roll_overlay.is_percussion_overlay:
 				piano_roll_overlay._toggle_display_mode()
@@ -935,28 +893,24 @@ func _on_button_allprograms_pressed()->void:
 		print("ButtonAllPrograms not found!")
 
 func update_allprograms_button_state(show_all: bool)->void:
-	# ボタンの視覚的状態を更新
 	var button = get_node_or_null("ControlPercussion/ButtonAllPrograms")
 	if button:
 		if show_all:
-			# 黄色に変更（StyleBoxFlatを使用）
 			var style_box = StyleBoxFlat.new()
 			style_box.bg_color = Color(1.0, 1.0, 0, 1)
 			button.add_theme_stylebox_override("normal", style_box)
 			button.add_theme_stylebox_override("hover", style_box)
 			button.add_theme_stylebox_override("pressed", style_box)
-			# 文字色を黒に変更（すべての状態で）
 			button.add_theme_color_override("font_color", Color(0.0, 0.0, 0.0, 1.0))
 			button.add_theme_color_override("font_hover_color", Color(0.0, 0.0, 0.0, 1.0))
 			button.add_theme_color_override("font_pressed_color", Color(0.0, 0.0, 0.0, 1.0))
 			button.add_theme_color_override("font_focus_color", Color(0.0, 0.0, 0.0, 1.0))
 			button.add_theme_color_override("font_disabled_color", Color(0.0, 0.0, 0.0, 1.0))
 		else:
-			# 通常色に戻す
 			button.remove_theme_stylebox_override("normal")
 			button.remove_theme_stylebox_override("hover")
 			button.remove_theme_stylebox_override("pressed")
-			# 文字色を明示的に白に設定（removeでは戻らないため）
+			# Explicitly set text color to white (remove doesn't restore it)
 			button.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
 			button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
 			button.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 1.0, 1.0))
