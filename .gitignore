@@ -15,3 +15,8 @@ godot_project/export_presets.cfg
 # Imported translations (automatically generated from CSV files)
 godot_project/*.translation
 
+# Temporary files
+*.tmp
+~*.TMP
+*.TMP
+

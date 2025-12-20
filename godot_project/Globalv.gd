@@ -23,6 +23,7 @@ var num_poly:int = 32
 var program:int = 0
 var base_tempo:int = 60
 var is_percussion:int = 0
+var pre_on_time: float = 5000.0  # preOnTime in milliseconds (for piano roll visualization)
 
 var total_gain:float = 1.0
 var atack_slope_time:float = 20.0

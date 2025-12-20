@@ -34,6 +34,7 @@ var show_all_programs: bool = false  # Display mode: false = single program, tru
 var program_color_map: Array[Color] = []  # Color map for 128 programs (indexed by program number)
 var last_percussion_mode: bool = false  # 前回のパーカッションモード状態を記録
 var is_percussion_overlay: bool = false  # このOverlayがパーカッション用かどうか
+var last_pre_on_time: float = -1.0  # Track preOnTime changes
 
 func _ready():
 	# Initialize height settings
@@ -641,6 +642,29 @@ func clear_all_notes()->void:
 	start_time_offset = -1.0
 	queue_redraw()
 
+func _update_pre_on_time(new_pre_on_time: float):
+	var old_scroll_speed = scroll_speed
+	
+	# Update pre_on_time
+	pre_on_time = new_pre_on_time
+	
+	# Recalculate scroll_speed
+	if pre_on_time > 0.0:
+		scroll_speed = viewport_height / pre_on_time
+		default_note_height = 600.0 * scroll_speed
+		
+		# Recalculate note_height for existing notes
+		if old_scroll_speed > 0.0 and scroll_speed > 0.0:
+			var ratio = scroll_speed / old_scroll_speed
+			for note in active_notes:
+				if note.has("note_height"):
+					note["note_height"] = note["note_height"] * ratio
+	else:
+		scroll_speed = 0.0
+		default_note_height = 0.0
+	
+	queue_redraw()
+
 # 以下の関数は新しい実装では不要（互換性のために残す）
 # func clear_notes_by_percussion_mode(is_percussion_mode: bool):
 # 	# パーカッションモードに応じて不要なノートを削除
@@ -684,6 +708,16 @@ func _process(delta):
 		# MIDI file was loaded, reloaded, or unloaded - clear all notes
 		clear_all_notes()
 		last_smf_filename = current_smf_filename
+	
+	# Check for preOnTime changes
+	if gd_synthesizer:
+		var ctr_params = gd_synthesizer.get_control_params()
+		if ctr_params.has("preOnTime"):
+			var current_pre_on_time = ctr_params["preOnTime"] / 1000.0  # Convert to seconds
+			if last_pre_on_time >= 0.0 and abs(current_pre_on_time - last_pre_on_time) > 0.001:
+				# preOnTime has changed - update scroll speed and recalculate
+				_update_pre_on_time(current_pre_on_time)
+			last_pre_on_time = current_pre_on_time
 	
 	queue_redraw()
 

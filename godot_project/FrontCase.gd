@@ -1031,3 +1031,20 @@ func _on_button_licens_pressed():
 
 func _on_button_pressed():
 	$"ControlLicens".visible=false
+
+func update_piano_roll_pre_on_time()->void:
+	# Notify both PianoRollOverlay instances of preOnTime changes
+	var piano_roll_overlay_non_perc = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayNonPercussion")
+	var piano_roll_overlay_perc = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayPercussion")
+	
+	var gd_synthesizer = get_node_or_null("GDSynthesizer")
+	if gd_synthesizer:
+		var ctr_params = gd_synthesizer.get_control_params()
+		if ctr_params.has("preOnTime"):
+			var new_pre_on_time = ctr_params["preOnTime"] / 1000.0
+			
+			if piano_roll_overlay_non_perc and piano_roll_overlay_non_perc.has_method("_update_pre_on_time"):
+				piano_roll_overlay_non_perc._update_pre_on_time(new_pre_on_time)
+			
+			if piano_roll_overlay_perc and piano_roll_overlay_perc.has_method("_update_pre_on_time"):
+				piano_roll_overlay_perc._update_pre_on_time(new_pre_on_time)

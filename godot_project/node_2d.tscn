@@ -23,8 +23,8 @@ position = Vector2(60, 142)
 [node name="KnobProgramSelect" parent="." instance=ExtResource("3_5shy8")]
 position = Vector2(60, 223)
 
-[node name="KnobPercussionMode" parent="." instance=ExtResource("3_5shy8")]
-position = Vector2(60, 303)
+[node name="KnobpreOnTime" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(59, 302)
 
 [node name="KnobAtackSlopeTime" parent="." instance=ExtResource("3_5shy8")]
 position = Vector2(164, 63)
@@ -1118,16 +1118,17 @@ offset_bottom = 2.0
 theme_override_font_sizes/font_size = 8
 text = "240"
 
-[node name="LabelPercussionMode" type="Label" parent="LabelSequencer"]
+[node name="LabelpreOnTime" type="Label" parent="LabelSequencer"]
 layout_mode = 0
 offset_left = -11.0
 offset_top = 323.0
 offset_right = 64.0
 offset_bottom = 337.0
 theme_override_font_sizes/font_size = 9
-text = "Percussion mode"
+text = "PreOnTime (ms)"
 
-[node name="Label_1_on" type="Label" parent="LabelSequencer/LabelPercussionMode"]
+[node name="Label_1_on" type="Label" parent="LabelSequencer/LabelpreOnTime"]
+visible = false
 layout_mode = 0
 offset_left = 62.0
 offset_top = -56.0
@@ -1137,7 +1138,8 @@ theme_override_font_sizes/font_size = 8
 text = "1:on
 "
 
-[node name="Label_2_off" type="Label" parent="LabelSequencer/LabelPercussionMode"]
+[node name="Label_2_off" type="Label" parent="LabelSequencer/LabelpreOnTime"]
+visible = false
 layout_mode = 0
 offset_left = 62.0
 offset_top = -14.0
@@ -1636,11 +1638,11 @@ text = "Close"
 [connection signal="file_selected" from="ButtonSelectSMF/FileDialog" to="GDSynthesizer" method="_on_file_dialog_file_selected"]
 [connection signal="button_up" from="ButtonUnselectSMF" to="GDSynthesizer" method="_on_button_unselect_smf_button_up"]
 [connection signal="button_up" from="ButtonLoadData" to="GDSynthesizer" method="_on_button_load_data_button_up"]
-[connection signal="file_selected" from="ButtonLoadData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_file_selected"]
 [connection signal="file_selected" from="ButtonLoadData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_load_file_selected"]
+[connection signal="file_selected" from="ButtonLoadData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_file_selected"]
 [connection signal="button_up" from="ButtonSaveData" to="GDSynthesizer" method="_on_button_save_data_button_up"]
-[connection signal="file_selected" from="ButtonSaveData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_file_selected"]
 [connection signal="file_selected" from="ButtonSaveData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_save_file_selected"]
+[connection signal="file_selected" from="ButtonSaveData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_file_selected"]
 [connection signal="pressed" from="ButtonLicens" to="." method="_on_button_licens_pressed"]
 [connection signal="pressed" from="ControlPercussion/ButtonKeySelect" to="." method="_on_button_key_select_pressed"]
 [connection signal="pressed" from="ControlPercussion/ButtonPercussionroll" to="." method="_on_button_percussionroll_pressed"]

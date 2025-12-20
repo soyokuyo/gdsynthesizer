@@ -25,8 +25,8 @@ func knob_draw()->void:
 				(5+2)*(j*(8+1)+i)+12,
 				(5+12)*k+Globalv.pled_pos_y+10)
 			$"../../PLed".set("position", pled_position)
-		"KnobPercussionMode":
-			changeKnob(0.0, 2.0, 12.0, 115.0, -Globalv.is_percussion+2) 
+		"KnobpreOnTime":
+			changeKnob(0.0, 5000.0, -156.0, 156.0, int(Globalv.pre_on_time)) 
 		"KnobAtackSlopeTime":
 			changeKnob(0.0, 5000.0, 0.0, 720.0, int(Globalv.atack_slope_time)) 
 		"KnobDecayHalfLifeTime":
@@ -180,12 +180,27 @@ func _on_input_event(viewport:Node, event:InputEvent , shape_idx:int)->void:
 					Globalv.program = value-1
 					$"../../GDSynthesizer".program_change()
 					Globalv.is_keyboard_clear = true
-				"KnobPercussionMode":
-					var value:int = -Globalv.is_percussion+2
-					value += direction * getAmount(1, 1)
-					value  = clampi(value, 1, 2)
-					Globalv.is_percussion = -(value-2)
-					Globalv.is_keyboard_clear = true
+				"KnobpreOnTime":
+					# Only allow changes when SMF file is not loaded
+					if Globalv.smf_filename == "":
+						var value: float = Globalv.pre_on_time
+						value += float(direction) * 100.0  # Change by 100 units
+						value = clampf(value, 0.0, 5000.0)
+						Globalv.pre_on_time = value
+						
+						# Reflect changes to GDSynthesizer
+						var gd_synthesizer = $"../../GDSynthesizer"
+						if gd_synthesizer:
+							var ctr_params = gd_synthesizer.get_control_params()
+							ctr_params["preOnTime"] = Globalv.pre_on_time
+							gd_synthesizer.set_control_params(ctr_params)
+						
+						# Notify FrontCase
+						var front_case = $"../.."
+						if front_case and front_case.has_method("update_piano_roll_pre_on_time"):
+							front_case.update_piano_roll_pre_on_time()
+					else:
+						return  # Silently ignore when SMF file is loaded
 				"KnobAtackSlopeTime":
 					var value:int = int(Globalv.atack_slope_time)
 					value += direction * getAmount(1, 100)

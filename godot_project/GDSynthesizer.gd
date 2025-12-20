@@ -112,8 +112,8 @@ func _ready()->void:
 	Globalv.num_division = ctr_params["divisionNum"]
 	percussion_params_array = get_percussion_params()
 	
-	# Set preOnTime to 5 seconds (5000ms) for piano roll visualization
-	ctr_params["preOnTime"] = 5000.0
+	# Set preOnTime from Globalv (default to 5000.0 if not set)
+	ctr_params["preOnTime"] = Globalv.pre_on_time
 	set_control_params(ctr_params)
 
 	play(0.0)
@@ -130,12 +130,11 @@ func modify_synthe_params()->void:
 	set_synthe_params(synthe_params_array)
 	set_percussion_params(percussion_params_array)
 	
-	# Get current control params to preserve preOnTime
-	var current_ctr_params = get_control_params()
+	# Use Globalv.pre_on_time for control params
 	var ctr_params = {
 		"divisionNum": Globalv.num_division,
 		"logLevel": Globalv.log_level,
-		"preOnTime": current_ctr_params.get("preOnTime", 5000.0)  # Preserve preOnTime (default to 5000.0 if not set)
+		"preOnTime": Globalv.pre_on_time  # Use Globalv.pre_on_time
 	}
 	set_control_params(ctr_params)
 	$"..".redraw_signal_allocation_bar()
