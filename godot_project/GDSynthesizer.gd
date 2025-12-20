@@ -157,7 +157,16 @@ func _on_file_dialog_file_selected(path:StringName)->void:
 	print(path)
 	$"..".info_change()
 
-	# PianoRollOverlayに直接クリアを指示（同じファイルを再ロードした場合でもクリアされる）
+	# 両方のPianoRollOverlayにクリアを指示（同じファイルを再ロードした場合でもクリアされる）
+	var piano_roll_overlay_non_perc = $"..".get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayNonPercussion")
+	var piano_roll_overlay_perc = $"..".get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayPercussion")
+	
+	if piano_roll_overlay_non_perc:
+		piano_roll_overlay_non_perc.clear_all_notes()
+	if piano_roll_overlay_perc:
+		piano_roll_overlay_perc.clear_all_notes()
+	
+	# フォールバック: 既存のPianoRollOverlay（互換性のため）
 	var piano_roll_overlay = $"..".get_node_or_null("PianoRoll/TextureRect/PianoRollOverlay")
 	if piano_roll_overlay:
 		piano_roll_overlay.clear_all_notes()

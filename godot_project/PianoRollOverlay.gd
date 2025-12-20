@@ -33,6 +33,7 @@ var last_smf_filename: String = ""  # Track SMF filename changes to clear notes 
 var show_all_programs: bool = false  # Display mode: false = single program, true = all programs
 var program_color_map: Array[Color] = []  # Color map for 128 programs (indexed by program number)
 var last_percussion_mode: bool = false  # 前回のパーカッションモード状態を記録
+var is_percussion_overlay: bool = false  # このOverlayがパーカッション用かどうか
 
 func _ready():
 	# Initialize height settings
@@ -109,16 +110,25 @@ func _ready():
 	# Generate color map for programs
 	program_color_map = _generate_color_map()
 	
+	# ノード名で自分の役割を判定
+	var node_name = name
+	if node_name == "PianoRollOverlayPercussion":
+		is_percussion_overlay = true
+	elif node_name == "PianoRollOverlayNonPercussion":
+		is_percussion_overlay = false
+	else:
+		# 既存のPianoRollOverlayとの互換性のため、get_is_percussion_mode()を使用
+		is_percussion_overlay = get_is_percussion_mode()
+	
 	# Force initial redraw
 	queue_redraw()
 
 var last_program: int = -1
 
 func get_is_percussion_mode() -> bool:
-	# FrontCaseからis_percussion_modeを取得
-	if front_case and front_case.has_method("get_is_percussion_mode"):
-		return front_case.get_is_percussion_mode()
-	return false
+	# ノード名で判定（既存コードとの互換性のため）
+	# 新しい実装ではis_percussion_overlayを使用
+	return is_percussion_overlay
 
 func _generate_color_map() -> Array[Color]:
 	# Fixed color table with 128 colors that satisfy:
@@ -474,10 +484,9 @@ func _switch_height():
 	queue_redraw()
 
 func _toggle_display_mode():
-	# パーカッションモード時はshow_all_programsの切り替えを無効化
-	var is_perc_mode = get_is_percussion_mode()
-	if is_perc_mode:
-		# パーカッションモード時は常に全表示なので、何もしない
+	# パーカッション用Overlay時はshow_all_programsの切り替えを無効化
+	if is_percussion_overlay:
+		# パーカッション用Overlay時は常に全表示なので、何もしない
 		return
 	
 	# Toggle between single program and all programs display mode
@@ -497,20 +506,17 @@ func _toggle_display_mode():
 	queue_redraw()
 
 func _on_pre_note_changed(state: String, note: Dictionary):
-	# パーカッションモード状態を取得
-	var is_perc_mode = get_is_percussion_mode()
-	
 	# チャンネルを取得
 	var channel = note.get("channel", -1)
 	var is_percussion_channel = (channel == 9 or channel == 25)
 	
-	# チャンネルフィルタリング
-	if is_perc_mode:
-		# パーカッションモード時: CH9またはCH25のみ処理
+	# このOverlayの役割に応じてフィルタリング
+	if is_percussion_overlay:
+		# パーカッション用Overlay: CH9またはCH25のみ処理
 		if not is_percussion_channel:
 			return  # パーカッションチャンネル以外はスキップ
 	else:
-		# 非パーカッションモード時: CH9とCH25を除外
+		# 非パーカッション用Overlay: CH9とCH25を除外
 		if is_percussion_channel:
 			return  # パーカッションチャンネルはスキップ
 	
@@ -531,8 +537,8 @@ func _on_pre_note_changed(state: String, note: Dictionary):
 	var note_program = -1
 	
 	# パーカッションノートのprogram値取得
-	if is_perc_mode and is_percussion_channel:
-		# パーカッションモード時: percussion_params_arrayから取得
+	if is_percussion_overlay and is_percussion_channel:
+		# パーカッション用Overlay時: percussion_params_arrayから取得
 		if gd_synthesizer:
 			# percussion_params_arrayに直接アクセス（GDSynthesizer.gdで定義されている）
 			var percussion_array = gd_synthesizer.percussion_params_array
@@ -550,7 +556,7 @@ func _on_pre_note_changed(state: String, note: Dictionary):
 			# フォールバック: 通常のinstrumentNumを使用
 			note_program = note.get("instrumentNum", -1)
 	else:
-		# 非パーカッションモード時: 従来通り
+		# 非パーカッション用Overlay時: 従来通り
 		note_program = note.get("instrumentNum", -1)
 	
 	var track_num = note.get("trackNum", -1)
@@ -575,11 +581,11 @@ func _on_pre_note_changed(state: String, note: Dictionary):
 		
 		# 可視性の判定
 		var note_visible: bool
-		if is_perc_mode:
-			# パーカッションモード時: show_all_programsを無視してすべて表示
+		if is_percussion_overlay:
+			# パーカッション用Overlay時: show_all_programsを無視してすべて表示
 			note_visible = true
 		else:
-			# 非パーカッションモード時: 従来通り
+			# 非パーカッション用Overlay時: 従来通り
 			note_visible = show_all_programs or (note_program == current_program)
 		
 		var note_data = {
@@ -616,40 +622,41 @@ func clear_all_notes()->void:
 	start_time_offset = -1.0
 	queue_redraw()
 
-func clear_notes_by_percussion_mode(is_percussion_mode: bool):
-	# パーカッションモードに応じて不要なノートを削除
-	# パーカッションモード時: 非パーカッションノートを削除
-	# 非パーカッションモード時: パーカッションノートを削除
-	active_notes = active_notes.filter(func(n):
-		var note_is_percussion = n.get("is_percussion", false)
-		if is_percussion_mode:
-			# パーカッションモード時: パーカッションノートのみ残す
-			return note_is_percussion
-		else:
-			# 非パーカッションモード時: 非パーカッションノートのみ残す
-			return not note_is_percussion
-	)
-	queue_redraw()
+# 以下の関数は新しい実装では不要（互換性のために残す）
+# func clear_notes_by_percussion_mode(is_percussion_mode: bool):
+# 	# パーカッションモードに応じて不要なノートを削除
+# 	# パーカッションモード時: 非パーカッションノートを削除
+# 	# 非パーカッションモード時: パーカッションノートを削除
+# 	active_notes = active_notes.filter(func(n):
+# 		var note_is_percussion = n.get("is_percussion", false)
+# 		if is_percussion_mode:
+# 			# パーカッションモード時: パーカッションノートのみ残す
+# 			return note_is_percussion
+# 		else:
+# 			# 非パーカッションモード時: 非パーカッションノートのみ残す
+# 			return not note_is_percussion
+# 	)
+# 	queue_redraw()
 
-func update_visibility_for_percussion_mode():
-	# パーカッションモード状態を取得
-	var is_perc_mode = get_is_percussion_mode()
-	var current_program = Globalv.program
-	
-	# すべてのノートの可視性を更新
-	for n in active_notes:
-		if is_perc_mode:
-			# パーカッションモード時: すべてのパーカッションノートを表示
-			if n.get("is_percussion", false):
-				n["visible"] = true
-			else:
-				n["visible"] = false
-		else:
-			# 非パーカッションモード時: 従来通り
-			if show_all_programs:
-				n["visible"] = true
-			else:
-				n["visible"] = (n.get("program", -1) == current_program)
+# func update_visibility_for_percussion_mode():
+# 	# パーカッションモード状態を取得
+# 	var is_perc_mode = get_is_percussion_mode()
+# 	var current_program = Globalv.program
+# 	
+# 	# すべてのノートの可視性を更新
+# 	for n in active_notes:
+# 		if is_perc_mode:
+# 			# パーカッションモード時: すべてのパーカッションノートを表示
+# 			if n.get("is_percussion", false):
+# 				n["visible"] = true
+# 			else:
+# 				n["visible"] = false
+# 		else:
+# 			# 非パーカッションモード時: 従来通り
+# 			if show_all_programs:
+# 				n["visible"] = true
+# 			else:
+# 				n["visible"] = (n.get("program", -1) == current_program)
 
 func _process(delta):
 	# Check for MIDI file load/unload and clear notes
@@ -662,11 +669,8 @@ func _process(delta):
 	queue_redraw()
 
 func _get_program_color(program: int) -> Color:
-	# パーカッションモード状態を取得
-	var is_perc_mode = get_is_percussion_mode()
-	
-	# パーカッションモード時の色ロジック
-	if is_perc_mode:
+	# このOverlayの役割に応じた色ロジック
+	if is_percussion_overlay:
 		# パーカッションモード時:
 		# program 1-128 (0-127): 黄色
 		# program 129-256 (128-255): program - 128をカラーインデックスとして使用
@@ -719,28 +723,17 @@ func _draw():
 	# Calculate key width (equal spacing for all keys)
 	var key_width = rect_size.x / Globalv.num_keyboard_key
 
-	# パーカッションモード状態を取得
-	var is_perc_mode = get_is_percussion_mode()
-	
-	# パーカッションモードが切り替わった場合、可視性を更新
-	if is_perc_mode != last_percussion_mode:
-		last_percussion_mode = is_perc_mode
-		update_visibility_for_percussion_mode()
-	
 	# Check for program change and update visibility flags for all notes
 	var current_program = Globalv.program
 	if current_program != last_program:
 		last_program = current_program
 		# Update visibility flags for all notes based on display mode and selected program
 		for n in active_notes:
-			if is_perc_mode:
-				# パーカッションモード時: すべてのパーカッションノートを表示（show_all_programsを無視）
-				if n.get("is_percussion", false):
-					n["visible"] = true
-				else:
-					n["visible"] = false  # 非パーカッションノートは非表示
+			if is_percussion_overlay:
+				# パーカッション用Overlay時: すべてのパーカッションノートを表示（show_all_programsを無視）
+				n["visible"] = true
 			else:
-				# 非パーカッションモード時: 従来通り
+				# 非パーカッション用Overlay時: 従来通り
 				if show_all_programs:
 					n["visible"] = true
 				else:

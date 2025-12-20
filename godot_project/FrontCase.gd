@@ -369,7 +369,17 @@ func _on_gd_synthesizer_note_changed(state, note)->void:
 					# フォールバック: 通常のinstrumentNumを使用
 			
 			# PianoRollOverlayから色を取得（パーカッションモードを考慮）
-			var piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlay")
+			# 現在のモードに応じたOverlayを取得
+			var piano_roll_overlay = null
+			if is_percussion_mode:
+				piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayPercussion")
+			else:
+				piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayNonPercussion")
+			
+			# フォールバック: 既存のPianoRollOverlay（互換性のため）
+			if not piano_roll_overlay:
+				piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlay")
+			
 			if piano_roll_overlay:
 				# _get_program_color()はパーカッションモードを考慮している
 				color = piano_roll_overlay._get_program_color(program_to_use)
@@ -750,14 +760,22 @@ func _on_button_percussionroll_pressed()->void:
 			button.add_theme_color_override("font_focus_color", Color(1.0, 1.0, 1.0, 1.0))
 			button.add_theme_color_override("font_disabled_color", Color(1.0, 1.0, 1.0, 1.0))
 		
-		# PianoRollOverlayに通知して再描画
-		var piano_roll_overlay = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlay")
-		if piano_roll_overlay:
-			# 不要なノートを削除
-			piano_roll_overlay.clear_notes_by_percussion_mode(is_percussion_mode)
-			# 可視性を更新
-			piano_roll_overlay.update_visibility_for_percussion_mode()
-			piano_roll_overlay.queue_redraw()
+		# 対応するPianoRollOverlayを可視化/不可視化
+		var piano_roll_overlay_non_perc = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayNonPercussion")
+		var piano_roll_overlay_perc = get_node_or_null("PianoRoll/TextureRect/PianoRollOverlayPercussion")
+		
+		if is_percussion_mode:
+			# パーカッションモード: パーカッション用を可視化、非パーカッション用を不可視化
+			if piano_roll_overlay_perc:
+				piano_roll_overlay_perc.visible = true
+			if piano_roll_overlay_non_perc:
+				piano_roll_overlay_non_perc.visible = false
+		else:
+			# 非パーカッションモード: 非パーカッション用を可視化、パーカッション用を不可視化
+			if piano_roll_overlay_non_perc:
+				piano_roll_overlay_non_perc.visible = true
+			if piano_roll_overlay_perc:
+				piano_roll_overlay_perc.visible = false
 	else:
 		print("ButtonPercussionroll not found!")
 
