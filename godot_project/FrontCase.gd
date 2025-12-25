@@ -338,6 +338,9 @@ func keyboard_clear_if_requied()->void:
 		for i in range(256):
 			var led = get_node("LED"+str(i)).get_node("Led") 
 			led.color = Color(0.2, 0.2, 0, 1)
+		
+		# Clear active_programs to prevent LED colors from being restored
+		active_programs.clear()
 
 func _on_gd_synthesizer_note_changed(state, note)->void:
 	keyboard_clear_if_requied()
@@ -446,6 +449,10 @@ func reset_percussion_related()->void:
 	for i in range(256):
 		get_node("LED"+str(i)).get_node("Led").color \
 			= Color(0.2, 0.2, 0.0, 1)
+	
+	# Clear active_programs to prevent LED colors from being restored
+	active_programs.clear()
+	
 	Globalv.percussion_key = -1
 	Globalv.percussion_prog = -1
 	Globalv.percussion_note = -1
@@ -742,6 +749,8 @@ func _on_button_percussion_mode_pressed()->void:
 			Globalv.is_percussion = 0
 		
 		Globalv.is_keyboard_clear = true
+		# Clear active_programs when switching percussion mode
+		active_programs.clear()
 		update_percussion_mode_button_style()
 
 func update_percussion_mode_button_style()->void:
