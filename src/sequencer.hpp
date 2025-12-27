@@ -131,6 +131,7 @@ class SharedLUT {
 private:
     static constexpr int32_t waveLUTSize = 32768;
     static constexpr int32_t pow2_x_1200LUT_size = 7200;
+    static constexpr int32_t lowFrequencyCorrectionLUT_size = 4096;
     
     // Singleton instance
     static SharedLUT* instance;
@@ -166,6 +167,7 @@ private:
     // Other shared LUTs
     std::unique_ptr<float[]> pow2_x_1200LUT;
     std::unique_ptr<float[]> velocity2powerLUT;
+    std::unique_ptr<float[]> lowFrequencyCorrectionLUT;
     
     // Private constructor (Singleton pattern)
     SharedLUT();
@@ -201,6 +203,7 @@ public:
     const float* getCos4thPowDistributionLUT() const { return cos4thPowDistributionLUT.get(); }
     const float* getPow2_x_1200LUT() const { return pow2_x_1200LUT.get(); }
     const float* getVelocity2powerLUT() const { return velocity2powerLUT.get(); }
+    const float* getLowFrequencyCorrectionLUT() const { return lowFrequencyCorrectionLUT.get(); }
     
     int32_t getNumAtackSlopeLUT() const { return numAtackSlopeLUT; }
     int32_t getNumReleaseSlopeLUT() const { return numReleaseSlopeLUT; }
@@ -212,6 +215,7 @@ public:
     
     static constexpr int32_t getWaveLUTSize() { return waveLUTSize; }
     static constexpr int32_t getPow2_x_1200LUT_size() { return pow2_x_1200LUT_size; }
+    static constexpr int32_t getLowFrequencyCorrectionLUT_size() { return lowFrequencyCorrectionLUT_size; }
 };
 
 

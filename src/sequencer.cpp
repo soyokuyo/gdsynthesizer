@@ -227,6 +227,27 @@ bool SharedLUT::initialize(float rate, int32_t noiseBufSize) {
         }
     }
     
+    // Initialize lowFrequencyCorrectionLUT (only once)
+    if (!lowFrequencyCorrectionLUT) {
+        lowFrequencyCorrectionLUT = std::make_unique<float[]>(lowFrequencyCorrectionLUT_size);
+        const float a = 3.0f;  // Attenuation slope
+        const float f_c = 440.0f;  // Inflection point frequency
+        const float d = 0.33f;  // Minimum coefficient
+        
+        for (int32_t i = 0; i < lowFrequencyCorrectionLUT_size; i++) {
+            float f = (float)i * 8.0f;  // Convert index to frequency (inverse of >>3)
+            
+            // f=0 case: set to 1.0
+            if (f <= 0.0f) {
+                lowFrequencyCorrectionLUT[i] = 1.0f;
+            } else {
+                float log_ratio = logf(f / f_c);
+                float tanh_val = tanhf(a * log_ratio);
+                lowFrequencyCorrectionLUT[i] = 1.0f - (1.0f - d) * (tanh_val + 1.0f) * 0.5f;
+            }
+        }
+    }
+    
     return true;
 }
 
@@ -238,7 +259,7 @@ void SharedLUT::cleanup() {
     pinkNoiseLUT.reset();
     triangularDistributionLUT.reset();
     cos4thPowDistributionLUT.reset();
-    // Note: waveLUT, pow2_x_1200LUT, and velocity2powerLUT are kept as they don't depend on sampling rate
+    // Note: waveLUT, pow2_x_1200LUT, velocity2powerLUT, and lowFrequencyCorrectionLUT are kept as they don't depend on sampling rate
     // They will be reused if needed
     samplingRate = 0.0f;
     noiseBufferSize = 0;
@@ -1065,6 +1086,10 @@ bool Sequencer::feed(double *frame){
     const float* triangularLUT = lut.getTriangularDistributionLUT();
     const float* cos4thPowLUT = lut.getCos4thPowDistributionLUT();
     const float* pinkLUT = lut.getPinkNoiseLUT();
+    
+    // Precompute frequency scale for low frequency correction (outside loop)
+    const float* lfcLUT = lut.getLowFrequencyCorrectionLUT();
+    const float freqScale = samplingRate / (2.0f * PI);
 
     for (size_t tonePos = 0; tonePos < activeToneIndices.size();) {
         int32_t toneIndex = activeToneIndices[tonePos];
@@ -1252,6 +1277,18 @@ bool Sequencer::feed(double *frame){
                     tone2 = (float)godot::Math::lerp(g2, f2, r2)*b2ratio;
                     tone3 = (float)godot::Math::lerp(g3, f3, r3)*b3ratio;
                 }
+                
+                // Apply low frequency correction
+                float freq1 = inc1 * freqScale;
+                float freq2 = inc2 * freqScale;
+                float freq3 = inc3 * freqScale;
+                int32_t idx1 = (int32_t)(freq1) >> 3;
+                int32_t idx2 = (int32_t)(freq2) >> 3;
+                int32_t idx3 = (int32_t)(freq3) >> 3;
+                tone1 *= lfcLUT[idx1];
+                tone2 *= lfcLUT[idx2];
+                tone3 *= lfcLUT[idx3];
+                
                 float data = tone1+tone2+tone3;
                 
                 if (doNoiseMix) {
