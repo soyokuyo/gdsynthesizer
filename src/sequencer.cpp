@@ -29,10 +29,10 @@
 
 #include "sequencer.hpp"
 #include <godot_cpp/variant/utility_functions.hpp> // for "UtilityFunctions::print()".
+#include <godot_cpp/classes/random_number_generator.hpp>
 
 #include "instrument.hpp"
 #include "shared_instruments.hpp"
-#include <new>
 #include <algorithm> // for std::find
 
 const char* scale[] = {" C", "C#", " D", "D#", " E", " F", "F#", " G", "G#", " A", "A#", " B"};
@@ -1338,7 +1338,6 @@ bool Sequencer::feed(double *frame){
 
     if (oneNote.state == NState::NS_END && activeToneIndices.empty()){
         midi.restart();
-//        currentTime = -1000; // wait 1sec for repetition.
         currentTime = 0; // or executed immediately without waiting.
         preOnOffActiveNotes.clear(); // Clear active pre_note_on tracking
     }

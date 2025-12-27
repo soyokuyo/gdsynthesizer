@@ -29,24 +29,15 @@
 #ifndef SEQUENCER_H
 #define SEQUENCER_H
 
-#include <filesystem>
-
 #include <cmath>
 #include "smfparser.hpp"
 #include <vector>
 #include <array>
 #include <functional>
-#include <godot_cpp/classes/random_number_generator.hpp>
 #include <godot_cpp/classes/image.hpp>
-#include <godot_cpp/classes/json.hpp>
 
 #define PI (float)Math_PI
 #define FLOAT_LONGTIME 36000000.0f
-
-// SIMD availability flags (set via build system)
-#if !defined(GDSYNTH_USE_X86_SIMD) && !defined(GDSYNTH_USE_WASM_SIMD)
-#define GDSYNTH_SIMD_DISABLED 1
-#endif
 
 enum class BaseWave {
     WAVE_SIN,         //  0
@@ -344,7 +335,6 @@ private:
     // LUTs are now shared via SharedLUT class
     
     float sustainRate = 0.0;
-    godot::RandomNumberGenerator rand;
     
     float asumedConcurrentTone = 4.0f;
     float preOnTime = 0.0f; // Pre-on signal time in milliseconds (0 = disabled)
