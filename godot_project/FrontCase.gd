@@ -720,6 +720,7 @@ func toggle_piano_roll()->void:
 						update_allprograms_button_state(show_all)
 		
 		update_active_program_leds_color()
+		update_piano_roll_button_style()
 
 func update_piano_roll_background_size()->void:
 	if piano_roll_background and piano_roll_background.visible:
@@ -782,15 +783,55 @@ func update_percussion_mode_button_style()->void:
 		button.add_theme_color_override("font_focus_color", Color(1.0, 1.0, 1.0, 1.0))
 		button.add_theme_color_override("font_disabled_color", Color(1.0, 1.0, 1.0, 1.0))
 
+func update_piano_roll_button_style()->void:
+	# Update button style based on PianoRoll visibility
+	var button = get_node_or_null("ControlPercussion/ButtonPianoroll")
+	if not button:
+		return
+	
+	var piano_roll = get_node_or_null("PianoRoll")
+	var is_piano_roll_active = piano_roll != null and piano_roll.visible
+	
+	if is_piano_roll_active:
+		var style_box = StyleBoxFlat.new()
+		style_box.bg_color = Color(1.0, 1.0, 0.0, 1.0)
+		button.add_theme_stylebox_override("normal", style_box)
+		button.add_theme_stylebox_override("hover", style_box)
+		button.add_theme_stylebox_override("pressed", style_box)
+		button.add_theme_color_override("font_color", Color(0.0, 0.0, 0.0, 1.0))
+		button.add_theme_color_override("font_hover_color", Color(0.0, 0.0, 0.0, 1.0))
+		button.add_theme_color_override("font_pressed_color", Color(0.0, 0.0, 0.0, 1.0))
+		button.add_theme_color_override("font_focus_color", Color(0.0, 0.0, 0.0, 1.0))
+		button.add_theme_color_override("font_disabled_color", Color(0.0, 0.0, 0.0, 1.0))
+	else:
+		var style_box = StyleBoxFlat.new()
+		style_box.bg_color = Color(0.0, 0.0, 0.0, 1.0)
+		button.add_theme_stylebox_override("normal", style_box)
+		button.add_theme_stylebox_override("hover", style_box)
+		button.add_theme_stylebox_override("pressed", style_box)
+		button.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
+		button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
+		button.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 1.0, 1.0))
+		button.add_theme_color_override("font_focus_color", Color(1.0, 1.0, 1.0, 1.0))
+		button.add_theme_color_override("font_disabled_color", Color(1.0, 1.0, 1.0, 1.0))
+
 func _process(_delta):
 	# Monitor Globalv.is_percussion changes and update button state
 	if last_is_percussion != Globalv.is_percussion:
 		last_is_percussion = Globalv.is_percussion
 		update_percussion_mode_button_style()
+	
+	# Monitor PianoRoll visibility changes and update button state
+	var piano_roll = get_node_or_null("PianoRoll")
+	var current_piano_roll_visible = piano_roll != null and piano_roll.visible
+	if last_piano_roll_visible != current_piano_roll_visible:
+		last_piano_roll_visible = current_piano_roll_visible
+		update_piano_roll_button_style()
 
 var is_percussion_mode: bool = false  # Percussion mode flag
 var active_programs: Dictionary = {}  # Mapping of currently active program values and channel information {program: is_percussion_channel}
 var last_is_percussion: int = -1  # Previous value of Globalv.is_percussion for monitoring
+var last_piano_roll_visible: bool = false  # Previous PianoRoll visibility state
 
 func get_is_percussion_mode() -> bool:
 	return is_percussion_mode

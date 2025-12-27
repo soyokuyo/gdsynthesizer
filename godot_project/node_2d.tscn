@@ -1029,9 +1029,9 @@ text = "1"
 
 [node name="Label_10" type="Label" parent="LabelSequencer/LabelNumPoly"]
 layout_mode = 0
-offset_left = -22.0
+offset_left = -14.0
 offset_top = -35.0
-offset_right = -6.0
+offset_right = 2.0
 offset_bottom = -21.0
 theme_override_font_sizes/font_size = 8
 text = "10"
