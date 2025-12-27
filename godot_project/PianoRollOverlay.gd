@@ -840,15 +840,15 @@ func _draw():
 				var note_program = note.get("program", -1)
 				var note_color = _get_program_color(note_program)
 				
-				# Create fill color (alpha 0.7) and border color (alpha 1.0)
-				var fill_color = Color(note_color.r, note_color.g, note_color.b, 0.7)
+				# Create fill color (RGB 0.7x, alpha 1.0) and border color (RGB 1.0x, alpha 1.0)
+				var fill_color = Color(note_color.r * 0.7, note_color.g * 0.7, note_color.b * 0.7, 1.0)
 				var border_color = Color(note_color.r, note_color.g, note_color.b, 1.0)
 				
-				# Draw filled rectangle (alpha 0.7)
+				# Draw filled rectangle (RGB 0.7x, alpha 1.0)
 				draw_rect(Rect2(note_x + 1, visible_top, note_width, visible_height), fill_color, true)
 				
 				# Draw border rectangle (alpha 1.0, filled=false, width=1.0)
-				draw_rect(Rect2(note_x + 1, visible_top, note_width, visible_height), border_color, false, 1.0)
+				draw_rect(Rect2(note_x + 1, visible_top, note_width, visible_height), border_color, false, 2.0)
 	
 	# Remove notes that have scrolled off screen (top edge below y=340)
 	active_notes = active_notes.filter(func(n): 
