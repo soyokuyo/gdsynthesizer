@@ -131,7 +131,7 @@ class SharedLUT {
 private:
     static constexpr int32_t waveLUTSize = 32768;
     static constexpr int32_t pow2_x_1200LUT_size = 7200;
-    static constexpr int32_t lowFrequencyCorrectionLUT_size = 4096;
+    static constexpr int32_t lowFrequencyCorrectionLUT_size = 8192;
     
     // Singleton instance
     static SharedLUT* instance;

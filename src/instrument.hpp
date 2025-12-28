@@ -36,7 +36,6 @@
 
 const std::array<Instrument, Sequencer::numinstruments> defaultInstruments = {
     {
-        //
         //                                          atackSlopeTime                                                                                                                                                                                                                                                             
         //                                            |     decayHalfLifeTime                                                                                                                                                                                                                                                  
         //                                            |       |   sustainRate                                                                                                                                                                                                                                                  

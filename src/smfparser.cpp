@@ -30,7 +30,8 @@
 
 #include <godot_cpp/classes/file_access.hpp>
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-#endif // DEBUG_ENABLED
+#include <godot_cpp/variant/utility_functions.hpp>
+#endif // DEBUG_ENABLED && WINDOWS_ENABLED
 
 SMFParser::SMFParser() : unitOfTime(60000.0f), position(0), tempo(60) {
 }
@@ -93,7 +94,7 @@ bool SMFParser::load(const char *name) {
     { // get timeDivision
         timeDivision = 0;
         for (uint8_t i = 0; i < 2; ++i) timeDivision = (timeDivision << 8) | in.get();
-        if (timeDivision & 0x8000) return false; //currently, not supported SMPTE format
+        if (timeDivision & 0x8000) return false; // currently, not supported SMPTE format
     }
 
     auto data_top = in.tellg();
@@ -133,7 +134,6 @@ bool SMFParser::load(const char *name) {
 }
 
 
-
 bool SMFParser::load(const godot::String &name) {
     // reset previous state in case caller skipped unload
     unload();
@@ -170,7 +170,7 @@ bool SMFParser::load(const godot::String &name) {
     { // get timeDivision
         timeDivision = 0;
         for (uint8_t i = 0; i < 2; ++i) timeDivision = (timeDivision << 8) | (uint32_t)in->get_8();
-        if (timeDivision & 0x8000) return false; //currently, not supported SMPTE format
+        if (timeDivision & 0x8000) return false; // currently, not supported SMPTE format
     }
 
     auto data_top = in->get_position();
@@ -317,11 +317,6 @@ Note SMFParser::parse(int32_t till, bool forPreOnOff) {
                     {
                         int8_t key = getByte(&(activeTracks[i].position));
                         int8_t pressure = getByte(&(activeTracks[i].position));   
-//                        skipByte(2, &(activeTracks[i].position));
-#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-                        // debug print removed
-#endif // DEBUG_ENABLED
-                        
                     }
                     break;
 
@@ -329,9 +324,6 @@ Note SMFParser::parse(int32_t till, bool forPreOnOff) {
                     {
                         int8_t controller = getByte(&(activeTracks[i].position));
                         int8_t value = getByte(&(activeTracks[i].position));  
-//#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-//                        debug print removed
-//#endif // DEBUG_ENABLED
                     }
                     break;
 
@@ -344,10 +336,6 @@ Note SMFParser::parse(int32_t till, bool forPreOnOff) {
                 case 0xd0: // Channel Pressure (ignored)
                     {
                         int8_t pressure = getByte(&(activeTracks[i].position));
-//                        skipByte(1, &(activeTracks[i].position));
-#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-                        // debug print removed
-#endif // DEBUG_ENABLED
                     }
                     break;
 
@@ -356,9 +344,6 @@ Note SMFParser::parse(int32_t till, bool forPreOnOff) {
                         int8_t lsb = getByte(&(activeTracks[i].position)); // note that it is only little endian.
                         int8_t msb = getByte(&(activeTracks[i].position));
                         int16_t pitchBend = (int16_t)lsb + ((int16_t)msb)*256; // msb
-#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-                        // debug print removed
-#endif // DEBUG_ENABLED
                     }
                     break;
 
@@ -384,36 +369,24 @@ Note SMFParser::parse(int32_t till, bool forPreOnOff) {
                                 case 0x01: // MetaText
                                     {
                                         std::string str = getStr(value, &(activeTracks[i].position));
-#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-                                        // debug print removed
-#endif // DEBUG_ENABLED
                                     }
                                     break;
 
                                 case 0x02: // MetaCopyright
                                     {
                                         std::string str = getStr(value, &(activeTracks[i].position));
-#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-                                        // debug print removed
-#endif // DEBUG_ENABLED
                                     }
                                     break;
 
                                 case 0x03: // MetaTrackName
                                     {
                                         std::string str = getStr(value, &(activeTracks[i].position));
-#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-                                        // debug print removed
-#endif // DEBUG_ENABLED
                                     }
                                     break;
 
                                 case 0x04: // MetaInstrumentName
                                     {
                                         std::string str = getStr(value, &(activeTracks[i].position));
-#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-                                        // debug print removed
-#endif // DEBUG_ENABLED
                                     }
                                     break;
 
@@ -451,9 +424,7 @@ Note SMFParser::parse(int32_t till, bool forPreOnOff) {
                                     {
                                         uint32_t metaSetTempo = getBytes(3, &(activeTracks[i].position));
                                         const uint32_t BPM = 60000000 / metaSetTempo;
-#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
-                                        // debug print removed
-#endif // DEBUG_ENABLED
+
                                         // Select appropriate tempos array based on forPreOnOff
                                         std::vector<Tempo>& activeTempos = forPreOnOff ? temposPreOnOff : tempos;
                                         if(activeTracks[i].tick == 0) {
@@ -577,6 +548,12 @@ uint32_t SMFParser::getBytes(uint16_t length, uint32_t *pos) {
 
 
 uint8_t SMFParser::getByte() {
+    if (position >= filesize) {
+#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
+        godot::UtilityFunctions::print("[SMFParser] getByte() out of bounds: position=", position, ", filesize=", filesize);
+#endif // DEBUG_ENABLED && WINDOWS_ENABLED
+        return 0;  // Return safe default value
+    }
     uint8_t value = binary_data[position];
     ++position;
     return value;
@@ -584,6 +561,12 @@ uint8_t SMFParser::getByte() {
 
 
 uint8_t SMFParser::getByte(uint32_t *pos) {
+    if (*pos >= filesize) {
+#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
+        godot::UtilityFunctions::print("[SMFParser] getByte(pos) out of bounds: *pos=", *pos, ", filesize=", filesize);
+#endif // DEBUG_ENABLED && WINDOWS_ENABLED
+        return 0;  // Return safe default value
+    }
     uint8_t value = binary_data[*pos];
     ++(*pos);
     return value;

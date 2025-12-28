@@ -501,6 +501,14 @@ godot::Dictionary Sequencer::getControlParams(void) {
 }
 
 bool Sequencer::initParam(double rate, double time, int32_t samples) {
+    // Validate parameters
+    if (rate <= 0.0 || samples <= 0) {
+#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
+        godot::UtilityFunctions::print("[Sequencer] initParam() invalid parameters: rate=", rate, ", samples=", samples);
+#endif // DEBUG_ENABLED && WINDOWS_ENABLED
+        return false;
+    }
+    
     samplingRate = (float)rate;
     bufferingTime = (float)time;
     bufferSamples = samples;
@@ -1221,7 +1229,7 @@ bool Sequencer::feed(double *frame){
                 if (doFM && current > wt){
                     fmPh += fmInc;
                     if (fmPh > PI*2.0f) fmPh -= PI*2.0f;
-                    int32_t fmIdx = (int32_t)(fmPh * phaseToIndex);
+                    int32_t fmIdx = (int32_t)(fmPh * phaseToIndex) & 0x7FFF; // Clamp to waveLUTSize-1 (32767)
                     cent += fmCentRange*(waveLUT[fmWave][fmIdx]*fmWaveInvert+1.0f)*0.5f;
                 }
                 
@@ -1245,7 +1253,7 @@ bool Sequencer::feed(double *frame){
                 if (doAM && current > wt){
                     amPh += amInc;
                     if (amPh > PI*2.0f) amPh -= PI*2.0f;
-                    int32_t amIdx = (int32_t)(amPh * phaseToIndex);
+                    int32_t amIdx = (int32_t)(amPh * phaseToIndex) & 0x7FFF; // Clamp to waveLUTSize-1 (32767)
                     level = (amLevel)*(waveLUT[amWave][amIdx]*amWaveInvert+1.0f)*0.5f;
                     level += 1.0f - amLevel;
                 }
@@ -1257,9 +1265,9 @@ bool Sequencer::feed(double *frame){
                 float tone1, tone2, tone3;
                 {
                     double c = 1.0/120.0; // key 120 may be 8372.0Hz
-                    int32_t idx1 = (int32_t)(ph1 * phaseToIndex);
-                    int32_t idx2 = (int32_t)(ph2 * phaseToIndex);
-                    int32_t idx3 = (int32_t)(ph3 * phaseToIndex);
+                    int32_t idx1 = (int32_t)(ph1 * phaseToIndex) & 0x7FFF; // Clamp to waveLUTSize-1 (32767)
+                    int32_t idx2 = (int32_t)(ph2 * phaseToIndex) & 0x7FFF; // Clamp to waveLUTSize-1 (32767)
+                    int32_t idx3 = (int32_t)(ph3 * phaseToIndex) & 0x7FFF; // Clamp to waveLUTSize-1 (32767)
 
                     double f1 = (double)waveLUT[sinWave][idx1];
                     double f2 = (double)waveLUT[sinWave][idx2];

@@ -43,7 +43,7 @@ namespace godot {
 class GDSynthesizer : public AudioStreamPlayer {
     GDCLASS(GDSynthesizer, AudioStreamPlayer);
 
-    static constexpr double mix_rate = 44100.0; // Sampling frq. It's also the samples num par sec.
+    static constexpr double mix_rate = 44100.0; // Sampling freq. It's also the samples num per sec.
     static constexpr double buffer_length = 0.1; // Buffer length in seconds.
 
     int32_t buf_samples = int32_t(mix_rate*buffer_length);
