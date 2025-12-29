@@ -342,7 +342,7 @@ private:
     
     float asumedConcurrentTone = 4.0f;
     float preOnTime = 0.0f; // Pre-on signal time in milliseconds (0 = disabled)
-    std::vector<std::pair<int32_t, int32_t>> preOnOffActiveNotes; // Track active pre_note_on events (channel, key) - using vector for FIFO matching, same as normal sequence's ringingIdx logic
+    std::vector<std::tuple<int32_t, int32_t, int32_t>> preOnOffActiveNotes; // Track active pre_note_on events (channel, key, program) - using vector for FIFO matching, same as normal sequence's ringingIdx logic
     bool checkNewNote(Note, bool forPreOnOff = false);
     int32_t logLevel = 1;
 public:

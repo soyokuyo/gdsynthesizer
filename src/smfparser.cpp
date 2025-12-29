@@ -258,29 +258,35 @@ Note SMFParser::parse(int32_t till, bool forPreOnOff) {
             activeTracks[i].nextNote.startTick = (uint32_t)(-1);
         }
         while(activeTracks[i].state == TState::TS_EMPTY && activeTracks[i].position < activeTracks[i].tail) {
-            activeTracks[i].tick += getVarLen(&(activeTracks[i].position));
+            uint32_t delta = getVarLen(&(activeTracks[i].position));
+            activeTracks[i].tick += delta;
             uint8_t event = getByte(&(activeTracks[i].position));
 
             if (event < 0x80) {
                 event = activeTracks[i].previousEvent;
                 skipByte(-1, &(activeTracks[i].position));
-                if(event == 0) continue; // SysEx event
-            } else 
+                if(event == 0) {
+                    continue; // SysEx event
+                }
+            } else {
                 activeTracks[i].previousEvent = ((event & 0xf0) != 0xf0) ? event : 0;
+            }
             uint8_t channel = event & 0xf;
 
             switch(event & 0xf0) {
                 case 0x80: // note off
                     {
-                        int8_t key = getByte(&(activeTracks[i].position));
-                        int8_t velocity = getByte(&(activeTracks[i].position));
+                        uint8_t key_byte = getByte(&(activeTracks[i].position));
+                        uint8_t velocity_byte = getByte(&(activeTracks[i].position));
+                        int32_t key = (int32_t)key_byte;  // MIDI key is 0-127, use uint8_t to avoid negative values
+                        int32_t velocity = (int32_t)velocity_byte;
 
                         activeTracks[i].nextNote = {
                             .state        = NState::NS_OFF,
                             .trackNum     = (int32_t)i,
                             .channel      = (int32_t)channel,
-                            .key          = (int32_t)key,
-                            .velocity     = (int32_t)velocity,
+                            .key          = key,
+                            .velocity     = velocity,
                             .program      = (int32_t)activeTracks[i].program,
                             .startTick    = activeTracks[i].tick,
                             .startTime    = 0,
@@ -292,8 +298,10 @@ Note SMFParser::parse(int32_t till, bool forPreOnOff) {
 
                 case 0x90: // note on
                     {
-                        int8_t key = getByte(&(activeTracks[i].position));
-                        int8_t velocity = getByte(&(activeTracks[i].position));
+                        uint8_t key_byte = getByte(&(activeTracks[i].position));
+                        uint8_t velocity_byte = getByte(&(activeTracks[i].position));
+                        int32_t key = (int32_t)key_byte;  // MIDI key is 0-127, use uint8_t to avoid negative values
+                        int32_t velocity = (int32_t)velocity_byte;
 
                         NState state = NState::NS_OFF;
                         if (velocity != 0) state = NState::NS_ON_FOREVER;
@@ -302,8 +310,8 @@ Note SMFParser::parse(int32_t till, bool forPreOnOff) {
                             .state        = state,
                             .trackNum     = (int32_t)i,
                             .channel      = (int32_t)channel,
-                            .key          = (int32_t)key,
-                            .velocity     = (int32_t)velocity,
+                            .key          = key,
+                            .velocity     = velocity,
                             .program      = (int32_t)activeTracks[i].program,
                             .startTick    = activeTracks[i].tick,
                             .startTime    = 0,
@@ -350,10 +358,12 @@ Note SMFParser::parse(int32_t till, bool forPreOnOff) {
                 case 0xf0: // SysEx event
                     {
                         if (event == 0xf0) {// System Exclusive Message Begin
-                            skipByte(getVarLen(&(activeTracks[i].position)));
+                            uint32_t len = getVarLen(&(activeTracks[i].position));
+                            skipByte(len, &(activeTracks[i].position));
                         }
                         else if (event == 0xf7) { // System Exclusive Message End
-                            skipByte(getVarLen(&(activeTracks[i].position)));
+                            uint32_t len = getVarLen(&(activeTracks[i].position));
+                            skipByte(len, &(activeTracks[i].position));
                         }
                         else if (event == 0xff) {
                             uint8_t type = getByte(&(activeTracks[i].position));
@@ -414,6 +424,12 @@ Note SMFParser::parse(int32_t till, bool forPreOnOff) {
                                     }
                                     break;
 
+                                case 0x21: // Meta Port
+                                    {
+                                        skipByte(1, &(activeTracks[i].position)); // Meta Port has 1 byte of data
+                                    }
+                                    break;
+
                                 case 0x2f: // END OF TRACK
                                     {
                                         activeTracks[i].state = TState::TS_SERVED;
@@ -470,6 +486,9 @@ Note SMFParser::parse(int32_t till, bool forPreOnOff) {
                                     break;
 
                                 default:
+                                    {
+                                        skipByte(value, &(activeTracks[i].position));
+                                    }
                                     break;
                             }
                         }
@@ -603,11 +622,11 @@ uint32_t SMFParser::getVarLen(uint32_t *pos) {
     uint32_t value = getByte(pos);
     if (value & 0x80) {
         value &= 0x7f;
-         uint8_t byteRead = 0;
-         do {
+        uint8_t byteRead = 0;
+        do {
             byteRead = getByte(pos);
             value = (value << 7) | (byteRead & 0x7f);
-         } while (byteRead & 0x80);
+        } while (byteRead & 0x80);
     }
     return value;
 }

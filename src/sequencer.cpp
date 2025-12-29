@@ -33,7 +33,8 @@
 
 #include "instrument.hpp"
 #include "shared_instruments.hpp"
-#include <algorithm> // for std::find
+#include <algorithm> // for std::find, std::find_if
+#include <tuple> // for std::tuple
 
 const char* scale[] = {" C", "C#", " D", "D#", " E", " F", "F#", " G", "G#", " A", "A#", " B"};
 
@@ -813,11 +814,16 @@ bool Sequencer::checkNewNote(Note oneNote, bool forPreOnOff){
         if (oneNote.state == NState::NS_OFF) {
             // Find corresponding pre_note_on (same logic as normal sequence's ringingIdx search)
             // Linear search for matching (channel, key) in preOnOffActiveNotes (FIFO: first match)
-            auto it = std::find(preOnOffActiveNotes.begin(), preOnOffActiveNotes.end(),
-                std::make_pair(oneNote.channel, oneNote.key));
+            auto it = std::find_if(preOnOffActiveNotes.begin(), preOnOffActiveNotes.end(),
+                [&](const std::tuple<int32_t, int32_t, int32_t>& entry) {
+                    return std::get<0>(entry) == oneNote.channel && std::get<1>(entry) == oneNote.key;
+                });
             if (it != preOnOffActiveNotes.end()) {
-                // Corresponding pre_note_on exists, emit pre_note_off signal (same timing as normal sequence)
-                enqueueNoteEvent(0, oneNote, 2); // msg=2 for preOnOff signal
+                // Corresponding pre_note_on exists, emit pre_note_off signal with saved program
+                // Use the program from pre_note_on time, not the current program
+                Note noteWithSavedProgram = oneNote;
+                noteWithSavedProgram.program = std::get<2>(*it); // Use saved program from pre_note_on
+                enqueueNoteEvent(0, noteWithSavedProgram, 2); // msg=2 for preOnOff signal
                 preOnOffActiveNotes.erase(it); // Remove from active notes (FIFO: first match)
             } else {
                 // No corresponding pre_note_on found, skip (same as normal sequence's ringingIdx < 0 case)
@@ -826,7 +832,8 @@ bool Sequencer::checkNewNote(Note oneNote, bool forPreOnOff){
         } else if (oneNote.state == NState::NS_ON_FOREVER) {
             // pre_note_on signal (same timing as normal sequence's NS_ON_FOREVER processing)
             // Track active pre_note_on (same channel/key can have multiple entries, FIFO matching)
-            preOnOffActiveNotes.push_back(std::make_pair(oneNote.channel, oneNote.key)); // Track active pre_note_on
+            // Save (channel, key, program) to use correct program in pre_note_off
+            preOnOffActiveNotes.push_back(std::make_tuple(oneNote.channel, oneNote.key, oneNote.program)); // Track active pre_note_on with program
             enqueueNoteEvent(1, oneNote, 2); // msg=2 for preOnOff signal
         }
         return true;
@@ -835,7 +842,10 @@ bool Sequencer::checkNewNote(Note oneNote, bool forPreOnOff){
     float durationTime = 0;
     if (oneNote.state == NState::NS_ON_FOREVER) durationTime = FLOAT_LONGTIME;
     int32_t ringingIdx = -1;
-    for (int32_t idx : activeToneIndices) {
+    // Search in reverse order to match the last (most recent) note_on (LIFO: Last In First Out)
+    // This matches MIDI specification where note_off matches the most recent note_on for the same channel/key
+    for (auto it = activeToneIndices.rbegin(); it != activeToneIndices.rend(); ++it) {
+        int32_t idx = *it;
         const Tone& foundTone = toneInstances[idx];
         if (oneNote.key == foundTone.note.key
             && oneNote.channel == foundTone.note.channel
@@ -855,18 +865,21 @@ bool Sequencer::checkNewNote(Note oneNote, bool forPreOnOff){
 #if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
             if (logLevel > 1){
                 godot::UtilityFunctions::print(
+                        "[note_off] matched: idx=", ringingIdx,
                         " state ", static_cast<int32_t>(ringingTone.note.state),
                         "  ch ", ringingTone.note.channel,
                         "  prog ", ringingTone.note.program,
                         "  key ", ringingTone.note.key,
                         "  scale ", scale[ringingTone.note.key%12],(uint16_t)(ringingTone.note.key / 12) - 1,
-                        "  end(ms) ", ringingTone.note.startTime
+                        "  startTime(ms) ", ringingTone.note.startTime,
+                        "  offTime(ms) ", oneNote.startTime,
+                        "  mainteinDuration(ms) ", mainteinDuration[ringingIdx]
                 );
             }
 #endif // DEBUG_ENABLED
         }
         else {
-            return false;
+            return true;
         }
     }
     else if (!freeToneIndices.empty()){
@@ -1187,6 +1200,18 @@ bool Sequencer::feed(double *frame){
             }
             if (current > releaseEnd){
                 isEnd = true;
+#if defined(DEBUG_ENABLED) && defined(WINDOWS_ENABLED)
+                if (logLevel > 1){
+                    godot::UtilityFunctions::print(
+                            "[envelope] tone ended: idx=", toneIndex,
+                            " ch=", toneRef.note.channel,
+                            " key=", toneRef.note.key,
+                            " prog=", toneRef.note.program,
+                            " current(ms)=", current,
+                            " releaseEnd(ms)=", releaseEnd
+                    );
+                }
+#endif // DEBUG_ENABLED
                 break;
             }
             else if (current > releaseStart){ // release
