@@ -14,4 +14,25 @@ build.bat
 # Logs
 *.log
 
+# Godot 4+ specific ignores (for examples)
+examples/*/godot_project/.godot/
+examples/*/godot_project/bin/
+
+# KuyoSynthe ignores
+examples/*/godot_project/savegame.json
+examples/*/godot_project/godot.bat
+examples/**/*.mid
+
+# Godot-specific ignores (for examples)
+examples/*/godot_project/.import/
+examples/*/godot_project/export.cfg
+examples/*/godot_project/export_presets.cfg
+
+# Imported translations (automatically generated from CSV files)
+examples/*/godot_project/*.translation
+
+# Temporary files
+*.tmp
+~*.TMP
+*.TMP
 
