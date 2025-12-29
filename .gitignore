@@ -17,6 +17,8 @@ build.bat
 # Godot 4+ specific ignores (for examples)
 examples/*/godot_project/.godot/
 examples/*/godot_project/bin/
+# Exception: include .gdextension files (configuration files, not build artifacts)
+!examples/*/godot_project/bin/*.gdextension
 
 # KuyoSynthe ignores
 examples/*/godot_project/savegame.json
