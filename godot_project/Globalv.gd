@@ -2,7 +2,7 @@ extends Node
 
 const most_left_key_num:int = 21
 const num_keyboard_key:int = 100
-const log_level:int = 1
+const log_level:int = 0
 
 var is_percussion_key_select:bool = false
 var is_percussion_prog_select:bool = false
