@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="56"
+   height="56"
+   viewBox="0 0 14.816666 14.816667"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.2.2 (732a01da63, 2022-12-09)"
+   sodipodi:docname="control_knob.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#cccccc"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="1"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px"
+     showgrid="true"
+     inkscape:zoom="11.313708"
+     inkscape:cx="22.008699"
+     inkscape:cy="26.693281"
+     inkscape:window-width="1789"
+     inkscape:window-height="993"
+     inkscape:window-x="46"
+     inkscape:window-y="1"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid132" />
+  </sodipodi:namedview>
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <circle
+       style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.49999999;stroke-miterlimit:8.7;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+       id="path298"
+       cx="7.4083333"
+       cy="7.4083333"
+       r="7.1437497" />
+    <rect
+       style="fill:#fffff0;fill-opacity:1;stroke:#e1e1e1;stroke-width:0.162;stroke-miterlimit:8.7;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+       id="rect1012"
+       width="0.63206631"
+       height="1.1612329"
+       x="7.0923004"
+       y="0.080841832" />
+  </g>
+</svg>

@@ -1,0 +1,1654 @@
+[gd_scene load_steps=6 format=3 uid="uid://chvbmg3vcgsmx"]
+
+[ext_resource type="Script" path="res://FrontCase.gd" id="1_gstdt"]
+[ext_resource type="Script" path="res://GDSynthesizer.gd" id="1_yny12"]
+[ext_resource type="Texture2D" uid="uid://bty60jgkpa63e" path="res://panel_silk.svg" id="2_gog28"]
+[ext_resource type="PackedScene" uid="uid://lmx8rmjigqy1" path="res://knob.tscn" id="3_5shy8"]
+[ext_resource type="Script" path="res://PianoRollOverlay.gd" id="3_pianoroll_script"]
+
+[node name="FrontCase" type="Node2D"]
+script = ExtResource("1_gstdt")
+
+[node name="TextureRect" type="TextureRect" parent="."]
+offset_right = 40.0
+offset_bottom = 40.0
+texture = ExtResource("2_gog28")
+
+[node name="KnobNumPoly" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(60, 63)
+
+[node name="KnobBaseTempo" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(60, 142)
+
+[node name="KnobProgramSelect" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(60, 223)
+
+[node name="KnobpreOnTime" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(59, 302)
+
+[node name="KnobAtackSlopeTime" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(164, 63)
+
+[node name="KnobDecayHalfLifeTime" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(164, 143)
+
+[node name="KnobSustainRate" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(164, 223)
+
+[node name="KnobReleaseSlopeTime" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(165, 303)
+
+[node name="KnobTotalSignalLevel" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(264, 63)
+
+[node name="KnobW1vsOthersRatio" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(264, 143)
+
+[node name="KnobW2vsW3Ratio" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(264, 223)
+
+[node name="KnobNoiseVsWaveRatio" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(265, 303)
+
+[node name="KnobW1Waveform" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(366, 68)
+
+[node name="KnobW1OffsetCent" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(526, 68)
+
+[node name="KnobW2Waveform" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(366, 159)
+
+[node name="KnobW2OffsetCent" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(526, 159)
+
+[node name="KnobW3Waveform" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(366, 251)
+
+[node name="KnobW3OffsetCent" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(526, 251)
+
+[node name="KnobAddedNoiseColor" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(366, 346)
+
+[node name="KnobD1DelayTime" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(624, 68)
+
+[node name="KnobD1Level" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(708, 68)
+
+[node name="KnobD2DelayTime" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(624, 159)
+
+[node name="KnobD2Level" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(708, 159)
+
+[node name="KnobD3DelayTime" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(624, 251)
+
+[node name="KnobD3Level" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(708, 250)
+
+[node name="KnobFDNDistributionType" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(550, 347)
+
+[node name="KnobFDNCentRange" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(708, 346)
+
+[node name="KnobFMCarrierFreq" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(807, 57)
+
+[node name="KnobFMCentRange" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(886, 58)
+
+[node name="KnobFMPhaseOffset" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(966, 57)
+
+[node name="KnobFMCarrierWaveform" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(807, 140)
+
+[node name="KnobFMSyncWithTempo" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(966, 140)
+
+[node name="KnobAMCarrierFreq" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(807, 236)
+
+[node name="KnobAMAmplitudeLevel" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(886, 236)
+
+[node name="KnobAMPhaseOffset" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(966, 236)
+
+[node name="KnobAMCarrierWaveform" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(807, 319)
+
+[node name="KnobAMSyncWithTempo" parent="." instance=ExtResource("3_5shy8")]
+position = Vector2(966, 319)
+
+[node name="LabelSignalElement" type="Label" parent="."]
+offset_left = 229.0
+offset_top = 12.0
+offset_right = 306.0
+offset_bottom = 28.0
+theme_override_font_sizes/font_size = 9
+text = "Signal allocation"
+
+[node name="LabelTotalSignalLevel" type="Label" parent="LabelSignalElement"]
+layout_mode = 0
+offset_left = -2.0
+offset_top = 81.0
+offset_right = 71.0
+offset_bottom = 95.0
+theme_override_font_sizes/font_size = 9
+text = "Total signal level"
+
+[node name="Label_0" type="Label" parent="LabelSignalElement/LabelTotalSignalLevel"]
+layout_mode = 0
+offset_left = 9.0
+offset_top = -7.0
+offset_right = 21.0
+offset_bottom = 5.0
+theme_override_font_sizes/font_size = 8
+text = "0.0
+"
+
+[node name="Label_1" type="Label" parent="LabelSignalElement/LabelTotalSignalLevel"]
+layout_mode = 0
+offset_left = 54.0
+offset_top = -7.0
+offset_right = 66.0
+offset_bottom = 5.0
+theme_override_font_sizes/font_size = 8
+text = "1.0
+"
+
+[node name="LabelW1vsOthersRatio" type="Label" parent="LabelSignalElement"]
+layout_mode = 0
+offset_top = 163.0
+offset_right = 85.0
+offset_bottom = 177.0
+theme_override_font_sizes/font_size = 9
+text = "W1 vs others ratio"
+
+[node name="Label_0" type="Label" parent="LabelSignalElement/LabelW1vsOthersRatio"]
+layout_mode = 0
+offset_left = 7.0
+offset_top = -8.0
+offset_right = 19.0
+offset_bottom = 4.0
+theme_override_font_sizes/font_size = 8
+text = "0.0
+"
+
+[node name="Label_1" type="Label" parent="LabelSignalElement/LabelW1vsOthersRatio"]
+layout_mode = 0
+offset_left = 52.0
+offset_top = -8.0
+offset_right = 64.0
+offset_bottom = 4.0
+theme_override_font_sizes/font_size = 8
+text = "1.0
+"
+
+[node name="LabelW2vsW3Ratio" type="Label" parent="LabelSignalElement"]
+layout_mode = 0
+offset_left = 5.0
+offset_top = 244.0
+offset_right = 76.0
+offset_bottom = 258.0
+theme_override_font_sizes/font_size = 9
+text = "W2 vs W3 ratio"
+
+[node name="Label_0" type="Label" parent="LabelSignalElement/LabelW2vsW3Ratio"]
+layout_mode = 0
+offset_left = 3.0
+offset_top = -8.0
+offset_right = 15.0
+offset_bottom = 4.0
+theme_override_font_sizes/font_size = 8
+text = "0.0
+"
+
+[node name="Label_1" type="Label" parent="LabelSignalElement/LabelW2vsW3Ratio"]
+layout_mode = 0
+offset_left = 48.0
+offset_top = -8.0
+offset_right = 60.0
+offset_bottom = 4.0
+theme_override_font_sizes/font_size = 8
+text = "1.0
+"
+
+[node name="LabelNoiseVsWavesRatio" type="Label" parent="LabelSignalElement"]
+layout_mode = 0
+offset_left = -10.0
+offset_top = 322.0
+offset_right = 79.0
+offset_bottom = 336.0
+theme_override_font_sizes/font_size = 9
+text = "Noise vs waves ratio"
+
+[node name="Label_0" type="Label" parent="LabelSignalElement/LabelNoiseVsWavesRatio"]
+layout_mode = 0
+offset_left = 17.0
+offset_top = -7.0
+offset_right = 29.0
+offset_bottom = 5.0
+theme_override_font_sizes/font_size = 8
+text = "0.0
+"
+
+[node name="Label_1" type="Label" parent="LabelSignalElement/LabelNoiseVsWavesRatio"]
+layout_mode = 0
+offset_left = 62.0
+offset_top = -7.0
+offset_right = 74.0
+offset_bottom = 5.0
+theme_override_font_sizes/font_size = 8
+text = "1.0
+"
+
+[node name="LabelEnvelope" type="Label" parent="."]
+offset_left = 143.0
+offset_top = 10.0
+offset_right = 194.0
+offset_bottom = 26.0
+theme_override_font_sizes/font_size = 9
+text = "Envelope"
+
+[node name="LabelAtackSlopeTime" type="Label" parent="LabelEnvelope"]
+layout_mode = 0
+offset_left = -14.0
+offset_top = 83.0
+offset_right = 59.0
+offset_bottom = 97.0
+theme_override_font_sizes/font_size = 9
+text = "Atack slope time"
+
+[node name="LabelDecayHalfLifeTime" type="Label" parent="LabelEnvelope"]
+layout_mode = 0
+offset_left = -20.0
+offset_top = 164.0
+offset_right = 64.0
+offset_bottom = 178.0
+theme_override_font_sizes/font_size = 9
+text = "Decay half-life time"
+
+[node name="LabelSustainRate" type="Label" parent="LabelEnvelope"]
+layout_mode = 0
+offset_left = -3.0
+offset_top = 245.0
+offset_right = 55.0
+offset_bottom = 259.0
+theme_override_font_sizes/font_size = 9
+text = "Sustain rate"
+
+[node name="Label_0" type="Label" parent="LabelEnvelope/LabelSustainRate"]
+layout_mode = 0
+offset_left = -4.0
+offset_top = -8.0
+offset_right = 8.0
+offset_bottom = 4.0
+theme_override_font_sizes/font_size = 8
+text = "0.0
+"
+
+[node name="Label_1" type="Label" parent="LabelEnvelope/LabelSustainRate"]
+layout_mode = 0
+offset_left = 41.0
+offset_top = -8.0
+offset_right = 53.0
+offset_bottom = 4.0
+theme_override_font_sizes/font_size = 8
+text = "1.0
+"
+
+[node name="LabelReleaseSlopeTime" type="Label" parent="LabelEnvelope"]
+layout_mode = 0
+offset_left = -19.0
+offset_top = 322.0
+offset_right = 63.0
+offset_bottom = 336.0
+theme_override_font_sizes/font_size = 9
+text = "Release slope time"
+
+[node name="LabelLFOAM" type="Label" parent="."]
+offset_left = 872.0
+offset_top = 188.0
+offset_right = 953.0
+offset_bottom = 203.0
+theme_override_font_sizes/font_size = 9
+text = "LFO(AM)"
+
+[node name="LabelCarrierWaveform" type="Label" parent="LabelLFOAM"]
+layout_mode = 0
+offset_left = -101.0
+offset_top = 160.0
+offset_right = -24.0
+offset_bottom = 175.0
+theme_override_font_sizes/font_size = 9
+text = "Carrier waveform"
+
+[node name="LabelSin" type="Label" parent="LabelLFOAM/LabelCarrierWaveform"]
+layout_mode = 0
+offset_left = 61.0
+offset_top = -64.0
+offset_right = 106.0
+offset_bottom = -50.0
+theme_override_font_sizes/font_size = 9
+text = "1:sin"
+
+[node name="LabelSquare" type="Label" parent="LabelLFOAM/LabelCarrierWaveform"]
+layout_mode = 0
+offset_left = 70.0
+offset_top = -51.0
+offset_right = 115.0
+offset_bottom = -37.0
+theme_override_font_sizes/font_size = 9
+text = "2:Square"
+
+[node name="LabelTriangle" type="Label" parent="LabelLFOAM/LabelCarrierWaveform"]
+layout_mode = 0
+offset_left = 73.0
+offset_top = -36.0
+offset_right = 118.0
+offset_bottom = -22.0
+theme_override_font_sizes/font_size = 9
+text = "3:Triangle"
+
+[node name="LabelSawtooth" type="Label" parent="LabelLFOAM/LabelCarrierWaveform"]
+layout_mode = 0
+offset_left = 69.0
+offset_top = -21.0
+offset_right = 118.0
+offset_bottom = -7.0
+theme_override_font_sizes/font_size = 9
+text = "4:Sawtooth"
+
+[node name="LabelSinSawtooth2" type="Label" parent="LabelLFOAM/LabelCarrierWaveform"]
+layout_mode = 0
+offset_left = 62.0
+offset_top = -8.0
+offset_right = 136.0
+offset_bottom = 6.0
+theme_override_font_sizes/font_size = 9
+text = "5:Sawtooth(invert)"
+
+[node name="LabelCarrierFreq" type="Label" parent="LabelLFOAM"]
+layout_mode = 0
+offset_left = -90.0
+offset_top = 78.0
+offset_right = -39.0
+offset_bottom = 93.0
+theme_override_font_sizes/font_size = 9
+text = "Carrier freq"
+
+[node name="LabelAmplitudeLevel" type="Label" parent="LabelLFOAM"]
+layout_mode = 0
+offset_left = -17.0
+offset_top = 78.0
+offset_right = 51.0
+offset_bottom = 93.0
+theme_override_font_sizes/font_size = 9
+text = "Amplitude level"
+
+[node name="Label_0" type="Label" parent="LabelLFOAM/LabelAmplitudeLevel"]
+layout_mode = 0
+offset_left = 3.0
+offset_top = -6.0
+offset_right = 15.0
+offset_bottom = 6.0
+theme_override_font_sizes/font_size = 8
+text = "0.0
+"
+
+[node name="Label_1" type="Label" parent="LabelLFOAM/LabelAmplitudeLevel"]
+layout_mode = 0
+offset_left = 48.0
+offset_top = -6.0
+offset_right = 60.0
+offset_bottom = 6.0
+theme_override_font_sizes/font_size = 8
+text = "1.0
+"
+
+[node name="LabelPhaseOffset" type="Label" parent="LabelLFOAM"]
+layout_mode = 0
+offset_left = 69.0
+offset_top = 78.0
+offset_right = 123.0
+offset_bottom = 93.0
+theme_override_font_sizes/font_size = 9
+text = "Phase offset"
+
+[node name="Label_m181" type="Label" parent="LabelLFOAM/LabelPhaseOffset"]
+layout_mode = 0
+offset_left = 22.0
+offset_top = -73.0
+offset_right = 39.0
+offset_bottom = -61.0
+theme_override_font_sizes/font_size = 8
+text = "0
+"
+
+[node name="Label_m180" type="Label" parent="LabelLFOAM/LabelPhaseOffset"]
+layout_mode = 0
+offset_left = 3.0
+offset_top = -6.0
+offset_right = 20.0
+offset_bottom = 6.0
+theme_override_font_sizes/font_size = 8
+text = "0
+"
+
+[node name="Label_p180" type="Label" parent="LabelLFOAM/LabelPhaseOffset"]
+layout_mode = 0
+offset_left = 43.0
+offset_top = -6.0
+offset_right = 57.0
+offset_bottom = 6.0
+theme_override_font_sizes/font_size = 8
+text = "360
+"
+
+[node name="LabelSyncTempo" type="Label" parent="LabelLFOAM"]
+layout_mode = 0
+offset_left = 65.0
+offset_top = 160.0
+offset_right = 132.0
+offset_bottom = 175.0
+theme_override_font_sizes/font_size = 9
+text = "Sync w/ tempo"
+
+[node name="Label_1_on" type="Label" parent="LabelLFOAM/LabelSyncTempo"]
+layout_mode = 0
+offset_left = 59.0
+offset_top = -56.0
+offset_right = 76.0
+offset_bottom = -44.0
+theme_override_font_sizes/font_size = 8
+text = "1:on
+"
+
+[node name="Label_2_off" type="Label" parent="LabelLFOAM/LabelSyncTempo"]
+layout_mode = 0
+offset_left = 59.0
+offset_top = -14.0
+offset_right = 77.0
+offset_bottom = -2.0
+theme_override_font_sizes/font_size = 8
+text = "2:off"
+
+[node name="LabelLFOFM" type="Label" parent="."]
+offset_left = 869.0
+offset_top = 10.0
+offset_right = 950.0
+offset_bottom = 25.0
+theme_override_font_sizes/font_size = 9
+text = "LFO(FM)"
+
+[node name="LabelCarrierFreq" type="Label" parent="LabelLFOFM"]
+layout_mode = 0
+offset_left = -85.0
+offset_top = 77.0
+offset_right = -34.0
+offset_bottom = 92.0
+theme_override_font_sizes/font_size = 9
+text = "Carrier freq"
+
+[node name="LabelCentRange" type="Label" parent="LabelLFOFM"]
+layout_mode = 0
+offset_left = -4.0
+offset_top = 77.0
+offset_right = 47.0
+offset_bottom = 92.0
+theme_override_font_sizes/font_size = 9
+text = "Cent range"
+
+[node name="LabelPhaseOffset" type="Label" parent="LabelLFOFM"]
+layout_mode = 0
+offset_left = 72.0
+offset_top = 78.0
+offset_right = 126.0
+offset_bottom = 93.0
+theme_override_font_sizes/font_size = 9
+text = "Phase offset"
+
+[node name="Label_0" type="Label" parent="LabelLFOFM/LabelPhaseOffset"]
+layout_mode = 0
+offset_left = 21.0
+offset_top = -74.0
+offset_right = 38.0
+offset_bottom = -62.0
+theme_override_font_sizes/font_size = 8
+text = "0
+"
+
+[node name="Label_360" type="Label" parent="LabelLFOFM/LabelPhaseOffset"]
+layout_mode = 0
+offset_left = 3.0
+offset_top = -7.0
+offset_right = 20.0
+offset_bottom = 5.0
+theme_override_font_sizes/font_size = 8
+text = "0
+"
+
+[node name="Label_p180" type="Label" parent="LabelLFOFM/LabelPhaseOffset"]
+layout_mode = 0
+offset_left = 42.0
+offset_top = -7.0
+offset_right = 61.0
+offset_bottom = 5.0
+theme_override_font_sizes/font_size = 8
+text = "360
+"
+
+[node name="LabelCarrierWaveform" type="Label" parent="LabelLFOFM"]
+layout_mode = 0
+offset_left = -99.0
+offset_top = 160.0
+offset_right = -22.0
+offset_bottom = 175.0
+theme_override_font_sizes/font_size = 9
+text = "Carrier waveform"
+
+[node name="LabelSin" type="Label" parent="LabelLFOFM/LabelCarrierWaveform"]
+layout_mode = 0
+offset_left = 62.0
+offset_top = -65.0
+offset_right = 107.0
+offset_bottom = -51.0
+theme_override_font_sizes/font_size = 9
+text = "1:sin"
+
+[node name="LabelSquare" type="Label" parent="LabelLFOFM/LabelCarrierWaveform"]
+layout_mode = 0
+offset_left = 71.0
+offset_top = -52.0
+offset_right = 116.0
+offset_bottom = -38.0
+theme_override_font_sizes/font_size = 9
+text = "2:Square"
+
+[node name="LabelTriangle" type="Label" parent="LabelLFOFM/LabelCarrierWaveform"]
+layout_mode = 0
+offset_left = 74.0
+offset_top = -37.0
+offset_right = 119.0
+offset_bottom = -23.0
+theme_override_font_sizes/font_size = 9
+text = "3:Triangle"
+
+[node name="LabelSawtooth" type="Label" parent="LabelLFOFM/LabelCarrierWaveform"]
+layout_mode = 0
+offset_left = 70.0
+offset_top = -22.0
+offset_right = 119.0
+offset_bottom = -8.0
+theme_override_font_sizes/font_size = 9
+text = "4:Sawtooth"
+
+[node name="LabelSinSawtooth2" type="Label" parent="LabelLFOFM/LabelCarrierWaveform"]
+layout_mode = 0
+offset_left = 63.0
+offset_top = -9.0
+offset_right = 137.0
+offset_bottom = 5.0
+theme_override_font_sizes/font_size = 9
+text = "5:Sawtooth(invert)"
+
+[node name="LabelSyncTempo" type="Label" parent="LabelLFOFM"]
+layout_mode = 0
+offset_left = 66.0
+offset_top = 159.0
+offset_right = 133.0
+offset_bottom = 174.0
+theme_override_font_sizes/font_size = 9
+text = "Sync w/ tempo"
+
+[node name="Label_1_on" type="Label" parent="LabelLFOFM/LabelSyncTempo"]
+layout_mode = 0
+offset_left = 60.0
+offset_top = -56.0
+offset_right = 77.0
+offset_bottom = -44.0
+theme_override_font_sizes/font_size = 8
+text = "1:on
+"
+
+[node name="Label_2_off" type="Label" parent="LabelLFOFM/LabelSyncTempo"]
+layout_mode = 0
+offset_left = 60.0
+offset_top = -14.0
+offset_right = 78.0
+offset_bottom = -2.0
+theme_override_font_sizes/font_size = 8
+text = "2:off"
+
+[node name="LabelDelay" type="Label" parent="."]
+offset_left = 653.0
+offset_top = 9.0
+offset_right = 734.0
+offset_bottom = 24.0
+theme_override_font_sizes/font_size = 9
+text = "Delay"
+
+[node name="LabelD1" type="Label" parent="LabelDelay"]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 16.0
+offset_right = 26.0
+offset_bottom = 31.0
+theme_override_font_sizes/font_size = 9
+text = "D1"
+
+[node name="LabelDelayTime" type="Label" parent="LabelDelay/LabelD1"]
+layout_mode = 0
+offset_left = -54.0
+offset_top = 72.0
+offset_right = -7.0
+offset_bottom = 87.0
+theme_override_font_sizes/font_size = 9
+text = "Delay time"
+
+[node name="LabelLevel" type="Label" parent="LabelDelay/LabelD1"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 72.0
+offset_right = 70.0
+offset_bottom = 87.0
+theme_override_font_sizes/font_size = 9
+text = "Level"
+
+[node name="Label_0" type="Label" parent="LabelDelay/LabelD1/LabelLevel"]
+layout_mode = 0
+offset_left = -20.0
+offset_top = -4.0
+offset_right = -8.0
+offset_bottom = 8.0
+theme_override_font_sizes/font_size = 8
+text = "0.0
+"
+
+[node name="Label_1" type="Label" parent="LabelDelay/LabelD1/LabelLevel"]
+layout_mode = 0
+offset_left = 25.0
+offset_top = -4.0
+offset_right = 37.0
+offset_bottom = 8.0
+theme_override_font_sizes/font_size = 8
+text = "0.2
+"
+
+[node name="LabelD2" type="Label" parent="LabelDelay"]
+layout_mode = 0
+offset_left = 9.0
+offset_top = 106.0
+offset_right = 31.0
+offset_bottom = 121.0
+theme_override_font_sizes/font_size = 9
+text = "D2"
+
+[node name="LabelDelayTime" type="Label" parent="LabelDelay/LabelD2"]
+layout_mode = 0
+offset_left = -60.0
+offset_top = 73.0
+offset_right = -13.0
+offset_bottom = 88.0
+theme_override_font_sizes/font_size = 9
+text = "Delay time"
+
+[node name="LabelLevel" type="Label" parent="LabelDelay/LabelD2"]
+layout_mode = 0
+offset_left = 34.0
+offset_top = 73.0
+offset_right = 64.0
+offset_bottom = 88.0
+theme_override_font_sizes/font_size = 9
+text = "Level"
+
+[node name="Label_0" type="Label" parent="LabelDelay/LabelD2/LabelLevel"]
+layout_mode = 0
+offset_left = -18.0
+offset_top = -6.0
+offset_right = -6.0
+offset_bottom = 6.0
+theme_override_font_sizes/font_size = 8
+text = "0.0
+"
+
+[node name="Label_1" type="Label" parent="LabelDelay/LabelD2/LabelLevel"]
+layout_mode = 0
+offset_left = 27.0
+offset_top = -6.0
+offset_right = 39.0
+offset_bottom = 6.0
+theme_override_font_sizes/font_size = 8
+text = "0.2
+"
+
+[node name="LabelD3" type="Label" parent="LabelDelay"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 198.0
+offset_right = 30.0
+offset_bottom = 213.0
+theme_override_font_sizes/font_size = 9
+text = "D3"
+
+[node name="LabelDelayTime" type="Label" parent="LabelDelay/LabelD3"]
+layout_mode = 0
+offset_left = -60.0
+offset_top = 72.0
+offset_right = -13.0
+offset_bottom = 87.0
+theme_override_font_sizes/font_size = 9
+text = "Delay time"
+
+[node name="LabelLevel" type="Label" parent="LabelDelay/LabelD3"]
+layout_mode = 0
+offset_left = 36.0
+offset_top = 74.0
+offset_right = 66.0
+offset_bottom = 89.0
+theme_override_font_sizes/font_size = 9
+text = "Level"
+
+[node name="Label_0" type="Label" parent="LabelDelay/LabelD3/LabelLevel"]
+layout_mode = 0
+offset_left = -20.0
+offset_top = -6.0
+offset_right = -8.0
+offset_bottom = 6.0
+theme_override_font_sizes/font_size = 8
+text = "0.0
+"
+
+[node name="Label_1" type="Label" parent="LabelDelay/LabelD3/LabelLevel"]
+layout_mode = 0
+offset_left = 25.0
+offset_top = -6.0
+offset_right = 37.0
+offset_bottom = 6.0
+theme_override_font_sizes/font_size = 8
+text = "0.2
+"
+
+[node name="LabelBaseOscillator" type="Label" parent="."]
+offset_left = 410.0
+offset_top = 10.0
+offset_right = 491.0
+offset_bottom = 25.0
+theme_override_font_sizes/font_size = 9
+text = "Base oscillators"
+
+[node name="LabelW1" type="Label" parent="LabelBaseOscillator"]
+layout_mode = 0
+offset_left = 31.0
+offset_top = 16.0
+offset_right = 52.0
+offset_bottom = 30.0
+theme_override_font_sizes/font_size = 9
+text = "W1"
+
+[node name="LabelWaveform" type="Label" parent="LabelBaseOscillator/LabelW1"]
+layout_mode = 0
+offset_left = -96.0
+offset_top = 73.0
+offset_right = -51.0
+offset_bottom = 87.0
+theme_override_font_sizes/font_size = 9
+text = "Waveform"
+
+[node name="LabelSin" type="Label" parent="LabelBaseOscillator/LabelW1/LabelWaveform"]
+layout_mode = 0
+offset_left = 46.0
+offset_top = -65.0
+offset_right = 91.0
+offset_bottom = -51.0
+theme_override_font_sizes/font_size = 9
+text = "1:sin"
+
+[node name="LabelSquare" type="Label" parent="LabelBaseOscillator/LabelW1/LabelWaveform"]
+layout_mode = 0
+offset_left = 55.0
+offset_top = -52.0
+offset_right = 100.0
+offset_bottom = -38.0
+theme_override_font_sizes/font_size = 9
+text = "2:Square"
+
+[node name="LabelTriangle" type="Label" parent="LabelBaseOscillator/LabelW1/LabelWaveform"]
+layout_mode = 0
+offset_left = 58.0
+offset_top = -37.0
+offset_right = 103.0
+offset_bottom = -23.0
+theme_override_font_sizes/font_size = 9
+text = "3:Triangle"
+
+[node name="LabelSawtooth" type="Label" parent="LabelBaseOscillator/LabelW1/LabelWaveform"]
+layout_mode = 0
+offset_left = 54.0
+offset_top = -22.0
+offset_right = 103.0
+offset_bottom = -8.0
+theme_override_font_sizes/font_size = 9
+text = "4:Sawtooth"
+
+[node name="LabelSinSawtooth2" type="Label" parent="LabelBaseOscillator/LabelW1/LabelWaveform"]
+layout_mode = 0
+offset_left = 47.0
+offset_top = -9.0
+offset_right = 121.0
+offset_bottom = 5.0
+theme_override_font_sizes/font_size = 9
+text = "5:sin&Sawtooth2"
+
+[node name="LabelOffsetCent" type="Label" parent="LabelBaseOscillator/LabelW1"]
+layout_mode = 0
+offset_left = 62.0
+offset_top = 73.0
+offset_right = 110.0
+offset_bottom = 87.0
+theme_override_font_sizes/font_size = 9
+text = "Offset cent"
+
+[node name="LabelW2" type="Label" parent="LabelBaseOscillator"]
+layout_mode = 0
+offset_left = 29.0
+offset_top = 107.0
+offset_right = 50.0
+offset_bottom = 121.0
+theme_override_font_sizes/font_size = 9
+text = "W2
+"
+
+[node name="LabelWaveform" type="Label" parent="LabelBaseOscillator/LabelW2"]
+layout_mode = 0
+offset_left = -94.0
+offset_top = 73.0
+offset_right = -49.0
+offset_bottom = 86.0
+theme_override_font_sizes/font_size = 9
+text = "Waveform"
+
+[node name="LabelSin" type="Label" parent="LabelBaseOscillator/LabelW2/LabelWaveform"]
+layout_mode = 0
+offset_left = 46.0
+offset_top = -65.0
+offset_right = 91.0
+offset_bottom = -51.0
+theme_override_font_sizes/font_size = 9
+text = "1:sin"
+
+[node name="LabelSquare" type="Label" parent="LabelBaseOscillator/LabelW2/LabelWaveform"]
+layout_mode = 0
+offset_left = 55.0
+offset_top = -52.0
+offset_right = 100.0
+offset_bottom = -38.0
+theme_override_font_sizes/font_size = 9
+text = "2:Square"
+
+[node name="LabelTriangle" type="Label" parent="LabelBaseOscillator/LabelW2/LabelWaveform"]
+layout_mode = 0
+offset_left = 58.0
+offset_top = -37.0
+offset_right = 103.0
+offset_bottom = -23.0
+theme_override_font_sizes/font_size = 9
+text = "3:Triangle"
+
+[node name="LabelSawtooth" type="Label" parent="LabelBaseOscillator/LabelW2/LabelWaveform"]
+layout_mode = 0
+offset_left = 54.0
+offset_top = -22.0
+offset_right = 103.0
+offset_bottom = -8.0
+theme_override_font_sizes/font_size = 9
+text = "4:Sawtooth"
+
+[node name="LabelSinSawtooth2" type="Label" parent="LabelBaseOscillator/LabelW2/LabelWaveform"]
+layout_mode = 0
+offset_left = 47.0
+offset_top = -9.0
+offset_right = 121.0
+offset_bottom = 5.0
+theme_override_font_sizes/font_size = 9
+text = "5:sin&Sawtooth2"
+
+[node name="LabelOffsetCent" type="Label" parent="LabelBaseOscillator/LabelW2"]
+layout_mode = 0
+offset_left = 65.0
+offset_top = 71.0
+offset_right = 113.0
+offset_bottom = 85.0
+theme_override_font_sizes/font_size = 9
+text = "Offset cent"
+
+[node name="LabelW3" type="Label" parent="LabelBaseOscillator"]
+layout_mode = 0
+offset_left = 30.0
+offset_top = 198.0
+offset_right = 51.0
+offset_bottom = 212.0
+theme_override_font_sizes/font_size = 9
+text = "W3
+"
+
+[node name="LabelWaveform" type="Label" parent="LabelBaseOscillator/LabelW3"]
+layout_mode = 0
+offset_left = -94.0
+offset_top = 71.0
+offset_right = -49.0
+offset_bottom = 84.0
+theme_override_font_sizes/font_size = 9
+text = "Waveform"
+
+[node name="LabelSin" type="Label" parent="LabelBaseOscillator/LabelW3/LabelWaveform"]
+layout_mode = 0
+offset_left = 46.0
+offset_top = -65.0
+offset_right = 91.0
+offset_bottom = -51.0
+theme_override_font_sizes/font_size = 9
+text = "1:sin"
+
+[node name="LabelSquare" type="Label" parent="LabelBaseOscillator/LabelW3/LabelWaveform"]
+layout_mode = 0
+offset_left = 55.0
+offset_top = -52.0
+offset_right = 100.0
+offset_bottom = -38.0
+theme_override_font_sizes/font_size = 9
+text = "2:Square"
+
+[node name="LabelTriangle" type="Label" parent="LabelBaseOscillator/LabelW3/LabelWaveform"]
+layout_mode = 0
+offset_left = 58.0
+offset_top = -37.0
+offset_right = 103.0
+offset_bottom = -23.0
+theme_override_font_sizes/font_size = 9
+text = "3:Triangle"
+
+[node name="LabelSawtooth" type="Label" parent="LabelBaseOscillator/LabelW3/LabelWaveform"]
+layout_mode = 0
+offset_left = 54.0
+offset_top = -22.0
+offset_right = 103.0
+offset_bottom = -8.0
+theme_override_font_sizes/font_size = 9
+text = "4:Sawtooth"
+
+[node name="LabelSinSawtooth2" type="Label" parent="LabelBaseOscillator/LabelW3/LabelWaveform"]
+layout_mode = 0
+offset_left = 47.0
+offset_top = -9.0
+offset_right = 121.0
+offset_bottom = 5.0
+theme_override_font_sizes/font_size = 9
+text = "5:sin&Sawtooth2"
+
+[node name="LabelOffsetCent" type="Label" parent="LabelBaseOscillator/LabelW3"]
+layout_mode = 0
+offset_left = 64.0
+offset_top = 71.0
+offset_right = 112.0
+offset_bottom = 85.0
+theme_override_font_sizes/font_size = 9
+text = "Offset cent"
+
+[node name="LabelSequencer" type="Label" parent="."]
+offset_left = 37.0
+offset_top = 10.0
+offset_right = 91.0
+offset_bottom = 24.0
+theme_override_font_sizes/font_size = 9
+text = "Sequencer"
+
+[node name="LabelNumPoly" type="Label" parent="LabelSequencer"]
+layout_mode = 0
+offset_left = -4.0
+offset_top = 84.0
+offset_right = 51.0
+offset_bottom = 98.0
+theme_override_font_sizes/font_size = 9
+text = "num divided"
+
+[node name="Label_1" type="Label" parent="LabelSequencer/LabelNumPoly"]
+layout_mode = 0
+offset_left = -1.0
+offset_top = -7.0
+offset_right = 15.0
+offset_bottom = 7.0
+theme_override_font_sizes/font_size = 8
+text = "1"
+
+[node name="Label_10" type="Label" parent="LabelSequencer/LabelNumPoly"]
+layout_mode = 0
+offset_left = -14.0
+offset_top = -35.0
+offset_right = 2.0
+offset_bottom = -21.0
+theme_override_font_sizes/font_size = 8
+text = "10"
+
+[node name="Label_20" type="Label" parent="LabelSequencer/LabelNumPoly"]
+layout_mode = 0
+offset_left = -5.0
+offset_top = -68.0
+offset_right = 11.0
+offset_bottom = -54.0
+theme_override_font_sizes/font_size = 8
+text = "20"
+
+[node name="Label_30" type="Label" parent="LabelSequencer/LabelNumPoly"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = -67.0
+offset_right = 56.0
+offset_bottom = -53.0
+theme_override_font_sizes/font_size = 8
+text = "30"
+
+[node name="Label_40" type="Label" parent="LabelSequencer/LabelNumPoly"]
+layout_mode = 0
+offset_left = 56.0
+offset_top = -34.0
+offset_right = 72.0
+offset_bottom = -20.0
+theme_override_font_sizes/font_size = 8
+text = "40"
+
+[node name="Label_50" type="Label" parent="LabelSequencer/LabelNumPoly"]
+layout_mode = 0
+offset_left = 38.0
+offset_top = -7.0
+offset_right = 54.0
+offset_bottom = 7.0
+theme_override_font_sizes/font_size = 8
+text = "50"
+
+[node name="LabelProgramSelect" type="Label" parent="LabelSequencer"]
+layout_mode = 0
+offset_left = -10.0
+offset_top = 243.0
+offset_right = 56.0
+offset_bottom = 257.0
+theme_override_font_sizes/font_size = 9
+text = "Program select"
+
+[node name="Label_1" type="Label" parent="LabelSequencer/LabelProgramSelect"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = -7.0
+offset_right = 26.0
+offset_bottom = 5.0
+theme_override_font_sizes/font_size = 8
+text = "1
+"
+
+[node name="Label_80" type="Label" parent="LabelSequencer/LabelProgramSelect"]
+layout_mode = 0
+offset_left = -5.0
+offset_top = -57.0
+offset_right = 9.0
+offset_bottom = -45.0
+theme_override_font_sizes/font_size = 8
+text = "80"
+
+[node name="Label_160" type="Label" parent="LabelSequencer/LabelProgramSelect"]
+layout_mode = 0
+offset_left = 56.0
+offset_top = -64.0
+offset_right = 70.0
+offset_bottom = -52.0
+theme_override_font_sizes/font_size = 8
+text = "160"
+
+[node name="Label_240" type="Label" parent="LabelSequencer/LabelProgramSelect"]
+layout_mode = 0
+offset_left = 55.0
+offset_top = -10.0
+offset_right = 69.0
+offset_bottom = 2.0
+theme_override_font_sizes/font_size = 8
+text = "240"
+
+[node name="LabelpreOnTime" type="Label" parent="LabelSequencer"]
+layout_mode = 0
+offset_left = -11.0
+offset_top = 323.0
+offset_right = 64.0
+offset_bottom = 337.0
+theme_override_font_sizes/font_size = 9
+text = "PreOnTime (ms)"
+
+[node name="Label_1_on" type="Label" parent="LabelSequencer/LabelpreOnTime"]
+visible = false
+layout_mode = 0
+offset_left = 62.0
+offset_top = -56.0
+offset_right = 79.0
+offset_bottom = -44.0
+theme_override_font_sizes/font_size = 8
+text = "1:on
+"
+
+[node name="Label_2_off" type="Label" parent="LabelSequencer/LabelpreOnTime"]
+visible = false
+layout_mode = 0
+offset_left = 62.0
+offset_top = -14.0
+offset_right = 80.0
+offset_bottom = -2.0
+theme_override_font_sizes/font_size = 8
+text = "2:off"
+
+[node name="LabelBaseTempo" type="Label" parent="LabelSequencer"]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 164.0
+offset_right = 55.0
+offset_bottom = 178.0
+theme_override_font_sizes/font_size = 9
+text = "BaseTempo"
+
+[node name="Label_1" type="Label" parent="LabelSequencer/LabelBaseTempo"]
+layout_mode = 0
+offset_left = 1.0
+offset_top = -9.0
+offset_right = 12.0
+offset_bottom = 3.0
+theme_override_font_sizes/font_size = 8
+text = "1
+"
+
+[node name="Label_60" type="Label" parent="LabelSequencer/LabelBaseTempo"]
+layout_mode = 0
+offset_left = -21.0
+offset_top = -37.0
+offset_right = -10.0
+offset_bottom = -25.0
+theme_override_font_sizes/font_size = 8
+text = "60
+"
+
+[node name="Label_120" type="Label" parent="LabelSequencer/LabelBaseTempo"]
+layout_mode = 0
+offset_left = -6.0
+offset_top = -70.0
+offset_right = 8.0
+offset_bottom = -58.0
+theme_override_font_sizes/font_size = 8
+text = "120
+"
+
+[node name="Label_180" type="Label" parent="LabelSequencer/LabelBaseTempo"]
+layout_mode = 0
+offset_left = 34.0
+offset_top = -69.0
+offset_right = 48.0
+offset_bottom = -57.0
+theme_override_font_sizes/font_size = 8
+text = "180
+"
+
+[node name="Label_240" type="Label" parent="LabelSequencer/LabelBaseTempo"]
+layout_mode = 0
+offset_left = 55.0
+offset_top = -36.0
+offset_right = 69.0
+offset_bottom = -24.0
+theme_override_font_sizes/font_size = 8
+text = "240
+"
+
+[node name="Label_300" type="Label" parent="LabelSequencer/LabelBaseTempo"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = -9.0
+offset_right = 54.0
+offset_bottom = 3.0
+theme_override_font_sizes/font_size = 8
+text = "300
+"
+
+[node name="LabelFreqNoise" type="Label" parent="."]
+offset_left = 582.0
+offset_top = 301.0
+offset_right = 681.0
+offset_bottom = 315.0
+theme_override_font_sizes/font_size = 9
+text = "Freq distribution noise"
+
+[node name="LabelCentRange" type="Label" parent="LabelFreqNoise"]
+layout_mode = 0
+offset_left = 104.0
+offset_top = 76.0
+offset_right = 155.0
+offset_bottom = 90.0
+theme_override_font_sizes/font_size = 9
+text = "CentRange"
+
+[node name="LabelDistributionType" type="Label" parent="LabelFreqNoise"]
+layout_mode = 0
+offset_left = -68.0
+offset_top = 77.0
+offset_right = 10.0
+offset_bottom = 91.0
+theme_override_font_sizes/font_size = 9
+text = "Distribution type"
+
+[node name="LabelFlat" type="Label" parent="LabelFreqNoise/LabelDistributionType"]
+layout_mode = 0
+offset_left = 68.0
+offset_top = -61.0
+offset_right = 146.0
+offset_bottom = -47.0
+theme_override_font_sizes/font_size = 9
+text = "1:Flat"
+
+[node name="LabelTriangular" type="Label" parent="LabelFreqNoise/LabelDistributionType"]
+layout_mode = 0
+offset_left = 74.0
+offset_top = -38.0
+offset_right = 152.0
+offset_bottom = -24.0
+theme_override_font_sizes/font_size = 9
+text = "2:Triangular"
+
+[node name="LabelCos" type="Label" parent="LabelFreqNoise/LabelDistributionType"]
+layout_mode = 0
+offset_left = 69.0
+offset_top = -14.0
+offset_right = 147.0
+theme_override_font_sizes/font_size = 9
+text = "3:cos"
+
+[node name="Label4" type="Label" parent="LabelFreqNoise/LabelDistributionType/LabelCos"]
+layout_mode = 0
+offset_left = 22.0
+offset_top = -3.0
+offset_right = 33.0
+offset_bottom = 9.0
+theme_override_font_sizes/font_size = 8
+text = "4"
+
+[node name="LabelAddedNoise" type="Label" parent="."]
+offset_left = 389.0
+offset_top = 303.0
+offset_right = 443.0
+offset_bottom = 317.0
+theme_override_font_sizes/font_size = 9
+text = "Added noise"
+
+[node name="LabelAddedNoise" type="Label" parent="LabelAddedNoise"]
+layout_mode = 0
+offset_left = -34.0
+offset_top = 74.0
+offset_right = 20.0
+offset_bottom = 88.0
+theme_override_font_sizes/font_size = 9
+text = "Color"
+
+[node name="LabelWhite" type="Label" parent="LabelAddedNoise/LabelAddedNoise"]
+layout_mode = 0
+offset_left = 45.0
+offset_top = -52.0
+offset_right = 99.0
+offset_bottom = -38.0
+theme_override_font_sizes/font_size = 9
+text = "1:White"
+
+[node name="LabelPink" type="Label" parent="LabelAddedNoise/LabelAddedNoise"]
+layout_mode = 0
+offset_left = 45.0
+offset_top = -22.0
+offset_right = 99.0
+offset_bottom = -8.0
+theme_override_font_sizes/font_size = 9
+text = "2:Pink"
+
+[node name="LabelInfoProg" type="Label" parent="."]
+offset_left = 324.0
+offset_top = 446.0
+offset_right = 584.0
+offset_bottom = 460.0
+theme_override_colors/font_color = Color(1, 0.501961, 0, 1)
+theme_override_font_sizes/font_size = 10
+text = "str"
+
+[node name="LabelInfoPercussion" type="Label" parent="."]
+offset_left = 100.0
+offset_top = 412.0
+offset_right = 259.0
+offset_bottom = 460.0
+theme_override_colors/font_color = Color(1, 0.501961, 0, 1)
+theme_override_font_sizes/font_size = 10
+text = "str
+str
+str"
+
+[node name="LabelPercussionParam" type="Label" parent="."]
+offset_left = 14.0
+offset_top = 412.0
+offset_right = 96.0
+offset_bottom = 429.0
+theme_override_font_sizes/font_size = 10
+text = "Edit percussions"
+horizontal_alignment = 2
+
+[node name="LabelInfoSMF" type="Label" parent="."]
+offset_left = 761.0
+offset_top = 444.0
+offset_right = 1016.0
+offset_bottom = 458.0
+theme_override_colors/font_color = Color(1, 0.501961, 0, 1)
+theme_override_font_sizes/font_size = 10
+text = "str"
+
+[node name="LabelSignalOutputLevel" type="Label" parent="."]
+offset_left = 321.0
+offset_top = 425.0
+offset_right = 407.0
+offset_bottom = 439.0
+theme_override_font_sizes/font_size = 9
+text = "Signal output level: "
+horizontal_alignment = 2
+
+[node name="LabelSignalAllocation" type="Label" parent="."]
+offset_left = 324.0
+offset_top = 415.0
+offset_right = 404.0
+offset_bottom = 429.0
+theme_override_font_sizes/font_size = 9
+text = "Signal Allocation:"
+horizontal_alignment = 2
+
+[node name="GDSynthesizer" type="GDSynthesizer" parent="."]
+script = ExtResource("1_yny12")
+
+[node name="PianoRoll" type="Node2D" parent="."]
+visible = false
+z_index = 1000
+position = Vector2(10, 0)
+
+[node name="TextureRect" type="TextureRect" parent="PianoRoll"]
+z_index = 1000
+offset_right = 1000.0
+offset_bottom = 350.0
+mouse_filter = 0
+
+[node name="PianoRollOverlayNonPercussion" type="Control" parent="PianoRoll/TextureRect"]
+z_index = 1001
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("3_pianoroll_script")
+
+[node name="PianoRollOverlayPercussion" type="Control" parent="PianoRoll/TextureRect"]
+visible = false
+z_index = 1001
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("3_pianoroll_script")
+
+[node name="ButtonSelectSMF" type="Button" parent="."]
+offset_left = 761.0
+offset_top = 418.0
+offset_right = 873.0
+offset_bottom = 462.0
+scale = Vector2(0.5, 0.5)
+text = "Select SMF"
+
+[node name="FileDialog" type="FileDialog" parent="ButtonSelectSMF"]
+title = "Open a File"
+position = Vector2i(50, 50)
+size = Vector2i(640, 480)
+ok_button_text = "開く"
+file_mode = 0
+filters = PackedStringArray("*.mid")
+
+[node name="ButtonUnselectSMF" type="Button" parent="."]
+offset_left = 819.0
+offset_top = 418.0
+offset_right = 931.0
+offset_bottom = 462.0
+scale = Vector2(0.5, 0.5)
+text = "Unselect SMF"
+
+[node name="ButtonLoadData" type="Button" parent="."]
+offset_left = 881.0
+offset_top = 418.0
+offset_right = 967.0
+offset_bottom = 462.0
+scale = Vector2(0.5, 0.5)
+text = "Load tone"
+
+[node name="FileDialog" type="FileDialog" parent="ButtonLoadData"]
+title = "Open a File"
+position = Vector2i(50, 50)
+size = Vector2i(640, 480)
+ok_button_text = "開く"
+file_mode = 0
+access = 1
+filters = PackedStringArray("*.json")
+
+[node name="ButtonSaveData" type="Button" parent="."]
+offset_left = 926.0
+offset_top = 418.0
+offset_right = 1010.0
+offset_bottom = 462.0
+scale = Vector2(0.5, 0.5)
+text = "Save tone"
+
+[node name="FileDialog" type="FileDialog" parent="ButtonSaveData"]
+position = Vector2i(50, 50)
+size = Vector2i(640, 480)
+ok_button_text = "保存"
+access = 1
+filters = PackedStringArray("*.json")
+
+[node name="ButtonLicens" type="Button" parent="."]
+offset_left = 975.0
+offset_top = 418.0
+offset_right = 1059.0
+offset_bottom = 462.0
+scale = Vector2(0.5, 0.5)
+text = "LICENSE"
+
+[node name="ColorRectRed" type="ColorRect" parent="."]
+offset_left = 455.0
+offset_top = 210.0
+offset_right = 460.0
+offset_bottom = 215.0
+color = Color(1, 0, 0, 1)
+
+[node name="ColorRectRed" type="ColorRect" parent="ColorRectRed"]
+layout_mode = 0
+offset_left = -10.0
+offset_top = 94.0
+offset_right = -5.0
+offset_bottom = 99.0
+color = Color(0.784314, 0.784314, 0.784314, 1)
+
+[node name="ColorRectGreen" type="ColorRect" parent="."]
+offset_left = 455.0
+offset_top = 120.0
+offset_right = 460.0
+offset_bottom = 125.0
+color = Color(0, 1, 0, 1)
+
+[node name="ColorRectBlue" type="ColorRect" parent="."]
+offset_left = 455.0
+offset_top = 28.0
+offset_right = 460.0
+offset_bottom = 33.0
+color = Color(0, 0, 1, 1)
+
+[node name="ControlPercussion" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 226.0
+offset_top = 415.0
+offset_right = 313.0
+offset_bottom = 464.0
+
+[node name="ButtonKeySelect" type="Button" parent="ControlPercussion"]
+layout_mode = 0
+offset_left = -208.0
+offset_top = 11.0
+offset_right = -104.0
+offset_bottom = 42.0
+scale = Vector2(0.5, 0.5)
+text = "Key select"
+
+[node name="ButtonPercussionroll" type="Button" parent="ControlPercussion"]
+layout_mode = 0
+offset_left = 511.0
+offset_top = 32.0
+offset_right = 539.0
+offset_bottom = 63.0
+scale = Vector2(0.5, 0.5)
+text = "P"
+
+[node name="ButtonAllPrograms" type="Button" parent="ControlPercussion"]
+layout_mode = 0
+offset_left = 495.0
+offset_top = 32.0
+offset_right = 523.0
+offset_bottom = 63.0
+scale = Vector2(0.5, 0.5)
+text = "A"
+
+[node name="ButtonPercussionMode" type="Button" parent="ControlPercussion"]
+layout_mode = 0
+offset_left = 363.0
+offset_top = 32.0
+offset_right = 499.0
+offset_bottom = 63.0
+scale = Vector2(0.5, 0.5)
+text = "PercussionMode"
+
+[node name="ButtonPianoroll" type="Button" parent="ControlPercussion"]
+layout_mode = 0
+offset_left = 439.0
+offset_top = 32.0
+offset_right = 543.0
+offset_bottom = 63.0
+scale = Vector2(0.5, 0.5)
+text = "PianoRoll"
+
+[node name="ButtonRegistProgram" type="Button" parent="ControlPercussion"]
+layout_mode = 0
+offset_left = 35.0
+offset_top = 14.0
+offset_right = 139.0
+offset_bottom = 45.0
+scale = Vector2(0.5, 0.5)
+text = "Regist prog"
+
+[node name="ButtonRegistNote" type="Button" parent="ControlPercussion"]
+layout_mode = 0
+offset_left = 35.0
+offset_top = 31.0
+offset_right = 139.0
+offset_bottom = 62.0
+scale = Vector2(0.5, 0.5)
+text = "Regist note"
+
+[node name="TextureRectW1" type="TextureRect" parent="."]
+offset_left = 453.0
+offset_top = 46.0
+offset_right = 493.0
+offset_bottom = 86.0
+
+[node name="TextureRectW2" type="TextureRect" parent="."]
+offset_left = 453.0
+offset_top = 137.0
+offset_right = 493.0
+offset_bottom = 177.0
+
+[node name="TextureRectW3" type="TextureRect" parent="."]
+offset_left = 453.0
+offset_top = 224.0
+offset_right = 493.0
+offset_bottom = 264.0
+
+[node name="TextureRectLFOFM" type="TextureRect" parent="."]
+offset_left = 893.0
+offset_top = 113.0
+offset_right = 933.0
+offset_bottom = 153.0
+
+[node name="TextureRectLFOAM" type="TextureRect" parent="."]
+offset_left = 893.0
+offset_top = 294.0
+offset_right = 933.0
+offset_bottom = 334.0
+
+[node name="ControlLicens" type="Control" parent="."]
+visible = false
+layout_mode = 3
+anchors_preset = 0
+offset_top = 4.0
+offset_right = 1023.0
+offset_bottom = 574.0
+
+[node name="TextEdit" type="TextEdit" parent="ControlLicens"]
+layout_mode = 0
+offset_right = 1024.0
+offset_bottom = 572.0
+theme_override_colors/background_color = Color(0.00392157, 0.00392157, 0.00392157, 0.505882)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_readonly_color = Color(1, 1, 1, 1)
+text = "test"
+editable = false
+context_menu_enabled = false
+shortcut_keys_enabled = false
+virtual_keyboard_enabled = false
+middle_mouse_paste_enabled = false
+scroll_smooth = true
+minimap_draw = true
+
+[node name="Button" type="Button" parent="ControlLicens"]
+layout_mode = 0
+offset_left = 477.0
+offset_top = 534.0
+offset_right = 527.0
+offset_bottom = 565.0
+text = "Close"
+
+[connection signal="level_info" from="GDSynthesizer" to="." method="_on_gd_synthesizer_level_info"]
+[connection signal="note_changed" from="GDSynthesizer" to="." method="_on_gd_synthesizer_note_changed"]
+[connection signal="button_up" from="ButtonSelectSMF" to="GDSynthesizer" method="_on_button_select_smf_button_up"]
+[connection signal="file_selected" from="ButtonSelectSMF/FileDialog" to="GDSynthesizer" method="_on_file_dialog_file_selected"]
+[connection signal="button_up" from="ButtonUnselectSMF" to="GDSynthesizer" method="_on_button_unselect_smf_button_up"]
+[connection signal="button_up" from="ButtonLoadData" to="GDSynthesizer" method="_on_button_load_data_button_up"]
+[connection signal="file_selected" from="ButtonLoadData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_load_file_selected"]
+[connection signal="file_selected" from="ButtonLoadData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_file_selected"]
+[connection signal="button_up" from="ButtonSaveData" to="GDSynthesizer" method="_on_button_save_data_button_up"]
+[connection signal="file_selected" from="ButtonSaveData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_file_selected"]
+[connection signal="file_selected" from="ButtonSaveData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_save_file_selected"]
+[connection signal="pressed" from="ButtonLicens" to="." method="_on_button_licens_pressed"]
+[connection signal="pressed" from="ControlPercussion/ButtonKeySelect" to="." method="_on_button_key_select_pressed"]
+[connection signal="pressed" from="ControlPercussion/ButtonPercussionroll" to="." method="_on_button_percussionroll_pressed"]
+[connection signal="pressed" from="ControlPercussion/ButtonAllPrograms" to="." method="_on_button_allprograms_pressed"]
+[connection signal="pressed" from="ControlPercussion/ButtonPercussionMode" to="." method="_on_button_percussion_mode_pressed"]
+[connection signal="pressed" from="ControlPercussion/ButtonPianoroll" to="." method="_on_button_pianoroll_pressed"]
+[connection signal="pressed" from="ControlPercussion/ButtonRegistProgram" to="." method="_on_button_regist_program_pressed"]
+[connection signal="pressed" from="ControlPercussion/ButtonRegistNote" to="." method="_on_button_regist_note_pressed"]
+[connection signal="pressed" from="ControlLicens/Button" to="." method="_on_button_pressed"]
