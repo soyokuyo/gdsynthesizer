@@ -1600,7 +1600,9 @@ offset_top = 294.0
 offset_right = 933.0
 offset_bottom = 334.0
 
-[node name="ControlLicens" type="Control" parent="."]
+[node name="CanvasLayerLicens" type="CanvasLayer" parent="."]
+
+[node name="ControlLicens" type="Control" parent="CanvasLayerLicens"]
 visible = false
 layout_mode = 3
 anchors_preset = 0
@@ -1608,7 +1610,7 @@ offset_top = 4.0
 offset_right = 1023.0
 offset_bottom = 574.0
 
-[node name="TextEdit" type="TextEdit" parent="ControlLicens"]
+[node name="TextEdit" type="TextEdit" parent="CanvasLayerLicens/ControlLicens"]
 layout_mode = 0
 offset_right = 1024.0
 offset_bottom = 572.0
@@ -1621,15 +1623,20 @@ context_menu_enabled = false
 shortcut_keys_enabled = false
 virtual_keyboard_enabled = false
 middle_mouse_paste_enabled = false
+wrap_mode = 2
 scroll_smooth = true
 minimap_draw = true
 
-[node name="Button" type="Button" parent="ControlLicens"]
+[node name="Button" type="Button" parent="CanvasLayerLicens/ControlLicens"]
 layout_mode = 0
 offset_left = 477.0
 offset_top = 534.0
 offset_right = 527.0
 offset_bottom = 565.0
+theme_override_colors/font_color = Color(1, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(1, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(1, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(1, 0, 0, 1)
 text = "Close"
 
 [connection signal="level_info" from="GDSynthesizer" to="." method="_on_gd_synthesizer_level_info"]
@@ -1638,8 +1645,8 @@ text = "Close"
 [connection signal="file_selected" from="ButtonSelectSMF/FileDialog" to="GDSynthesizer" method="_on_file_dialog_file_selected"]
 [connection signal="button_up" from="ButtonUnselectSMF" to="GDSynthesizer" method="_on_button_unselect_smf_button_up"]
 [connection signal="button_up" from="ButtonLoadData" to="GDSynthesizer" method="_on_button_load_data_button_up"]
-[connection signal="file_selected" from="ButtonLoadData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_load_file_selected"]
 [connection signal="file_selected" from="ButtonLoadData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_file_selected"]
+[connection signal="file_selected" from="ButtonLoadData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_load_file_selected"]
 [connection signal="button_up" from="ButtonSaveData" to="GDSynthesizer" method="_on_button_save_data_button_up"]
 [connection signal="file_selected" from="ButtonSaveData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_file_selected"]
 [connection signal="file_selected" from="ButtonSaveData/FileDialog" to="GDSynthesizer" method="_on_file_dialog_save_file_selected"]
@@ -1651,4 +1658,4 @@ text = "Close"
 [connection signal="pressed" from="ControlPercussion/ButtonPianoroll" to="." method="_on_button_pianoroll_pressed"]
 [connection signal="pressed" from="ControlPercussion/ButtonRegistProgram" to="." method="_on_button_regist_program_pressed"]
 [connection signal="pressed" from="ControlPercussion/ButtonRegistNote" to="." method="_on_button_regist_note_pressed"]
-[connection signal="pressed" from="ControlLicens/Button" to="." method="_on_button_pressed"]
+[connection signal="pressed" from="CanvasLayerLicens/ControlLicens/Button" to="." method="_on_button_pressed"]

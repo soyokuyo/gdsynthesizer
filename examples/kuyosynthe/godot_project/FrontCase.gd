@@ -1025,16 +1025,27 @@ func all_led_off()->void:
 
 
 func _on_button_licens_pressed():
-	$"ControlLicens".visible=true
+	$"CanvasLayerLicens/ControlLicens".visible=true
 	var path="res://license.txt"
 	var f:FileAccess = FileAccess.open(path, FileAccess.READ)
 	var content = f.get_as_text()
 	f.close()
-	$"ControlLicens/TextEdit".text=content
+	$"CanvasLayerLicens/ControlLicens/TextEdit".text=content
+	
+	# Set Close button to red and bold (larger font size for emphasis)
+	var close_button = $"CanvasLayerLicens/ControlLicens/Button"
+	if close_button:
+		close_button.add_theme_color_override("font_color", Color(1.0, 0.0, 0.0, 1.0))
+		close_button.add_theme_color_override("font_hover_color", Color(1.0, 0.0, 0.0, 1.0))
+		close_button.add_theme_color_override("font_pressed_color", Color(1.0, 0.0, 0.0, 1.0))
+		close_button.add_theme_color_override("font_focus_color", Color(1.0, 0.0, 0.0, 1.0))
+		# Increase font size for emphasis (bold effect)
+		var current_size = close_button.get_theme_font_size("font_size")
+		close_button.add_theme_font_size_override("font_size", current_size + 2)
 
 
 func _on_button_pressed():
-	$"ControlLicens".visible=false
+	$"CanvasLayerLicens/ControlLicens".visible=false
 
 func update_piano_roll_pre_on_time()->void:
 	# Notify both PianoRollOverlay instances of preOnTime changes

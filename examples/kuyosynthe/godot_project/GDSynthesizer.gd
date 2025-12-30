@@ -2,6 +2,8 @@ extends GDSynthesizer
 
 var synthe_params_array:Array
 var percussion_params_array:Array
+var os:String
+
 
 func copy_program_params()->void:
 	var index:int = Globalv.program
@@ -105,6 +107,7 @@ func get_mini_wave_image(type:int, phase:int, target)->void:
 
 
 func _ready()->void:
+	os = OS.get_name()
 	init_synthe(Globalv.num_poly);
 	synthe_params_array = get_synthe_params()
 	copy_program_params()
@@ -185,14 +188,19 @@ func _on_button_select_smf_button_up()->void:
 	# note that https://github.com/godotengine/godot/issues/53339
 	# "In exported games, a FileDialog in Resource mode cannot open 
 	# resources in subfolders #53339"
+	if os != "Android" && os != "iOS" && os != "Web":
+		$"../ButtonSelectSMF/FileDialog".access = FileDialog.ACCESS_FILESYSTEM
 	$"../ButtonSelectSMF/FileDialog".show()
 
-
 func _on_button_load_data_button_up()->void:
+	if os != "Android" && os != "iOS" && os != "Web":
+		$"../ButtonLoadData/FileDialog".access = FileDialog.ACCESS_FILESYSTEM
 	$"../ButtonLoadData/FileDialog".show()
 
 
 func _on_button_save_data_button_up()->void:
+	if os != "Android" && os != "iOS" && os != "Web":
+		$"../ButtonSaveData/FileDialog".access = FileDialog.ACCESS_FILESYSTEM
 	$"../ButtonSaveData/FileDialog".show()
 
 
@@ -207,6 +215,12 @@ func _on_file_dialog_load_file_selected(path:StringName)->void:
 		Globalv.program         = loaddata["program"]
 		Globalv.base_tempo      = loaddata["base_tempo"]
 		Globalv.is_percussion   = loaddata["is_percussion"]
+		# Load pre_on_time if present, otherwise keep current value
+		if loaddata.has("pre_on_time"):
+			Globalv.pre_on_time = loaddata["pre_on_time"]
+		# Load num_division if present, otherwise keep current value
+		if loaddata.has("num_division"):
+			Globalv.num_division = loaddata["num_division"]
 		synthe_params_array     = loaddata["synthe_params_array"]
 		percussion_params_array = loaddata["percussion__params_array"]
 
@@ -214,6 +228,11 @@ func _on_file_dialog_load_file_selected(path:StringName)->void:
 		copy_program_params()
 		set_synthe_params(synthe_params_array)
 		set_percussion_params(percussion_params_array)
+		# Update control params with loaded values (or current values if not in file)
+		var ctr_params = get_control_params()
+		ctr_params["preOnTime"] = Globalv.pre_on_time
+		ctr_params["divisionNum"] = Globalv.num_division
+		set_control_params(ctr_params)
 
 
 func _on_file_dialog_save_file_selected(path:StringName)->void:
@@ -222,6 +241,8 @@ func _on_file_dialog_save_file_selected(path:StringName)->void:
 		"program":                  Globalv.program,
 		"base_tempo":               Globalv.base_tempo,
 		"is_percussion":            Globalv.is_percussion,
+		"pre_on_time":              Globalv.pre_on_time,
+		"num_division":             Globalv.num_division,
 		"synthe_params_array":      synthe_params_array,
 		"percussion__params_array": percussion_params_array
 	}
