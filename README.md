@@ -25,6 +25,14 @@ GDSYNTHESIZER does not have:
 Target Godot Version is ver.4.2.1.
 This project is just a hobby of the author and may not necessarily work the way you want it to.
 
+## Examples
+
+GDSYNTHESIZER includes example implementations in the `examples/` directory:
+
+- **KuyoSynthe** (`examples/kuyosynthe/`): A complete GUI example implementation with tone editor and SMF player. This is the easiest way to check how your SMF sounds with GDSYNTHESIZER and learn how to use it.
+
+For more examples and tutorials, see the `examples/` directory.
+
 ## How to build
 
 GDSYNTHESIZER is built with MinGW64 and scons.
@@ -43,12 +51,15 @@ git clone --depth 1 https://github.com/godotengine/godot-cpp.git -b godot-4.2.1-
 Directory structure may be below.
 ```
 your_directory/
-    godot-cpp-4.2.1-stable/
-    project/
-    src/
-    .gitignore
-    SConstruct
-    (and some other files)
+    gdsynthesizer/
+        godot-cpp-4.2.1-stable/
+        project/
+        src/
+        examples/
+            kuyosynthe/
+        .gitignore
+        SConstruct
+        (and some other files)
 ```
 
 - debug build for Windows
@@ -115,9 +126,8 @@ func _process(delta:float)->void:
 GDSYNTHESIZER is variable tone generator, so you can modify tone with parameter editing.
 But actually, editing parameters is a little complicated.
 
-To check how your SMF sounds with SYNTHESIZER, I've made a working GUI example named "KuyoSynthe" using GD SYNTHESIZER.
-Find it from following GITHUB and try it out.
-https://github.com/soyokuyo/kuyosynthe
+To check how your SMF sounds with SYNTHESIZER, you can use the example implementation "KuyoSynthe" included in this repository.
+See `examples/kuyosynthe/` for details.
 
 By using KuyoSynthe, you can easily check how your SMF sounds, and you may find out which parameters to change to make it even better.
 If you look into KuyoSynthe, you may find out how to use GDSYNTHESIZER.

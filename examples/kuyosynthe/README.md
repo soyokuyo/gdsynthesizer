@@ -4,15 +4,15 @@ KuyoSynthe is toy synthesizer for Godot using GDSYNTHESIZER.
 
  ![kuyosynthe_image.png](kuyosynthe_image.png "KuyoSynthe")
 
-## What is GDSYNTHESIZER?
+## What is KuyoSynthe?
 
-KuyoSynthe is an implementation sample of GDSYNTHESIZSE using Godot script.
-KuyoSynthe is the way to know how to use GDSYNTHESIZER.
+KuyoSynthe is an example implementation of GDSYNTHESIZER using Godot script.
+KuyoSynthe is included in the GDSYNTHESIZER repository as an example application.
 
 KuyoSynthe is:
- - an implementation sample of GDSYNTHESIZSE using Godot script
- - the way to know how to use GDSYNTHESIZER
- - tone editor for each musical instruments of midi.
+ - an example implementation of GDSYNTHESIZER using Godot script
+ - a way to learn how to use GDSYNTHESIZER
+ - tone editor for each musical instruments of midi
  - sequence player for SMF files
 
 KuyoSynthe has been confirmed to work as a desktop app on Windows.
@@ -24,16 +24,29 @@ This project is just a hobby of the author and may not necessarily work the way 
 
 ## How to install
 
-KuyoSynthe requires the GDSYNTHESIZSER runtime library.
-GDSYNTHESIZSER is published on the following github.
-https://github.com/soyokuyo/gdsynthesizer
- Build this and place the files generated in "project/bin" in the res:// directory of the godot project.
-A precompiled runtime library for GDSYNTHESIZER may be made available in the near future.
+KuyoSynthe is included in the GDSYNTHESIZER repository at `examples/kuyosynthe/`.
+
+Since GDSYNTHESIZER is integrated in this repository, you need to build GDSYNTHESIZER first.
+See the main [README.md](../../README.md) for build instructions.
+
+After building GDSYNTHESIZER, the runtime library files will be generated in `project/bin/`.
+Copy these files to `examples/kuyosynthe/godot_project/bin/`:
+
+```
+examples/kuyosynthe/godot_project/bin/
+    gdsynthesizer.gdextension
+    libgdsynthesizer.windows.template_debug.x86_64.dll
+    libgdsynthesizer.windows.template_release.x86_64.dll
+    libgdsynthesizer.web.template_release.wasm32.wasm
+    libgdsynthesizer.web.template_debug.wasm32.wasm
+```
+
+Then open `examples/kuyosynthe/godot_project/` in Godot Engine and run the project.
 
 ## How to use
 
 Each parameter can be changed using the dial knob. Change the dial knob by hovering over the mouse cursor and using the wheel.
-Put your favorite SMF file in the "res://" directory. Then press the "select SMF" button to select the file and play it.
+Put your favorite SMF file in the `godot_project/` directory. Then press the "select SMF" button to select the file and play it.
 
 
 
